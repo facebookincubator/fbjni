@@ -14,10 +14,10 @@ function download() {
 
 function installsdk() {
   # We need an existing SDK with `sdkmanager`, otherwise, install it.
-  which sdkmanager &> /dev/null || getAndroidSDK
+  command which sdkmanager &> /dev/null || getAndroidSDK
 
   PROXY_ARGS=""
-  if [[ ! -z "$HTTPS_PROXY" ]]; then
+  if [[ -n "$HTTPS_PROXY" ]]; then
     PROXY_HOST="$(echo "$HTTPS_PROXY" | cut -d : -f 1,1)"
     PROXY_PORT="$(echo "$HTTPS_PROXY" | cut -d : -f 2,2)"
     PROXY_ARGS="--proxy=http --proxy_host=$PROXY_HOST --proxy_port=$PROXY_PORT"
