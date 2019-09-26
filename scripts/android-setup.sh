@@ -35,7 +35,7 @@ function getAndroidSDK {
 }
 
 function installAndroidSDK {
-  export ANDROID_HOME=$USER/android_sdk
+  export ANDROID_HOME="$HOME/android_sdk"
   getAndroidSDK
   export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$PATH"
 
