@@ -2,6 +2,7 @@
 
 set -exo pipefail
 
+mkdir -p host-build-cmake
 # Configure CMake project
 cmake -S . -B host-build-cmake -DJAVA_HOME="$JAVA_HOME"
 # Build binaries and libraries
