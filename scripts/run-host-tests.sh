@@ -8,7 +8,7 @@ CMAKE=$ANDROID_HOME/cmake/3.10.2.4988404/bin/cmake
 cd "$DIR/.."
 
 # Configure CMake project
-$CMAKE -S . -B host-build-cmake -DJAVA_HOME="$JAVA_HOME"
+$CMAKE -S "$DIR/.." -B host-build-cmake -DJAVA_HOME="$JAVA_HOME"
 # Build binaries and libraries
 $CMAKE --build host-build-cmake
 # Run C++ tests
