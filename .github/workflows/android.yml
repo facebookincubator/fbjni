@@ -17,3 +17,5 @@ jobs:
       run: |
         source scripts/android-setup.sh && installAndroidSDK
         ./gradlew assembleDebug
+    - name: Run tests
+      run: scripts/run-host-tests.sh
