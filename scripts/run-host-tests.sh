@@ -5,15 +5,17 @@ set -exo pipefail
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
 CMAKE=$ANDROID_HOME/cmake/3.10.2.4988404/bin/cmake
 
-cd "$BASE_DIR"
+mkdir -p "$BASE_DIR/host-build-cmake"
+cd "$BASE_DIR/host-build-cmake"
 
 # Configure CMake project
-$CMAKE -B "$BASE_DIR/host-build-cmake" -DJAVA_HOME="$JAVA_HOME" .
+$CMAKE -DJAVA_HOME="$JAVA_HOME" ..
 # Build binaries and libraries
-$CMAKE --build host-build-cmake
+make
 # Run C++ tests
-$CMAKE --build host-build-cmake --target test
+make test
 # LD_LIBRARY_PATH is needed for native library dependencies to load cleanly
-TEST_LD_LIBRARY_PATH=$PWD/host-build-cmake:$PWD/host-build-cmake/test/jni
+TEST_LD_LIBRARY_PATH="$BASE_DIR/host-build-cmake:$BASE_DIR/host-build-cmake/test/jni"
 # Build and run JNI tests
+cd "$BASE_DIR"
 env LD_LIBRARY_PATH="$TEST_LD_LIBRARY_PATH" ./gradlew -b host.gradle -PbuildDir=host-build-gradle test
