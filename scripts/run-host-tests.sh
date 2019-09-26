@@ -9,6 +9,7 @@ cd "$BASE_DIR"
 ls
 
 # Configure CMake project
+mkdir -p "$BASE_DIR/host-build-cmake"
 $CMAKE -S "$BASE_DIR" -B "$BASE_DIR/host-build-cmake" -DJAVA_HOME="$JAVA_HOME"
 # Build binaries and libraries
 $CMAKE --build host-build-cmake
