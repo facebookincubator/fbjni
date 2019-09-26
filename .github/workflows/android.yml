@@ -20,5 +20,4 @@ jobs:
     - name: Run tests
       run: |
         source scripts/android-setup.sh && installAndroidSDK && installsdk 'cmake;3.10.2.4988404'
-        ls
         scripts/run-host-tests.sh

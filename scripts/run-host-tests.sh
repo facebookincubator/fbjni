@@ -2,13 +2,14 @@
 
 set -exo pipefail
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
 CMAKE=$ANDROID_HOME/cmake/3.10.2.4988404/bin/cmake
 
-cd "$DIR/.."
+cd "$BASE_DIR"
+ls
 
 # Configure CMake project
-$CMAKE -S "$DIR/.." -B "$DIR/../host-build-cmake" -DJAVA_HOME="$JAVA_HOME"
+$CMAKE -S "$BASE_DIR" -B "$BASE_DIR/host-build-cmake" -DJAVA_HOME="$JAVA_HOME"
 # Build binaries and libraries
 $CMAKE --build host-build-cmake
 # Run C++ tests
