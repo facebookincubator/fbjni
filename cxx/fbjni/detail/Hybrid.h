@@ -290,7 +290,7 @@ public:
 
 template <typename T, typename B>
 inline T* HybridClass<T, B>::JavaPart::cthis() const {
-  detail::BaseHybridClass* result = 0;
+  detail::BaseHybridClass* result = nullptr;
   static bool isHybrid = detail::HybridClassBase::isHybridClassBase(this->getClass());
   if (isHybrid) {
     result = getNativePointer(this);
