@@ -25,6 +25,7 @@ set(FBJNI_COMPILE_OPTIONS
   -ffunction-sections
   -O3
   -DNDEBUG
+  /experimental:preprocessor
 )
 
 file(GLOB fbjni_SOURCES

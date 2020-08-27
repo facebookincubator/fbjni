@@ -35,8 +35,7 @@ struct JNativeRunnable : public HybridClass<JNativeRunnable, JRunnable> {
 
   static void OnLoad() {
     registerHybrid({
-        // TODO: why can't MSVC resolve this appropriately?
-        makeNativeMethod2("run", JNativeRunnable::run),
+        makeNativeMethod("run", JNativeRunnable::run),
       });
   }
 
