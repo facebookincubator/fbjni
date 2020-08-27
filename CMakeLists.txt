@@ -25,7 +25,6 @@ set(FBJNI_COMPILE_OPTIONS
   -ffunction-sections
   -O3
   -DNDEBUG
-  /experimental:preprocessor
 )
 
 file(GLOB fbjni_SOURCES
@@ -37,7 +36,13 @@ file(GLOB fbjni_SOURCES
 add_library(fbjni SHARED ${fbjni_SOURCES})
 set(fbjni PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-target_compile_options(fbjni PRIVATE ${FBJNI_COMPILE_OPTIONS})
+target_compile_options(fbjni
+    PRIVATE
+      $<$<CXX_COMPILER_ID:MSVC>:/experimental:preprocessor /W3 /DNDEBUG>
+      $<$<CXX_COMPILER_ID:Clang>:>${FBJNI_COMPILE_OPTIONS}>
+      $<$<CXX_COMPILER_ID:GNU>:>${FBJNI_COMPILE_OPTIONS}>
+)
+
 target_compile_options(fbjni PRIVATE -DBUILDING_FBJNI)
 
 target_include_directories(fbjni PUBLIC
