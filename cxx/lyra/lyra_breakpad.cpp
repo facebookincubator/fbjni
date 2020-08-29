@@ -23,7 +23,9 @@ namespace lyra {
  * This can be overridden by an implementation capable of looking up
  * the breakpad id for logging purposes.
 */
+#ifndef _WIN32
 __attribute__((weak))
+#endif
 std::string getBreakpadId(const std::string& library) {
   return "<unimplemented>";
 }
