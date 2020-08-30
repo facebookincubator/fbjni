@@ -16,6 +16,7 @@
 
 #include "CoreClasses.h"
 #include "Log.h"
+#include "Exceptions.h"
 
 #ifndef FBJNI_NO_EXCEPTION_PTR
 #include <lyra/lyra.h>
