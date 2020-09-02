@@ -19,21 +19,13 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: Build with Gradle on Ubuntu
+    - name: Build with Gradle
       run: |
         source scripts/android-setup.sh && installAndroidSDK
         ./gradlew assembleDebug
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-    - name: Run tests on Ubuntu
+      shell: bash
+    - name: Run tests
       run: |
         source scripts/android-setup.sh && installAndroidSDK && installsdk 'cmake;3.10.2.4988404'
         scripts/run-host-tests.sh
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-    - name: Build with Gradle on Windows
-      run: |
-        echo "Windows build here"
-      if: ${{ matrix.os == 'windows-latest' }}
-    - name: Run tests on Windows
-      run: |
-        echo "Windows tests here"
-      if: ${{ matrix.os == 'windows-latest' }}
+      shell: bash
