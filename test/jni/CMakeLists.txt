@@ -26,9 +26,11 @@ set(TEST_COMPILE_OPTIONS
 add_library(inter_dso_exception_test_1 SHARED
   inter_dso_exception_test_1/Test.cpp
 )
+set_target_properties(inter_dso_exception_test_1 PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 target_compile_options(inter_dso_exception_test_1
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /DFBJNI_DEBUG_REFS /UNDEBUG>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor ${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:Clang>:>${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${TEST_COMPILE_OPTIONS}>
 )
@@ -40,10 +42,11 @@ target_link_libraries(inter_dso_exception_test_1
 add_library(inter_dso_exception_test_2 SHARED
   inter_dso_exception_test_2/Test.cpp
 )
+set_target_properties(inter_dso_exception_test_2 PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_compile_options(inter_dso_exception_test_2
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /DFBJNI_DEBUG_REFS /UNDEBUG>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor ${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:Clang>:>${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${TEST_COMPILE_OPTIONS}>
 )
@@ -60,10 +63,11 @@ target_link_libraries(inter_dso_exception_test_2
 add_library(no_rtti SHARED
   no_rtti.cpp
 )
+set_target_properties(no_rtti PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_compile_options(no_rtti
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /DFBJNI_DEBUG_REFS /UNDEBUG>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor ${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:Clang>:>${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${TEST_COMPILE_OPTIONS}>
 )
@@ -82,9 +86,12 @@ add_library(fbjni-tests SHARED
   primitive_array_tests.cpp
   readable_byte_channel_tests.cpp
 )
+set_target_properties(fbjni-tests PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+
 target_compile_options(fbjni-tests
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /DFBJNI_DEBUG_REFS /UNDEBUG>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor ${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:Clang>:>${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${TEST_COMPILE_OPTIONS}>
 )
@@ -100,9 +107,12 @@ target_link_libraries(fbjni-tests
 add_library(doc_tests SHARED
   doc_tests.cpp
 )
+
+set_target_properties(doc_tests PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 target_compile_options(doc_tests
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /DFBJNI_DEBUG_REFS /UNDEBUG>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor ${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:Clang>:>${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${TEST_COMPILE_OPTIONS}>
 )
@@ -115,7 +125,7 @@ add_executable(modified_utf8_test
 )
 target_compile_options(modified_utf8_test
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /DFBJNI_DEBUG_REFS /UNDEBUG>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor ${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:Clang>:>${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${TEST_COMPILE_OPTIONS}>
 )
@@ -123,8 +133,13 @@ target_link_libraries(modified_utf8_test
   fbjni
   gtest
   Threads::Threads
-  dl
 )
+
+if(NOT WIN32)
+  target_link_libraries(modified_utf8_test dl)
+endif()
+
+
 gtest_add_tests(TARGET modified_utf8_test)
 
 add_executable(utf16toUTF8_test
@@ -132,7 +147,7 @@ add_executable(utf16toUTF8_test
 )
 target_compile_options(utf16toUTF8_test
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /DFBJNI_DEBUG_REFS /UNDEBUG>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor ${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:Clang>:>${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${TEST_COMPILE_OPTIONS}>
 )
@@ -141,6 +156,10 @@ target_link_libraries(utf16toUTF8_test
   fbjni
   gtest
   Threads::Threads
-  dl
 )
+
+if(NOT WIN32)
+  target_link_libraries(utf16toUTF8_test dl)
+endif()
+
 gtest_add_tests(TARGET utf16toUTF8_test)
