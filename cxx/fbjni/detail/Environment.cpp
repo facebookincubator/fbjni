@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include <fbjni/fbjni.h>
 
 #ifdef __ANDROID__
@@ -93,7 +94,8 @@ JNIEnv* attachCurrentThread() {
 
   const auto threadName = getThreadName();
   if (threadName.size()) {
-    args.name = threadName.c_str();
+    std::vector<char> v(threadName.begin(), threadName.end());
+    args.name = &v[0];
   }
 
   using AttachEnvType =
