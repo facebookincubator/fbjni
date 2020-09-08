@@ -15,17 +15,15 @@
 
 set -exo pipefail
 
-CMAKE="$ANDROID_HOME/cmake/3.10.2.4988404/bin/cmake"
-export CXX=clang++
 
 mkdir -p "host-build-cmake"
 cd "host-build-cmake"
 
 # Configure CMake project
-$CMAKE -DJAVA_HOME="$JAVA_HOME" ..
+cmake -DJAVA_HOME="$JAVA_HOME" ..
 
 # Build binaries and libraries
-$CMAKE --build .
+cmake --build .
 
 # Run C++ tests
 make test

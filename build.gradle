@@ -68,6 +68,7 @@ android {
             cmake {
                 arguments '-DANDROID_TOOLCHAIN=clang'
                 targets 'fbjni'
+                version "3.17.2"
             }
         }
     }
