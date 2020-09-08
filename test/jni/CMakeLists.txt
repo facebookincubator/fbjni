@@ -33,7 +33,7 @@ set_target_properties(inter_dso_exception_test_1 PROPERTIES WINDOWS_EXPORT_ALL_S
 
 target_compile_options(inter_dso_exception_test_1
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor ${TEST_COMPILE_OPTIONS}>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /Zc:ternary /Zc:twoPhase ${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:Clang>:>${TEST_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${TEST_COMPILE_OPTIONS}>
 )

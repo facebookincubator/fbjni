@@ -42,7 +42,7 @@ set_target_properties(fbjni PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_compile_options(fbjni
     PRIVATE
-      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /W3 /DNDEBUG>
+      $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor /Zc:ternary /W3 -DNDEBUG >
       $<$<CXX_COMPILER_ID:Clang>:>${FBJNI_COMPILE_OPTIONS}>
       $<$<CXX_COMPILER_ID:GNU>:>${FBJNI_COMPILE_OPTIONS}>
 )
