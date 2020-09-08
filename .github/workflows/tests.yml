@@ -12,20 +12,62 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: add msbuild to path
-      uses: microsoft/setup-msbuild@v1.0.1
-      if: ${{ matrix.os == 'windows-latest' }}
+    - name: set up cmake
+      uses: jwlawson/actions-setup-cmake@v1.3
+      with:
+        cmake-version: '3.17.x'
     - name: set up JDK 1.8
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
+    - name: install android
+      run: |
+        # Download Android SDK
+        export ANDROID_HOME="$HOME/android_sdk"
+        TMP=/tmp/sdk$$.zip
+        curl -s -L -o "$TMP" "https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip"
+        mkdir -p "$ANDROID_HOME"
+        unzip -qod "$ANDROID_HOME" $TMP
+        rm $TMP
+
+        # Export things needed to make Gradle happy
+        echo "::add-path::$ANDROID_HOME/platform-tools"
+        echo "::add-path::$ANDROID_HOME/tools"
+        echo "::add-path::$ANDROID_HOME/tools/bin"
+
+        # License stuff
+        mkdir -p "$ANDROID_HOME/licenses/"
+        echo 24333f8a63b6825ea9c5514f83c2829b004d1fee > "$ANDROID_HOME/licenses/android-sdk-license"
+        echo 8933bad161af4178b1185d1a37fbf41ea5269c55 >> "$ANDROID_HOME/licenses/android-sdk-license"
+
+        # Install the build manager
+        echo y | "$ANDROID_HOME/tools/bin/sdkmanager" "build-tools;29.0.1"
+      shell: bash
+    - name: setup ninja
+      uses: seanmiddleditch/gha-setup-ninja@master
     - name: Build with Gradle
       run: |
-        source scripts/android-setup.sh && installAndroidSDK
-        ./gradlew assembleDebug
+        ./gradlew assembleDebug --info
       shell: bash
     - name: Run tests
       run: |
-        source scripts/android-setup.sh && installAndroidSDK && installsdk 'cmake;3.10.2.4988404'
-        scripts/run-host-tests.sh
+        mkdir -p "host-build-cmake"
+        cd "host-build-cmake"
+
+        # Configure CMake project
+        cmake -DJAVA_HOME="$JAVA_HOME" ..
+
+        # Build binaries and libraries
+        cmake --build .
+
+        # Run C++ tests
+        make test
+
+        cd ..
+
+        # LD_LIBRARY_PATH is needed for native library dependencies to load cleanly
+        export LD_LIBRARY_PATH="./host-build-cmake:./host-build-cmake/test/jni"
+
+        # Build and run JNI tests
+        ./gradlew -b host.gradle -PbuildDir=host-build-gradle test -Djava.library.path="$LD_LIBRARY_PATH"
       shell: bash
