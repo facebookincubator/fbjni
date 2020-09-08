@@ -41,7 +41,7 @@ jobs:
         echo 8933bad161af4178b1185d1a37fbf41ea5269c55 >> "$ANDROID_HOME/licenses/android-sdk-license"
 
         # Install the build manager
-        echo y | "$ANDROID_HOME/tools/bin/sdkmanager" "build-tools;29.0.1"
+        echo y | "$ANDROID_HOME/tools/bin/sdkmanager" "build-tools;29.0.2"
       shell: bash
     - name: setup ninja
       uses: seanmiddleditch/gha-setup-ninja@master
