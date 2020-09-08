@@ -15,6 +15,9 @@
 enable_testing()
 include(GoogleTest)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 find_package(Threads REQUIRED)
 
 set(TEST_COMPILE_OPTIONS
