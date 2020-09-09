@@ -63,9 +63,10 @@ jobs:
         # Build binaries and libraries
         cmake --build . --config Release
 
-        # Copy the fbjni artifacts into the test directory
+        # Copy the fbjni artifacts into a common directory
         # TODO: replace this with appropriate cmake
-        cp Release/fbjni.* test/jni/Release/
+        [[ -e Release/ ]] && cp Release/fbjni.* .
+        [[ -e test/jni/Release/ ]] && cp test/jni/Release/* test/jni/
 
         # Run C++ tests
         cmake -C Release
@@ -73,7 +74,7 @@ jobs:
         cd ..
 
         # LD_LIBRARY_PATH is needed for native library dependencies to load cleanly
-        export LD_LIBRARY_PATH="./host-build-cmake/Release:./host-build-cmake/test/jni/Release"
+        export LD_LIBRARY_PATH="./host-build-cmake/:./host-build-cmake/test/jni/"
 
         # Build and run JNI tests
         ./gradlew -b host.gradle -PbuildDir=host-build-gradle test -Djava.library.path="$LD_LIBRARY_PATH"
