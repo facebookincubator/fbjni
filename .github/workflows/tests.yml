@@ -53,6 +53,9 @@ jobs:
       run: |
         mkdir -p "host-build-cmake"
         cd "host-build-cmake"
+        
+        # Export CXX to clang++. This currently only propagates on Ubuntu, which is OK
+        export CXX=clang++
 
         # Configure CMake project
         cmake -DJAVA_HOME="$JAVA_HOME" ..
