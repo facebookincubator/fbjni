@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 buildscript {
     repositories {
         google()
@@ -67,7 +69,6 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments '-DANDROID_TOOLCHAIN=clang'
                 targets 'fbjni'
             }
         }

@@ -47,6 +47,8 @@ jobs:
       uses: seanmiddleditch/gha-setup-ninja@master
     - name: Build with Gradle
       run: |
+        # Export CXX to clang++. This currently only propagates on Ubuntu, which is OK
+        export CXX=clang++
         ./gradlew assembleRelease --info
       shell: bash
     - name: Run tests
