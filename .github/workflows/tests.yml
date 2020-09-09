@@ -15,7 +15,7 @@ jobs:
     - name: set up cmake
       uses: jwlawson/actions-setup-cmake@v1.3
       with:
-        cmake-version: '3.17.x'
+        cmake-version: '3.17.2'
     - name: set up JDK 1.8
       uses: actions/setup-java@v1
       with:
@@ -47,7 +47,7 @@ jobs:
       uses: seanmiddleditch/gha-setup-ninja@master
     - name: Build with Gradle
       run: |
-        ./gradlew assembleDebug --info
+        ./gradlew assembleRelease --info
       shell: bash
     - name: Run tests
       run: |
@@ -58,15 +58,19 @@ jobs:
         cmake -DJAVA_HOME="$JAVA_HOME" ..
 
         # Build binaries and libraries
-        cmake --build .
+        cmake --build . --config Release
+
+        # Copy the fbjni artifacts into the test directory
+        # TODO: replace this with appropriate cmake
+        cp Release/fbjni.* test/jni/Release/
 
         # Run C++ tests
-        make test
+        cmake -C Release
 
         cd ..
 
         # LD_LIBRARY_PATH is needed for native library dependencies to load cleanly
-        export LD_LIBRARY_PATH="./host-build-cmake:./host-build-cmake/test/jni"
+        export LD_LIBRARY_PATH="./host-build-cmake/Release:./host-build-cmake/test/jni/Release"
 
         # Build and run JNI tests
         ./gradlew -b host.gradle -PbuildDir=host-build-gradle test -Djava.library.path="$LD_LIBRARY_PATH"
