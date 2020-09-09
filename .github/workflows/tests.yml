@@ -71,12 +71,12 @@ jobs:
         [[ -e test/jni/Release/ ]] && cp test/jni/Release/* test/jni/
 
         # Run C++ tests
-        cmake -C Release
+        ctest -C Release
 
         cd ..
 
         # LD_LIBRARY_PATH is needed for native library dependencies to load cleanly
-        export LD_LIBRARY_PATH="./host-build-cmake/:./host-build-cmake/test/jni/"
+        export LD_LIBRARY_PATH="$PWD/host-build-cmake/:$PWD/host-build-cmake/test/jni/"
 
         # Build and run JNI tests
         ./gradlew -b host.gradle -PbuildDir=host-build-gradle test -Djava.library.path="$LD_LIBRARY_PATH"
