@@ -45,7 +45,7 @@ size_t JBuffer::getDirectCapacity() const {
   if (!self()) {
     throwNewJavaException("java/lang/NullPointerException", "java.lang.NullPointerException");
   }
-  int size = Environment::current()->GetDirectBufferCapacity(self());
+  jlong size = Environment::current()->GetDirectBufferCapacity(self());
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
   if (size < 0) {
     throw std::runtime_error(
