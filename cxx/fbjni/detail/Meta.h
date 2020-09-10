@@ -275,7 +275,7 @@ struct jtype_traits {
 private:
   using Repr = ReprType<T>;
   static constexpr auto /* detail::SimpleFixedString<_> */ descriptor() {
-    constexpr auto len = Repr::kJavaDescriptor
+    constexpr std::size_t len = Repr::kJavaDescriptor
       ? detail::constexpr_strlen(Repr::kJavaDescriptor)
       : Repr::get_instantiated_java_descriptor().size();
     if (Repr::kJavaDescriptor) {
@@ -285,7 +285,7 @@ private:
     }
   }
   static constexpr auto /* detail::SimpleFixedString<_> */ base_name() {
-    constexpr auto len = Repr::kJavaDescriptor ? detail::constexpr_strlen(Repr::kJavaDescriptor) - 2 : Repr::get_instantiated_base_name().size();
+    constexpr std::size_t len = Repr::kJavaDescriptor ? detail::constexpr_strlen(Repr::kJavaDescriptor) - 2 : Repr::get_instantiated_base_name().size();
     if (Repr::kJavaDescriptor) {
       detail::SimpleFixedString<len + 2> result(Repr::kJavaDescriptor, len + 2);
       return detail::SimpleFixedString<len>(result.substr(1, result.size() - 2));
