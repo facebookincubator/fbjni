@@ -12,6 +12,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: set up MSVC
+      if: ${{ matrix.os == 'windows-latest' }}
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        sdk: 10.0.18362.0
     - name: set up cmake
       uses: jwlawson/actions-setup-cmake@v1.3
       with:
