@@ -93,8 +93,9 @@ JNIEnv* attachCurrentThread() {
   JavaVMAttachArgs args{JNI_VERSION_1_6, nullptr, nullptr};
 
   const auto threadName = getThreadName();
+  std::vector<char> v;
   if (threadName.size()) {
-    std::vector<char> v(threadName.begin(), threadName.end());
+    v.assign(threadName.begin(), threadName.end());
     args.name = &v[0];
   }
 
