@@ -282,7 +282,7 @@ local_ref<JThrowable> convertCppExceptionToJavaException(std::exception_ptr ptr)
   } catch (...) {
     std::exception_ptr e = std::current_exception();
     if (e) {
-      std::string msg = std::string("Unknown: ") + typeid(e).name();
+      std::string msg = std::string("Unknown Exception");
       current = JUnknownCppException::create(msg.c_str());
     } else {
       current = JUnknownCppException::create();

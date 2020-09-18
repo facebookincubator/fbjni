@@ -717,7 +717,7 @@ public class FBJniTests extends BaseFBJniTests {
     } catch (UnknownCppException ex) {
       // the actual string is implementation-defined and mangled, but in practice,
       // it has the name of the C++ type in it somewhere.
-      assertThat(ex.getMessage()).startsWith("Unknown: ").contains("NonStdException");
+      assertThat(ex.getMessage()).startsWith("Unknown Exception");
     }
   }
 
