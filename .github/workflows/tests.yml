@@ -95,7 +95,9 @@ jobs:
 
         # LD_LIBRARY_PATH is needed for native library dependencies to load cleanly
         export LD_LIBRARY_PATH="$PWD/host-build-cmake/:$PWD/host-build-cmake/test/jni/"
+        # Cheatcode for Windows
+        export PATH="$PATH:$LD_LIBRARY_PATH"
 
         # Build and run JNI tests
-        ./gradlew -b host.gradle -PbuildDir=host-build-gradle test -Djava.library.path="$LD_LIBRARY_PATH"
+        ./gradlew -b host.gradle -PbuildDir=host-build-gradle test 
       shell: bash
