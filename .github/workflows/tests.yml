@@ -52,16 +52,6 @@ jobs:
 
         cmake --version
 
-        which cmake
-
-        # This is a super hack
-        cmake_parent="$(dirname `which cmake`)"
-        
-        echo "$cmake_parent"
-        cmake_parent_parent="$(dirname $cmake_parent)"
-        type cygpath && cmake_parent_parent="$(cygpath $cmake_parent_parent)"
-        echo "$cmake_parent_parent"
-        echo "cmake.dir=$cmake_parent_parent" >> local.properties
         ./gradlew assembleRelease --info
       shell: bash
     - name: Run tests
