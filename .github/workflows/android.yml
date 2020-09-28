@@ -6,7 +6,9 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        compiler: [clang++, g++]
     steps:
     - uses: actions/checkout@v1
     - name: set up JDK 1.8
@@ -20,4 +22,5 @@ jobs:
     - name: Run tests
       run: |
         source scripts/android-setup.sh && installAndroidSDK && installsdk 'cmake;3.10.2.4988404'
+        export CXX=${{ matrix.compiler }}
         scripts/run-host-tests.sh
