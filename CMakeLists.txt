@@ -41,8 +41,8 @@ set_target_properties(fbjni PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 target_compile_options(fbjni PRIVATE ${FBJNI_COMPILE_OPTIONS})
 target_compile_options(fbjni PRIVATE -DBUILDING_FBJNI)
 
-target_include_directories(fbjni PUBLIC
-  cxx
+target_include_directories(fbjni BEFORE
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cxx> 
 )
 
 if (NOT ANDROID_ABI)
