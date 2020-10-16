@@ -15,6 +15,8 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(fbjni CXX)
 
+include(GNUInstallDirs)
+
 set(FBJNI_COMPILE_OPTIONS
   -Wall
   -std=c++14
@@ -100,3 +102,14 @@ if (ANDROID_ABI)
   )
 endif()
 
+install(TARGETS fbjni EXPORT fbjniLibraryConfig
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}) #For windows
+
+install(EXPORT fbjniLibraryConfig DESTINATION share/cmake/fbjni
+  FILE fbjniLibraryConfig.cmake)
+
+if(MSVC)
+  install(TARGETS fbjni DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
