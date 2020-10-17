@@ -111,5 +111,6 @@ install(EXPORT fbjniLibraryConfig DESTINATION share/cmake/fbjni
   FILE fbjniLibraryConfig.cmake)
 
 if(MSVC)
-  install(TARGETS fbjni DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(FILES $<TARGET_PDB_FILE:fbjni> DESTINATION ${CMAKE_INSTALL_LIBDIR} OPTIONAL)  
+    install(TARGETS fbjni DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
