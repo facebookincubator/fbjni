@@ -70,8 +70,19 @@ android {
                 targets 'fbjni'
             }
         }
+
+        buildFeatures {
+            prefabPublishing true
+        }
+
+        prefab {
+            fbjni {
+                headers 'cxx/'
+            }
+        }
     }
 }
+
 
 dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
