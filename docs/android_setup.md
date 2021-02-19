@@ -4,7 +4,7 @@
 as it relies on the new [prefab](https://android-developers.googleblog.com/2020/02/native-dependencies-in-android-studio-40.html) integration.
 Check below for a pre-4.0.0 workaround.**
 
-```
+```groovy
 repositories {
   maven {
     mavenCentral()
@@ -23,6 +23,7 @@ will available implicitly.
 
 ```cmake
 set(build_DIR ${CMAKE_SOURCE_DIR}/build)
+set(PACKAGE_NAME "myapp")
 
 find_package(fbjni REQUIRED CONFIG)
 
@@ -104,6 +105,7 @@ Now, in your CMake setup, you can refer to the extracted paths:
 
 ```cmake
 set(build_DIR ${CMAKE_SOURCE_DIR}/build)
+set(PACKAGE_NAME "myapp")
 
 file(GLOB libfbjni_link_DIRS "${build_DIR}/fbjni*.aar/jni/${ANDROID_ABI}")
 file(GLOB libfbjni_include_DIRS "${build_DIR}/fbjni-*-headers.jar/")
