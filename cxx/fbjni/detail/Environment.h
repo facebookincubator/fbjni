@@ -24,22 +24,22 @@ namespace facebook {
 namespace jni {
 
 // Keeps a thread-local reference to the current thread's JNIEnv.
-struct Environment {
-  // Throws a std::runtime_error if this thread isn't attached to the JVM
-  // TODO(T6594868) Benchmark against raw JNI access
-  static JNIEnv* current();
-  static void initialize(JavaVM* vm);
+namespace Environment {
+// Throws a std::runtime_error if this thread isn't attached to the JVM
+// TODO(T6594868) Benchmark against raw JNI access
+JNIEnv* current();
+void initialize(JavaVM* vm);
 
-  // There are subtle issues with calling the next functions directly. It is
-  // much better to always use a ThreadScope to manage attaching/detaching for
-  // you.
-  static JNIEnv* ensureCurrentThreadIsAttached();
+// There are subtle issues with calling the next functions directly. It is
+// much better to always use a ThreadScope to manage attaching/detaching for
+// you.
+JNIEnv* ensureCurrentThreadIsAttached();
 
-  // To check if a Java VM is available at all in this environment.
-  // Note that this doesn't check if it is attached to this thread,
-  // it checks whether one is available at all.
-  static bool isGlobalJvmAvailable();
-};
+// To check if a Java VM is available at all in this environment.
+// Note that this doesn't check if it is attached to this thread,
+// it checks whether one is available at all.
+bool isGlobalJvmAvailable();
+}
 
 namespace detail {
 

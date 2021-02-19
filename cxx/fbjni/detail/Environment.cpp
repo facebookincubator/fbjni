@@ -110,7 +110,6 @@ JNIEnv* attachCurrentThread() {
 
 }
 
-/* static */
 void Environment::initialize(JavaVM* vm) {
   static EnvironmentInitializer init(vm);
 }
@@ -300,7 +299,6 @@ ThreadScope::~ThreadScope() {
   setTLData(key, nullptr);
 }
 
-/* static */
 JNIEnv* Environment::current() {
   FBJNI_ASSERT(g_vm);
   JNIEnv* env = detail::currentOrNull();
@@ -310,7 +308,6 @@ JNIEnv* Environment::current() {
   return env;
 }
 
-/* static */
 JNIEnv* Environment::ensureCurrentThreadIsAttached() {
   FBJNI_ASSERT(g_vm);
   JNIEnv* env = detail::currentOrNull();
@@ -321,7 +318,6 @@ JNIEnv* Environment::ensureCurrentThreadIsAttached() {
   return env;
 }
 
-/* static */
 bool Environment::isGlobalJvmAvailable() {
   return g_vm != nullptr;
 }
