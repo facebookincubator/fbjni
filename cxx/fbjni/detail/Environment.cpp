@@ -35,14 +35,6 @@ namespace {
 
 JavaVM* g_vm = nullptr;
 
-struct EnvironmentInitializer {
-  EnvironmentInitializer(JavaVM* vm) {
-      FBJNI_ASSERT(!g_vm);
-      FBJNI_ASSERT(vm);
-      g_vm = vm;
-  }
-};
-
 int getEnv(JNIEnv** env) {
   FBJNI_ASSERT(g_vm);
   // g_vm->GetEnv() might not clear the env* in failure cases.
@@ -111,7 +103,9 @@ JNIEnv* attachCurrentThread() {
 }
 
 void Environment::initialize(JavaVM* vm) {
-  static EnvironmentInitializer init(vm);
+  FBJNI_ASSERT(!g_vm);
+  FBJNI_ASSERT(vm);
+  g_vm = vm;
 }
 
 namespace {
