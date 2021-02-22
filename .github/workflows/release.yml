@@ -1,9 +1,9 @@
 name: Publish Android
 
 on:
-  push:
-    tags:
-      - v*
+  release:
+    types:
+      - created
   workflow_dispatch:
 
 jobs:
