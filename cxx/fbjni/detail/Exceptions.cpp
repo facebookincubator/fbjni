@@ -39,46 +39,6 @@ namespace facebook {
 namespace jni {
 
 namespace {
-class JRuntimeException : public JavaClass<JRuntimeException, JThrowable> {
- public:
-  static auto constexpr kJavaDescriptor = "Ljava/lang/RuntimeException;";
-
-  static local_ref<JRuntimeException> create(const char* str) {
-    return newInstance(make_jstring(str));
-  }
-
-  static local_ref<JRuntimeException> create() {
-    return newInstance();
-  }
-};
-
-class JIOException : public JavaClass<JIOException, JThrowable> {
- public:
-  static auto constexpr kJavaDescriptor = "Ljava/io/IOException;";
-
-  static local_ref<JIOException> create(const char* str) {
-    return newInstance(make_jstring(str));
-  }
-};
-
-class JOutOfMemoryError : public JavaClass<JOutOfMemoryError, JThrowable> {
- public:
-  static auto constexpr kJavaDescriptor = "Ljava/lang/OutOfMemoryError;";
-
-  static local_ref<JOutOfMemoryError> create(const char* str) {
-    return newInstance(make_jstring(str));
-  }
-};
-
-class JArrayIndexOutOfBoundsException : public JavaClass<JArrayIndexOutOfBoundsException, JThrowable> {
- public:
-  static auto constexpr kJavaDescriptor = "Ljava/lang/ArrayIndexOutOfBoundsException;";
-
-  static local_ref<JArrayIndexOutOfBoundsException> create(const char* str) {
-    return newInstance(make_jstring(str));
-  }
-};
-
 class JUnknownCppException : public JavaClass<JUnknownCppException, JThrowable> {
  public:
   static auto constexpr kJavaDescriptor = "Lcom/facebook/jni/UnknownCppException;";
@@ -184,6 +144,22 @@ auto JThrowable::getStackTrace() -> local_ref<JStackTrace> {
 void JThrowable::setStackTrace(alias_ref<JStackTrace> stack) {
   static auto meth = javaClassStatic()->getMethod<void(alias_ref<JStackTrace>)>("setStackTrace");
   return meth(self(), stack);
+}
+
+local_ref<JRuntimeException> JRuntimeException::create(const char *str) {
+  return newInstance(make_jstring(str));
+}
+local_ref<JRuntimeException> JRuntimeException::create() {
+  return newInstance();
+}
+local_ref<JIOException> JIOException::create(const char *str) {
+  return newInstance(make_jstring(str));
+}
+local_ref<JOutOfMemoryError> JOutOfMemoryError::create(const char *str) {
+  return newInstance(make_jstring(str));
+}
+local_ref<JArrayIndexOutOfBoundsException> JArrayIndexOutOfBoundsException::create(const char *str) {
+  return newInstance(make_jstring(str));
 }
 
 auto JStackTraceElement::create(
