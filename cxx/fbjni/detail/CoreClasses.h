@@ -607,36 +607,6 @@ class JThrowable : public JavaClass<JThrowable, JObject, jthrowable> {
   void setStackTrace(alias_ref<JArrayClass<JStackTraceElement::javaobject>>);
 };
 
-class JRuntimeException : public JavaClass<JRuntimeException, JThrowable> {
- public:
-  static auto constexpr kJavaDescriptor = "Ljava/lang/RuntimeException;";
-
-  static local_ref<JRuntimeException> create(const char* str);
-
-  static local_ref<JRuntimeException> create();
-};
-
-class JIOException : public JavaClass<JIOException, JThrowable> {
- public:
-  static auto constexpr kJavaDescriptor = "Ljava/io/IOException;";
-
-  static local_ref<JIOException> create(const char* str);
-};
-
-class JOutOfMemoryError : public JavaClass<JOutOfMemoryError, JThrowable> {
- public:
-  static auto constexpr kJavaDescriptor = "Ljava/lang/OutOfMemoryError;";
-
-  static local_ref<JOutOfMemoryError> create(const char* str);
-};
-
-class JArrayIndexOutOfBoundsException : public JavaClass<JArrayIndexOutOfBoundsException, JThrowable> {
- public:
-  static auto constexpr kJavaDescriptor = "Ljava/lang/ArrayIndexOutOfBoundsException;";
-
-  static local_ref<JArrayIndexOutOfBoundsException> create(const char* str);
-};
-
 #pragma push_macro("PlainJniRefMap")
 #undef PlainJniRefMap
 #define PlainJniRefMap(rtype, jtype) \

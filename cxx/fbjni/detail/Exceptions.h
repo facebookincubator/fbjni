@@ -46,6 +46,46 @@ namespace jni {
 
 class JThrowable;
 
+class JException : public JavaClass<JException, JThrowable> {
+ public:
+  static constexpr const char* kJavaDescriptor = "Ljava/lang/Exception;";
+
+  static local_ref<JException> create(const char* str);
+
+  static local_ref<JException> create();
+};
+
+class JRuntimeException : public JavaClass<JRuntimeException, JException> {
+ public:
+  static auto constexpr kJavaDescriptor = "Ljava/lang/RuntimeException;";
+
+  static local_ref<JRuntimeException> create(const char* str);
+
+  static local_ref<JRuntimeException> create();
+};
+
+class JIOException : public JavaClass<JIOException, JException> {
+ public:
+  static auto constexpr kJavaDescriptor = "Ljava/io/IOException;";
+
+  static local_ref<JIOException> create(const char* str);
+};
+
+class JOutOfMemoryError : public JavaClass<JOutOfMemoryError, JThrowable> {
+ public:
+  static auto constexpr kJavaDescriptor = "Ljava/lang/OutOfMemoryError;";
+
+  static local_ref<JOutOfMemoryError> create(const char* str);
+};
+
+class JArrayIndexOutOfBoundsException
+    : public JavaClass<JArrayIndexOutOfBoundsException, JRuntimeException> {
+ public:
+  static auto constexpr kJavaDescriptor = "Ljava/lang/ArrayIndexOutOfBoundsException;";
+
+  static local_ref<JArrayIndexOutOfBoundsException> create(const char* str);
+};
+
 class JCppException : public JavaClass<JCppException, JThrowable> {
  public:
   static auto constexpr kJavaDescriptor = "Lcom/facebook/jni/CppException;";

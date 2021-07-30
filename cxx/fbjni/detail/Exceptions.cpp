@@ -146,6 +146,14 @@ void JThrowable::setStackTrace(alias_ref<JStackTrace> stack) {
   return meth(self(), stack);
 }
 
+local_ref<JException> JException::create(const char *str) {
+  return newInstance(make_jstring(str));
+}
+
+local_ref<JException> JException::create() {
+  return newInstance();
+}
+
 local_ref<JRuntimeException> JRuntimeException::create(const char *str) {
   return newInstance(make_jstring(str));
 }
