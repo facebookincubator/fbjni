@@ -26,7 +26,7 @@ buildscript {
 }
 
 plugins {
-    id 'com.vanniktech.maven.publish' version '0.13.0' apply false
+    id 'com.vanniktech.maven.publish' version '0.18.0' apply false
 }
 
 apply plugin: 'com.android.library'
@@ -38,8 +38,9 @@ repositories {
 }
 
 android {
-    compileSdkVersion 30
-    ndkVersion '21.4.7075529'
+    compileSdkVersion 31
+    ndkVersion '23.1.7779620'
+
 
     externalNativeBuild {
         cmake {
@@ -49,7 +50,8 @@ android {
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 30
+        targetSdkVersion 31
+
         buildConfigField "boolean", "IS_INTERNAL_BUILD", 'true'
 
         sourceSets {
@@ -85,8 +87,8 @@ android {
 
 
 dependencies {
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-    implementation 'com.facebook.soloader:nativeloader:0.10.1'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'com.facebook.soloader:nativeloader:0.10.3'
 }
 
 apply from: rootProject.file('gradle/release.gradle')
