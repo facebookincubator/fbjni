@@ -107,7 +107,7 @@ install(TARGETS fbjni EXPORT fbjniLibraryConfig
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}) #For windows
 
-install(EXPORT fbjniLibraryConfig DESTINATION share/cmake/fbjni
+install(EXPORT fbjniLibraryConfig DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fbjni
   FILE fbjniLibraryConfig.cmake)
 
 if(MSVC)
