@@ -35,7 +35,15 @@ file(GLOB fbjni_SOURCES
   cxx/lyra/*.cpp
 )
 
-add_library(fbjni SHARED ${fbjni_SOURCES})
+file(GLOB fbjni_HEADERS
+  cxx/fbjni/*.h
+)
+
+file(GLOB fbjni_detail_HEADERS
+  cxx/fbjni/detail/*.h
+)
+
+add_library(fbjni SHARED ${fbjni_SOURCES} ${fbjni_HEADERS})
 set_target_properties(fbjni PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 target_compile_options(fbjni PRIVATE ${FBJNI_COMPILE_OPTIONS})
@@ -109,6 +117,9 @@ install(TARGETS fbjni EXPORT fbjniLibraryConfig
 
 install(EXPORT fbjniLibraryConfig DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/fbjni
   FILE fbjniLibraryConfig.cmake)
+
+install(FILES ${fbjni_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fbjni)
+install(FILES ${fbjni_detail_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fbjni/detail)
 
 if(MSVC)
     install(FILES $<TARGET_PDB_FILE:fbjni> DESTINATION ${CMAKE_INSTALL_LIBDIR} OPTIONAL)
