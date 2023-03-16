@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <fbjni/fbjni.h>
 #include <fbjni/File.h>
+#include <fbjni/fbjni.h>
 
 namespace facebook {
 namespace jni {
@@ -25,6 +25,12 @@ namespace jni {
 class AContext : public JavaClass<AContext> {
  public:
   static constexpr const char* kJavaDescriptor = "Landroid/content/Context;";
+
+  std::string getPackageName() {
+    static const auto method =
+        getClass()->getMethod<local_ref<JString>()>("getPackageName");
+    return method(self())->toStdString();
+  }
 
   // Define a method that calls into the represented Java class
   local_ref<JFile> getCacheDir() {
@@ -38,5 +44,5 @@ class AContext : public JavaClass<AContext> {
   }
 };
 
-}
-}
+} // namespace jni
+} // namespace facebook
