@@ -16,8 +16,8 @@
 
 package com.facebook.jni;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.fest.assertions.api.Assertions.failBecauseExceptionWasNotThrown;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
 import com.facebook.soloader.nativeloader.NativeLoader;
 import java.nio.ByteBuffer;

@@ -16,14 +16,14 @@
 
 package com.facebook.jni;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import com.facebook.jni.annotations.DoNotStrip;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
-import org.fest.assertions.api.Fail;
+import org.assertj.core.api.Fail;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

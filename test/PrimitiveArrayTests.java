@@ -16,8 +16,8 @@
 
 package com.facebook.jni;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-import static org.fest.assertions.api.Assertions.offset;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
