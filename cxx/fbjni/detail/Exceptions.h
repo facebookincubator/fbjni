@@ -90,7 +90,6 @@ class JniException : public std::exception {
   global_ref<JThrowable> throwable_;
   mutable std::string what_;
   mutable bool isMessageExtracted_;
-  const static std::string kExceptionMessageFailure_;
 
   void populateWhat() const noexcept;
 };

@@ -48,7 +48,6 @@ void logExceptionAndAbort() {
   }
 }
 
-const std::vector<InstructionPointer> emptyTrace;
 } // namespace
 
 ExceptionTraceHolder::~ExceptionTraceHolder() {}
@@ -66,6 +65,7 @@ void ensureRegisteredTerminateHandler() {
 }
 
 const std::vector<InstructionPointer>& getExceptionTrace(std::exception_ptr ptr) {
+  static const std::vector<InstructionPointer> emptyTrace;
 #ifndef _WIN32
   auto holder = getExceptionTraceHolder(ptr);
   return holder ? holder->stackTrace_ : emptyTrace;
