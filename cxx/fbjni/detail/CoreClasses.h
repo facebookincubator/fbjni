@@ -330,7 +330,8 @@ class JClass : public JavaClass<JClass, JObject, jclass> {
   template<typename F>
   JNonvirtualMethod<F> getNonvirtualMethod(const char* name, const char* descriptor) const;
 
-  local_ref<JString> getSimpleName();
+  /// Get the canonical name of the class
+  local_ref<JString> getCanonicalName();
 
 private:
   jclass self() const noexcept;

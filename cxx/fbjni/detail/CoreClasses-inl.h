@@ -304,8 +304,8 @@ inline void registerNatives(const char* name, std::initializer_list<JNINativeMet
   findClassLocal(name)->registerNatives(methods);
 }
 
-inline auto JClass::getSimpleName() -> local_ref<JString> {
-  static auto meth = javaClassStatic()->getMethod<JString::javaobject()>("getSimpleName");
+inline auto JClass::getCanonicalName() -> local_ref<JString> {
+  static auto meth = javaClassStatic()->getMethod<JString::javaobject()>("getCanonicalName");
   return meth(self());
 }
 
