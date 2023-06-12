@@ -360,7 +360,9 @@ void translatePendingCppExceptionToJavaException() {
 
 // JniException ////////////////////////////////////////////////////////////////////////////////////
 
-const std::string JniException::kExceptionMessageFailure_ = "Unable to get exception message.";
+namespace {
+constexpr const char* kExceptionMessageFailure = "Unable to get exception message.";
+}
 
 JniException::JniException() : JniException(JRuntimeException::create()) { }
 
@@ -400,7 +402,7 @@ void JniException::populateWhat() const noexcept {
     what_ = throwable_->toString();
     isMessageExtracted_ = true;
   } catch(...) {
-    what_ = kExceptionMessageFailure_;
+    what_ = kExceptionMessageFailure;
   }
 }
 

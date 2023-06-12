@@ -90,7 +90,6 @@ class JniException : public std::exception {
   global_ref<JThrowable> throwable_;
   mutable std::string what_;
   mutable bool isMessageExtracted_;
-  const static std::string kExceptionMessageFailure_;
 
   void populateWhat() const noexcept;
 };
@@ -99,7 +98,7 @@ class JniException : public std::exception {
 
 // Functions that throw C++ exceptions
 
-static const int kMaxExceptionMessageBufferSize = 512;
+static constexpr int kMaxExceptionMessageBufferSize = 512;
 
 // These methods are the preferred way to throw a Java exception from
 // a C++ function.  They create and throw a C++ exception which wraps
