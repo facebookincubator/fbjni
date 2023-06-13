@@ -186,6 +186,11 @@ void JThrowable::setStackTrace(alias_ref<JStackTrace> stack) {
   return meth(self(), stack);
 }
 
+auto JThrowable::getMessage() -> local_ref<JString> {
+  static auto meth = javaClassStatic()->getMethod<JString::javaobject()>("getMessage");
+  return meth(self());
+}
+
 auto JStackTraceElement::create(
     const std::string& declaringClass, const std::string& methodName, const std::string& file, int line)
     -> local_ref<javaobject> {

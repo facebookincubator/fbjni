@@ -37,6 +37,7 @@ namespace jni {
 
 class JClass;
 class JObject;
+class JString;
 
 namespace detail {
 
@@ -329,6 +330,9 @@ class JClass : public JavaClass<JClass, JObject, jclass> {
   template<typename F>
   JNonvirtualMethod<F> getNonvirtualMethod(const char* name, const char* descriptor) const;
 
+  /// Get the canonical name of the class
+  local_ref<JString> getCanonicalName();
+
 private:
   jclass self() const noexcept;
 };
@@ -604,6 +608,7 @@ class JThrowable : public JavaClass<JThrowable, JObject, jthrowable> {
 
   local_ref<JThrowable> initCause(alias_ref<JThrowable> cause);
   local_ref<JStackTrace> getStackTrace();
+  local_ref<JString> getMessage();
   void setStackTrace(alias_ref<JArrayClass<JStackTraceElement::javaobject>>);
 };
 
