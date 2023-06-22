@@ -16,7 +16,7 @@
 set -exo pipefail
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
-CMAKE=$ANDROID_HOME/cmake/3.10.2.4988404/bin/cmake
+CMAKE=$ANDROID_HOME/cmake/3.18.1/bin/cmake
 export CXX=clang++
 
 mkdir -p "$BASE_DIR/host-build-cmake"
