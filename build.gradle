@@ -51,10 +51,10 @@ android {
         minSdkVersion 15
         targetSdkVersion 31
         buildConfigField "boolean", "IS_INTERNAL_BUILD", 'true'
+        namespace "com.facebook.fbjni"
 
         sourceSets {
             main {
-                manifest.srcFile 'manifest/AndroidManifest.xml'
                 java.srcDir 'java'
             }
         }
