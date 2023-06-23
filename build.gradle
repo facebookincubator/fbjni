@@ -68,7 +68,7 @@ android {
             cmake {
                 arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_shared'
                 targets 'fbjni'
-                version '3.18.1'
+                version '3.22.1'
             }
         }
 
