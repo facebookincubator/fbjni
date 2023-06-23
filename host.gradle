@@ -43,5 +43,3 @@ dependencies {
 // Overriding the artifacts name globally defined in gradle.properties
 POM_PACKAGING = 'jar'
 POM_ARTIFACT_ID = 'fbjni-java-only'
-
-apply from: rootProject.file('gradle/release.gradle')

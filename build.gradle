@@ -26,11 +26,12 @@ buildscript {
 }
 
 plugins {
-    id 'com.vanniktech.maven.publish' version '0.18.0' apply false
+    id 'com.vanniktech.maven.publish' version '0.25.2' apply false
 }
 
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
+apply plugin: 'com.vanniktech.maven.publish'
 
 repositories {
     google()
@@ -88,5 +89,3 @@ dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     implementation 'com.facebook.soloader:nativeloader:0.10.5'
 }
-
-apply from: rootProject.file('gradle/release.gradle')
