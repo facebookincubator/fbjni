@@ -39,7 +39,7 @@ repositories {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdk 33
     ndkVersion '25.1.8937393'
 
     externalNativeBuild {
@@ -50,7 +50,7 @@ android {
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 31
+        targetSdkVersion 33
         buildConfigField "boolean", "IS_INTERNAL_BUILD", 'true'
         namespace "com.facebook.fbjni"
 
