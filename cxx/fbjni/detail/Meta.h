@@ -29,6 +29,7 @@
 #include <fbjni/detail/FbjniApi.h>
 #include <fbjni/detail/SimpleFixedString.h>
 #include "References-forward.h"
+#include "TypeTraits.h"
 
 #ifdef __ANDROID__
 # include <android/log.h>
