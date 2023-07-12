@@ -76,8 +76,7 @@ namespace fixedstring {
 // at compile-time instead of at runtime.
 [[noreturn]] inline void assertOutOfBounds() {
   assert(!(bool)"Array index out of bounds in SimpleFixedString");
-  throw std::out_of_range(
-      "Array index out of bounds in SimpleFixedString");
+  throw std::out_of_range("Array index out of bounds in SimpleFixedString");
 }
 
 constexpr std::size_t checkOverflow(std::size_t i, std::size_t max) {
@@ -92,7 +91,8 @@ constexpr std::size_t checkOverflowOrNpos(std::size_t i, std::size_t max) {
 
 // Intentionally NOT constexpr. See note above for assertOutOfBounds
 [[noreturn]] inline void assertNotNullTerminated() noexcept {
-  assert(!(bool)"Non-null terminated string used to initialize a SimpleFixedString");
+  assert(!(
+      bool)"Non-null terminated string used to initialize a SimpleFixedString");
   std::terminate(); // Fail hard, fail fast.
 }
 
@@ -104,10 +104,10 @@ constexpr const char (&checkNullTerminated(const char (&a)[N]) noexcept)[N] {
   // Strange decltype(a)(a) used to make MSVC happy.
   if (a[N - 1u] == '\0'
 #ifndef NDEBUG
-          // In Debug mode, guard against embedded nulls:
-          && N - 1u == detail::constexpr_strlen_internal(a, 0u)
+      // In Debug mode, guard against embedded nulls:
+      && N - 1u == detail::constexpr_strlen_internal(a, 0u)
 #endif
-      ) {
+  ) {
     return decltype(a)(a);
   } else {
     assertNotNullTerminated();
@@ -174,9 +174,9 @@ constexpr char char_at_(
     const Right& right,
     std::size_t right_count,
     std::size_t i) noexcept {
-  return i < left_count
-      ? left[i]
-      : i < (left_count + right_count) ? right[i - left_count] : '\0';
+  return i < left_count                ? left[i]
+      : i < (left_count + right_count) ? right[i - left_count]
+                                       : '\0';
 }
 
 } // namespace fixedstring
@@ -195,11 +195,11 @@ class SimpleFixedString {
 
   template <class That, std::size_t... Is>
   constexpr SimpleFixedString(
-    const That& that,
-    std::size_t size,
-    std::index_sequence<Is...>,
-    std::size_t pos = 0,
-    std::size_t count = static_cast<std::size_t>(-1)) noexcept
+      const That& that,
+      std::size_t size,
+      std::index_sequence<Is...>,
+      std::size_t pos = 0,
+      std::size_t count = static_cast<std::size_t>(-1)) noexcept
       : data_{(Is < (size - pos) && Is < count ? that[Is + pos] : '\0')..., '\0'},
         size_{(size - pos) < count ? (size - pos) : count} {}
 
@@ -211,13 +211,7 @@ class SimpleFixedString {
       const Right& right,
       std::size_t right_size,
       std::index_sequence<Is...>) noexcept
-      : data_{detail::fixedstring::char_at_(
-                  left,
-                  left_size,
-                  right,
-                  right_size,
-                  Is)...,
-              '\0'},
+      : data_{detail::fixedstring::char_at_(left, left_size, right, right_size, Is)..., '\0'},
         size_{left_size + right_size} {}
 
  public:
@@ -231,7 +225,10 @@ class SimpleFixedString {
 
   // Support substr.
   template <std::size_t M>
-  constexpr SimpleFixedString(const SimpleFixedString<M>& that, std::size_t pos, std::size_t count) noexcept(false)
+  constexpr SimpleFixedString(
+      const SimpleFixedString<M>& that,
+      std::size_t pos,
+      std::size_t count) noexcept(false)
       : SimpleFixedString{
             that.data_,
             that.size_,
@@ -247,13 +244,17 @@ class SimpleFixedString {
   // Construct from literal.
   template <std::size_t M, class = typename std::enable_if<(M - 1u <= N)>::type>
   constexpr SimpleFixedString(const char (&literal)[M]) noexcept
-      : SimpleFixedString{detail::fixedstring::checkNullTerminated(literal),
-                          M - 1u,
-                          std::make_index_sequence<M - 1u>{}} {}
+      : SimpleFixedString{
+            detail::fixedstring::checkNullTerminated(literal),
+            M - 1u,
+            std::make_index_sequence<M - 1u>{}} {}
 
-  constexpr SimpleFixedString(const char *str, std::size_t count) noexcept(false)
-      : SimpleFixedString{str, detail::fixedstring::checkOverflow(count, N),
-                          Indices{}} {}
+  constexpr SimpleFixedString(const char* str, std::size_t count) noexcept(
+      false)
+      : SimpleFixedString{
+            str,
+            detail::fixedstring::checkOverflow(count, N),
+            Indices{}} {}
 
   constexpr const char* c_str() const noexcept {
     return data_;
@@ -294,11 +295,11 @@ class SimpleFixedString {
       const char (&a)[M],
       const SimpleFixedString& b) noexcept {
     return detail::fixedstring::Helper::concat_(
-      detail::fixedstring::checkNullTerminated(a),
-      M-1u,
-      b.data_,
-      b.size_,
-      std::make_index_sequence<N + M - 1u>{});
+        detail::fixedstring::checkNullTerminated(a),
+        M - 1u,
+        b.data_,
+        b.size_,
+        std::make_index_sequence<N + M - 1u>{});
   }
 
   template <std::size_t M>
@@ -306,11 +307,11 @@ class SimpleFixedString {
       const SimpleFixedString& a,
       const char (&b)[M]) noexcept {
     return detail::fixedstring::Helper::concat_(
-      a.data_,
-      a.size_,
-      detail::fixedstring::checkNullTerminated(b),
-      M - 1u,
-      std::make_index_sequence<N + M - 1u>{});
+        a.data_,
+        a.size_,
+        detail::fixedstring::checkNullTerminated(b),
+        M - 1u,
+        std::make_index_sequence<N + M - 1u>{});
   }
 
   constexpr const char* begin() const noexcept {

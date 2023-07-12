@@ -21,11 +21,13 @@ namespace jni {
 
 int JReadableByteChannel::read(alias_ref<JByteBuffer> dest) const {
   if (!self()) {
-    throwNewJavaException("java/lang/NullPointerException", "java.lang.NullPointerException");
+    throwNewJavaException(
+        "java/lang/NullPointerException", "java.lang.NullPointerException");
   }
-  static auto method = javaClassStatic()->getMethod<jint(alias_ref<JByteBuffer>)>("read");
+  static auto method =
+      javaClassStatic()->getMethod<jint(alias_ref<JByteBuffer>)>("read");
   return method(self(), dest);
 }
 
-}}
-
+} // namespace jni
+} // namespace facebook

@@ -26,32 +26,33 @@ namespace facebook {
 namespace lyra {
 
 namespace detail {
-  struct ExceptionTraceHolder {
-    ExceptionTraceHolder();
-    // Need some virtual function to make this a polymorphic type.
-    virtual ~ExceptionTraceHolder();
-    ExceptionTraceHolder(const ExceptionTraceHolder&) = delete;
-    ExceptionTraceHolder(ExceptionTraceHolder&&) = default;
+struct ExceptionTraceHolder {
+  ExceptionTraceHolder();
+  // Need some virtual function to make this a polymorphic type.
+  virtual ~ExceptionTraceHolder();
+  ExceptionTraceHolder(const ExceptionTraceHolder&) = delete;
+  ExceptionTraceHolder(ExceptionTraceHolder&&) = default;
 
-    std::vector<InstructionPointer> stackTrace_;
-  };
+  std::vector<InstructionPointer> stackTrace_;
+};
 
-  template <typename E, bool hasTraceHolder>
-  struct Holder : E, ExceptionTraceHolder {
-    Holder(E&& e) : E{std::forward<E>(e)}, ExceptionTraceHolder{} {}
-  };
-  template <typename E>
-  struct Holder<E, true> : E {
-    Holder(E&& e) : E{std::forward<E>(e)} {}
-  };
+template <typename E, bool hasTraceHolder>
+struct Holder : E, ExceptionTraceHolder {
+  Holder(E&& e) : E{std::forward<E>(e)}, ExceptionTraceHolder{} {}
+};
+template <typename E>
+struct Holder<E, true> : E {
+  Holder(E&& e) : E{std::forward<E>(e)} {}
+};
 
-  const ExceptionTraceHolder* getExceptionTraceHolder(std::exception_ptr ptr);
-}
+const ExceptionTraceHolder* getExceptionTraceHolder(std::exception_ptr ptr);
+} // namespace detail
 
 /**
  * Retrieves the stack trace of an exception
  */
-const std::vector<InstructionPointer>& getExceptionTrace(std::exception_ptr ptr);
+const std::vector<InstructionPointer>& getExceptionTrace(
+    std::exception_ptr ptr);
 
 /**
  * Throw an exception and store the stack trace. This works like
@@ -60,7 +61,9 @@ const std::vector<InstructionPointer>& getExceptionTrace(std::exception_ptr ptr)
  */
 template <class E>
 [[noreturn]] void fbthrow(E&& exception) {
-  throw detail::Holder<E, std::is_base_of<detail::ExceptionTraceHolder, E>::value>{std::forward<E>(exception)};
+  throw detail::
+      Holder<E, std::is_base_of<detail::ExceptionTraceHolder, E>::value>{
+          std::forward<E>(exception)};
 }
 
 /**
@@ -79,18 +82,20 @@ std::string toString(std::exception_ptr exceptionPointer);
  * lyra's cxa_throw will delegate to the original cxa throw. That pointer must
  * be set before lyra::cxa_throw is called.
  *
- * One example use would be to statically compile against something that overrides __cxa_throw.
- * That would look something like:
+ * One example use would be to statically compile against something that
+ * overrides __cxa_throw. That would look something like:
  *
- * [[noreturn]] void __cxa_throw(void* obj, const std::type_info* type, void (*destructor) (void*)) {
- *   static auto initializer = lyra::original_cxa_throw = lookupOriginalCxaThrow();
- *   lyra::cxa_throw(obj, type, destructor);
+ * [[noreturn]] void __cxa_throw(void* obj, const std::type_info* type, void
+ * (*destructor) (void*)) { static auto initializer = lyra::original_cxa_throw =
+ * lookupOriginalCxaThrow(); lyra::cxa_throw(obj, type, destructor);
  * }
  */
-[[gnu::noreturn]] extern void (*original_cxa_throw)(void*, const std::type_info*, void (*) (void*));
-[[noreturn]] void cxa_throw(void* obj, const std::type_info* type, void (*destructor) (void *));
+[[gnu::noreturn]] extern void (
+    *original_cxa_throw)(void*, const std::type_info*, void (*)(void*));
+[[noreturn]] void
+cxa_throw(void* obj, const std::type_info* type, void (*destructor)(void*));
 
 void enableCxaThrowHookBacktraces(bool enable);
 
-}
-}
+} // namespace lyra
+} // namespace facebook

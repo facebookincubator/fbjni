@@ -16,8 +16,8 @@
 
 #include <vector>
 
-#include <fbjni/fbjni.h>
 #include <fbjni/ByteBuffer.h>
+#include <fbjni/fbjni.h>
 
 #include "expect.h"
 
@@ -28,7 +28,8 @@ namespace {
 std::vector<uint8_t> vec{1, 0, 0, 0};
 
 size_t ByteBufferCapacity(alias_ref<JByteBuffer> buffer) {
-  static auto meth = JByteBuffer::javaClassStatic()->getMethod<int()>("capacity");
+  static auto meth =
+      JByteBuffer::javaClassStatic()->getMethod<int()>("capacity");
   return meth(buffer);
 }
 
@@ -65,7 +66,8 @@ jboolean testRewindBuffer(alias_ref<jobject> self) {
 
   auto cls = self->getClass();
   auto writeBytes =
-    cls->getStaticMethod<void(JByteBuffer, jbyte, jbyte, jbyte, jbyte)>("writeBytes");
+      cls->getStaticMethod<void(JByteBuffer, jbyte, jbyte, jbyte, jbyte)>(
+          "writeBytes");
 
   writeBytes(cls, *nbb, 0, 1, 2, 3);
   nbb->rewind();
@@ -87,7 +89,9 @@ local_ref<JByteBuffer> nativeAllocateDirect(alias_ref<jobject> self, int size) {
   return JByteBuffer::allocateDirect(size);
 }
 
-jboolean testFloatBuffer(alias_ref<jobject> self, alias_ref<facebook::jni::JBuffer> buffer) {
+jboolean testFloatBuffer(
+    alias_ref<jobject> self,
+    alias_ref<facebook::jni::JBuffer> buffer) {
   EXPECT(buffer->isDirect());
   EXPECT(buffer->getDirectCapacity() == 5);
   float* raw = (float*)buffer->getDirectAddress();
@@ -107,15 +111,18 @@ local_ref<JByteBuffer> nativeByteBufferOrder(alias_ref<jobject> self) {
   return nbb->order(JByteOrder::nativeOrder());
 }
 
-}
+} // namespace
 
 void RegisterByteBufferTests() {
-  registerNatives("com/facebook/jni/ByteBufferTests", {
-    makeNativeMethod("nativeTestDirectByteBuffer", testDirectByteBuffer),
-    makeNativeMethod("nativeTestEmptyDirectByteBuffer", testEmptyDirectByteBuffer),
-    makeNativeMethod("nativeTestRewindBuffer", testRewindBuffer),
-    makeNativeMethod("nativeAllocateDirect", nativeAllocateDirect),
-    makeNativeMethod("nativeTestFloatBuffer", testFloatBuffer),
-    makeNativeMethod("nativeByteBufferOrder", nativeByteBufferOrder),
-  });
+  registerNatives(
+      "com/facebook/jni/ByteBufferTests",
+      {
+          makeNativeMethod("nativeTestDirectByteBuffer", testDirectByteBuffer),
+          makeNativeMethod(
+              "nativeTestEmptyDirectByteBuffer", testEmptyDirectByteBuffer),
+          makeNativeMethod("nativeTestRewindBuffer", testRewindBuffer),
+          makeNativeMethod("nativeAllocateDirect", nativeAllocateDirect),
+          makeNativeMethod("nativeTestFloatBuffer", testFloatBuffer),
+          makeNativeMethod("nativeByteBufferOrder", nativeByteBufferOrder),
+      });
 }

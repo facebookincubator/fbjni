@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <fbjni/fbjni.h>
 #include <fbjni/NativeRunnable.h>
+#include <fbjni/fbjni.h>
 
 using namespace facebook::jni;
 

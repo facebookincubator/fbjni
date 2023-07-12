@@ -17,27 +17,35 @@
 // These two includes must be before Meta.h or we have circular include issues.
 #include "CoreClasses.h"
 #include "TypeTraits.h"
+// Order matters for some reason
+// clang-format off
 #include "Meta.h"
+// clang-format on
 
 namespace facebook {
 namespace jni {
 
-/* static */ constexpr detail::SimpleFixedString<1> jtype_traits<void>::kDescriptor;
+/* static */ constexpr detail::SimpleFixedString<1>
+    jtype_traits<void>::kDescriptor;
 
-#define DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(TYPE, DSC)           \
-  /* static */ constexpr decltype(detail::makeSimpleFixedString(#DSC)) jtype_traits<TYPE>::kDescriptor; \
-  /* static */ constexpr decltype(jtype_traits<TYPE>::kDescriptor) jtype_traits<TYPE>::kBaseName; \
-  /* static */ constexpr decltype(detail::makeSimpleFixedString("[" #DSC)) jtype_traits<TYPE ## Array>::kDescriptor; \
-  /* static */ constexpr decltype(jtype_traits<TYPE ## Array>::kDescriptor) jtype_traits<TYPE ## Array>::kBaseName;
+#define DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(TYPE, DSC)             \
+  /* static */ constexpr decltype(detail::makeSimpleFixedString(          \
+      #DSC)) jtype_traits<TYPE>::kDescriptor;                             \
+  /* static */ constexpr decltype(jtype_traits<TYPE>::kDescriptor)        \
+      jtype_traits<TYPE>::kBaseName;                                      \
+  /* static */ constexpr decltype(detail::makeSimpleFixedString(          \
+      "[" #DSC)) jtype_traits<TYPE##Array>::kDescriptor;                  \
+  /* static */ constexpr decltype(jtype_traits<TYPE##Array>::kDescriptor) \
+      jtype_traits<TYPE##Array>::kBaseName;
 
 DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jboolean, Z)
-DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jbyte,    B)
-DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jchar,    C)
-DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jshort,   S)
-DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jint,     I)
-DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jlong,    J)
-DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jfloat,   F)
-DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jdouble,  D)
+DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jbyte, B)
+DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jchar, C)
+DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jshort, S)
+DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jint, I)
+DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jlong, J)
+DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jfloat, F)
+DEFINE_CONSTANTS_FOR_FIELD_AND_ARRAY_TRAIT(jdouble, D)
 
 } // namespace jni
 } // namespace facebook

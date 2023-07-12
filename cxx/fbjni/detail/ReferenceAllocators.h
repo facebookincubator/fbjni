@@ -17,15 +17,16 @@
 /**
  * @file ReferenceAllocators.h
  *
- * Reference allocators are used to create and delete various classes of JNI references (local,
- * global, and weak global).
+ * Reference allocators are used to create and delete various classes of JNI
+ * references (local, global, and weak global).
  */
 
 #pragma once
 
 #include "Common.h"
 
-namespace facebook { namespace jni {
+namespace facebook {
+namespace jni {
 
 /// Allocator that handles local references
 class LocalReferenceAllocator {
@@ -59,6 +60,7 @@ class WeakGlobalReferenceAllocator {
  */
 bool isObjectRefType(jobject reference, jobjectRefType refType);
 
-}}
+} // namespace jni
+} // namespace facebook
 
 #include "ReferenceAllocators-inl.h"

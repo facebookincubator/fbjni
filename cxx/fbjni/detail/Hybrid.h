@@ -29,7 +29,7 @@ namespace jni {
 namespace detail {
 
 class BaseHybridClass {
-public:
+ public:
   virtual ~BaseHybridClass() {}
 };
 
@@ -39,44 +39,52 @@ struct HybridData : public JavaClass<HybridData> {
 };
 
 class HybridDestructor : public JavaClass<HybridDestructor> {
-  public:
-    static auto constexpr kJavaDescriptor = "Lcom/facebook/jni/HybridData$Destructor;";
+ public:
+  static auto constexpr kJavaDescriptor =
+      "Lcom/facebook/jni/HybridData$Destructor;";
 
   detail::BaseHybridClass* getNativePointer() const;
 
   void setNativePointer(std::unique_ptr<detail::BaseHybridClass> new_value);
 };
 
-template<typename T>
+template <typename T>
 detail::BaseHybridClass* getNativePointer(const T* t) {
   return getHolder(t)->getNativePointer();
 }
 
-template<typename T>
-void setNativePointer(const T* t, std::unique_ptr<detail::BaseHybridClass> new_value) {
+template <typename T>
+void setNativePointer(
+    const T* t,
+    std::unique_ptr<detail::BaseHybridClass> new_value) {
   getHolder(t)->setNativePointer(std::move(new_value));
 }
 
 // Save space: use unified getHolder implementation.
-template<typename T, typename Alloc>
-void setNativePointer(basic_strong_ref<T, Alloc> t, std::unique_ptr<detail::BaseHybridClass> new_value) {
+template <typename T, typename Alloc>
+void setNativePointer(
+    basic_strong_ref<T, Alloc> t,
+    std::unique_ptr<detail::BaseHybridClass> new_value) {
   getHolder(&*t)->setNativePointer(std::move(new_value));
 }
 
 // Save space: use unified getHolder implementation.
-template<typename T>
-void setNativePointer(alias_ref<T> t, std::unique_ptr<detail::BaseHybridClass> new_value) {
+template <typename T>
+void setNativePointer(
+    alias_ref<T> t,
+    std::unique_ptr<detail::BaseHybridClass> new_value) {
   getHolder(&*t)->setNativePointer(std::move(new_value));
 }
 
 // Inline rather than in cpp file so that consumers can call into
 // their own copy directly rather than into the DSO containing fbjni,
 // saving space for the symbol table.
-inline JField<HybridDestructor::javaobject> getDestructorField(const local_ref<JClass>& c) {
+inline JField<HybridDestructor::javaobject> getDestructorField(
+    const local_ref<JClass>& c) {
   return c->template getField<HybridDestructor::javaobject>("mDestructor");
 }
 
-template<typename T>
+template <typename T>
 local_ref<HybridDestructor::javaobject> getHolder(const T* t) {
   static auto holderField = getDestructorField(t->getClass());
   return t->getFieldValue(holderField);
@@ -97,37 +105,40 @@ struct HybridTraits {
   // specializations below.
   static_assert(
       std::is_base_of<JObject, Base>::value ||
-      std::is_base_of<BaseHybridClass, Base>::value,
+          std::is_base_of<BaseHybridClass, Base>::value,
       "The base of a HybridClass must be either another HybridClass or derived from JObject.");
 };
 
 template <>
 struct HybridTraits<BaseHybridClass> {
- using CxxBase = BaseHybridClass;
- using JavaBase = JObject;
+  using CxxBase = BaseHybridClass;
+  using JavaBase = JObject;
 };
 
 template <typename Base>
 struct HybridTraits<
     Base,
-    typename std::enable_if<std::is_base_of<BaseHybridClass, Base>::value>::type> {
- using CxxBase = Base;
- using JavaBase = typename Base::JavaPart;
+    typename std::enable_if<
+        std::is_base_of<BaseHybridClass, Base>::value>::type> {
+  using CxxBase = Base;
+  using JavaBase = typename Base::JavaPart;
 };
 
 template <typename Base>
 struct HybridTraits<
     Base,
     typename std::enable_if<std::is_base_of<JObject, Base>::value>::type> {
- using CxxBase = BaseHybridClass;
- using JavaBase = Base;
+  using CxxBase = BaseHybridClass;
+  using JavaBase = Base;
 };
 
 // convert to HybridClass* from jhybridobject
 template <typename T>
 struct Convert<
-  T, typename std::enable_if<
-    std::is_base_of<BaseHybridClass, typename std::remove_pointer<T>::type>::value>::type> {
+    T,
+    typename std::enable_if<std::is_base_of<
+        BaseHybridClass,
+        typename std::remove_pointer<T>::type>::value>::type> {
   typedef typename std::remove_pointer<T>::type::jhybridobject jniType;
   static T fromJni(jniType t) {
     if (t == nullptr) {
@@ -138,27 +149,33 @@ struct Convert<
   // There is no automatic return conversion for objects.
 };
 
-template<typename T>
-struct RefReprType<T, typename std::enable_if<std::is_base_of<BaseHybridClass, T>::value, void>::type> {
-  static_assert(std::is_same<T, void>::value,
+template <typename T>
+struct RefReprType<
+    T,
+    typename std::enable_if<std::is_base_of<BaseHybridClass, T>::value, void>::
+        type> {
+  static_assert(
+      std::is_same<T, void>::value,
       "HybridFoo (where HybridFoo derives from HybridClass<HybridFoo>) is not supported in this context. "
       "For an xxx_ref<HybridFoo>, you may want: xxx_ref<HybridFoo::javaobject> or HybridFoo*.");
   using Repr = T;
 };
 
-
-}
+} // namespace detail
 
 template <typename T, typename Base = detail::BaseHybridClass>
 class HybridClass : public detail::HybridTraits<Base>::CxxBase {
-public:
-  struct JavaPart : JavaClass<JavaPart, typename detail::HybridTraits<Base>::JavaBase> {
+ public:
+  struct JavaPart
+      : JavaClass<JavaPart, typename detail::HybridTraits<Base>::JavaBase> {
     // At this point, T is incomplete, and so we cannot access
     // T::kJavaDescriptor directly. jtype_traits support this escape hatch for
     // such a case.
     static constexpr const char* kJavaDescriptor = nullptr;
-    static constexpr auto /* detail::SimpleFixedString<_> */ get_instantiated_java_descriptor();
-    static constexpr auto /* detail::SimpleFixedString<_> */ get_instantiated_base_name();
+    static constexpr auto /* detail::SimpleFixedString<_> */
+    get_instantiated_java_descriptor();
+    static constexpr auto /* detail::SimpleFixedString<_> */
+    get_instantiated_base_name();
 
     using HybridType = T;
 
@@ -179,11 +196,12 @@ public:
   }
 
   static local_ref<JClass> javaClassLocal() {
-    std::string className(T::kJavaDescriptor + 1, strlen(T::kJavaDescriptor) - 2);
+    std::string className(
+        T::kJavaDescriptor + 1, strlen(T::kJavaDescriptor) - 2);
     return findClassLocal(className.c_str());
   }
 
-protected:
+ protected:
   typedef HybridClass HybridBase;
 
   // This ensures that a C++ hybrid part cannot be created on its own
@@ -195,7 +213,8 @@ protected:
     javaClassLocal()->registerNatives(methods);
   }
 
-  static local_ref<detail::HybridData> makeHybridData(std::unique_ptr<T> cxxPart) {
+  static local_ref<detail::HybridData> makeHybridData(
+      std::unique_ptr<T> cxxPart) {
     auto hybridData = detail::HybridData::create();
     setNativePointer(hybridData, std::move(cxxPart));
     return hybridData;
@@ -203,7 +222,8 @@ protected:
 
   template <typename... Args>
   static local_ref<detail::HybridData> makeCxxInstance(Args&&... args) {
-    return makeHybridData(std::unique_ptr<T>(new T(std::forward<Args>(args)...)));
+    return makeHybridData(
+        std::unique_ptr<T>(new T(std::forward<Args>(args)...)));
   }
 
   template <typename... Args>
@@ -211,7 +231,7 @@ protected:
     setNativePointer(o, std::unique_ptr<T>(new T(std::forward<Args>(args)...)));
   }
 
-public:
+ public:
   // Factory method for creating a hybrid object where the arguments
   // are used to initialize the C++ part directly without passing them
   // through java.  This method requires the Java part to have a ctor
@@ -224,15 +244,15 @@ public:
   // C++ object fails, or any JNI methods throw.
   template <typename... Args>
   static local_ref<JavaPart> newObjectCxxArgs(Args&&... args) {
-    static bool isHybrid = detail::HybridClassBase::isHybridClassBase(javaClassStatic());
+    static bool isHybrid =
+        detail::HybridClassBase::isHybridClassBase(javaClassStatic());
     auto cxxPart = std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 
     local_ref<JavaPart> result;
     if (isHybrid) {
       result = JavaPart::newInstance();
       setNativePointer(result, std::move(cxxPart));
-    }
-    else {
+    } else {
       auto hybridData = makeHybridData(std::move(cxxPart));
       result = JavaPart::newInstance(hybridData);
     }
@@ -240,14 +260,15 @@ public:
     return result;
   }
 
- // TODO? Create reusable interface for Allocatable classes and use it to
+  // TODO? Create reusable interface for Allocatable classes and use it to
   // strengthen type-checking (and possibly provide a default
   // implementation of allocate().)
   template <typename... Args>
   static local_ref<jhybridobject> allocateWithCxxArgs(Args&&... args) {
     auto hybridData = makeCxxInstance(std::forward<Args>(args)...);
     static auto allocateMethod =
-        javaClassStatic()->template getStaticMethod<jhybridobject(jhybriddata)>("allocate");
+        javaClassStatic()->template getStaticMethod<jhybridobject(jhybriddata)>(
+            "allocate");
     return allocateMethod(javaClassStatic(), hybridData.get());
   }
 
@@ -260,28 +281,33 @@ public:
 
   // If a hybrid class throws an exception, it will be passed to mapException
   // on the hybrid class, or nearest ancestor. This allows boilerplate exception
-  // translation code (for example, calling throwNewJavaException on a particular
-  // java class) to be hoisted to a common function.  If mapException returns,
-  // then the std::exception will be translated to Java.
+  // translation code (for example, calling throwNewJavaException on a
+  // particular java class) to be hoisted to a common function.  If mapException
+  // returns, then the std::exception will be translated to Java.
   static void mapException(std::exception_ptr ex) {
     (void)ex;
   }
 };
 
 [[noreturn]] inline void throwNPE() {
-  throwNewJavaException("java/lang/NullPointerException", "java.lang.NullPointerException");
+  throwNewJavaException(
+      "java/lang/NullPointerException", "java.lang.NullPointerException");
 }
 
 // Detect whether the given class is a hybrid. If not, grab its
 // mHybridData field.
-// Returns a null field if the class is a hybrid, the ID of the mHybridData field if not.
-template<typename T, typename B>
-inline JField<detail::HybridData::javaobject> detectHybrid(alias_ref<jclass> jclass) {
+// Returns a null field if the class is a hybrid, the ID of the mHybridData
+// field if not.
+template <typename T, typename B>
+inline JField<detail::HybridData::javaobject> detectHybrid(
+    alias_ref<jclass> jclass) {
   bool isHybrid = detail::HybridClassBase::isHybridClassBase(jclass);
   if (isHybrid) {
     return JField<detail::HybridData::javaobject>(nullptr);
   } else {
-    auto result = HybridClass<T, B>::JavaPart::javaClassStatic()->template getField<detail::HybridData::javaobject>("mHybridData");
+    auto result =
+        HybridClass<T, B>::JavaPart::javaClassStatic()
+            ->template getField<detail::HybridData::javaobject>("mHybridData");
     if (!result) {
       throwNPE();
     }
@@ -289,7 +315,9 @@ inline JField<detail::HybridData::javaobject> detectHybrid(alias_ref<jclass> jcl
   }
 }
 
-inline detail::BaseHybridClass* getHybridDataFromField(const JObject* self, const JField<detail::HybridData::javaobject>& field) {
+inline detail::BaseHybridClass* getHybridDataFromField(
+    const JObject* self,
+    const JField<detail::HybridData::javaobject>& field) {
   const bool isHybrid = !field;
   if (isHybrid) {
     return getNativePointer(self);
@@ -313,13 +341,15 @@ inline T* HybridClass<T, B>::JavaPart::cthis() const {
 }
 
 template <typename T, typename B>
-constexpr auto /* detail::SimpleFixedString<_> */ HybridClass<T, B>::JavaPart::get_instantiated_java_descriptor() {
+constexpr auto /* detail::SimpleFixedString<_> */
+HybridClass<T, B>::JavaPart::get_instantiated_java_descriptor() {
   constexpr auto len = detail::constexpr_strlen(T::kJavaDescriptor);
   return detail::SimpleFixedString<len>(T::kJavaDescriptor, len);
 }
 
 template <typename T, typename B>
-/* static */ constexpr auto /* detail::SimpleFixedString<_> */ HybridClass<T, B>::JavaPart::get_instantiated_base_name() {
+/* static */ constexpr auto /* detail::SimpleFixedString<_> */
+HybridClass<T, B>::JavaPart::get_instantiated_base_name() {
   constexpr auto len = detail::constexpr_strlen(T::kJavaDescriptor);
   return detail::SimpleFixedString<len>(T::kJavaDescriptor + 1, len - 2);
 }
@@ -334,5 +364,5 @@ inline auto cthis(T jthis) -> decltype(jthis->cthis()) {
 
 void HybridDataOnLoad();
 
-}
-}
+} // namespace jni
+} // namespace facebook

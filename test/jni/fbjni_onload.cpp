@@ -29,11 +29,11 @@ void RegisterReadableByteChannelTests();
 
 jint JNI_OnLoad(JavaVM* vm, void*) {
   return facebook::jni::initialize(vm, [] {
-      RegisterFbjniTests();
-      RegisterTestHybridClass();
-      RegisterPrimitiveArrayTests();
-      RegisterIteratorTests();
-      RegisterByteBufferTests();
-      RegisterReadableByteChannelTests();
+    RegisterFbjniTests();
+    RegisterTestHybridClass();
+    RegisterPrimitiveArrayTests();
+    RegisterIteratorTests();
+    RegisterByteBufferTests();
+    RegisterReadableByteChannelTests();
   });
 }

@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <fbjni/fbjni.h>
 #include <fbjni/ByteBuffer.h>
 #include <fbjni/ReadableByteChannel.h>
+#include <fbjni/fbjni.h>
+#include <vector>
 
 #include "expect.h"
 
 using namespace facebook::jni;
 
-jboolean testSmallRead(alias_ref<JClass> cls, alias_ref<JReadableByteChannel> channel, alias_ref<JArrayByte> data) {
+jboolean testSmallRead(
+    alias_ref<JClass> cls,
+    alias_ref<JReadableByteChannel> channel,
+    alias_ref<JArrayByte> data) {
   std::vector<uint8_t> vec(data->size() * 2);
   auto npp = JByteBuffer::wrapBytes(vec.data(), vec.size());
 
@@ -39,7 +42,9 @@ jboolean testSmallRead(alias_ref<JClass> cls, alias_ref<JReadableByteChannel> ch
 }
 
 jboolean testReadToBufferCapacity(
-  alias_ref<JClass> cls, alias_ref<JReadableByteChannel> channel, alias_ref<JArrayByte> data) {
+    alias_ref<JClass> cls,
+    alias_ref<JReadableByteChannel> channel,
+    alias_ref<JArrayByte> data) {
   std::vector<uint8_t> vec(data->size() / 2);
   auto npp = JByteBuffer::wrapBytes(vec.data(), vec.size());
 
@@ -58,12 +63,14 @@ jboolean testReadToBufferCapacity(
 }
 
 jboolean testConsumeChannel(
-  alias_ref<JClass> cls, alias_ref<JReadableByteChannel> channel, alias_ref<JArrayByte> data) {
+    alias_ref<JClass> cls,
+    alias_ref<JReadableByteChannel> channel,
+    alias_ref<JArrayByte> data) {
   std::vector<uint8_t> vec(data->size() + 16);
   auto npp = JByteBuffer::wrapBytes(vec.data(), vec.size());
 
   int n = channel->read(npp);
-  EXPECT((unsigned) n == data->size());
+  EXPECT((unsigned)n == data->size());
 
   n = channel->read(npp);
   EXPECT(n == -1);
@@ -77,7 +84,9 @@ jboolean testConsumeChannel(
 }
 
 jboolean testConsumeChannelIteratively(
-  alias_ref<JClass> cls, alias_ref<JReadableByteChannel> channel, alias_ref<JArrayByte> data) {
+    alias_ref<JClass> cls,
+    alias_ref<JReadableByteChannel> channel,
+    alias_ref<JArrayByte> data) {
   std::vector<uint8_t> vec(data->size() / 4);
   auto npp = JByteBuffer::wrapBytes(vec.data(), vec.size());
   auto pinned = data->pin();
@@ -95,10 +104,15 @@ jboolean testConsumeChannelIteratively(
 }
 
 void RegisterReadableByteChannelTests() {
-  registerNatives("com/facebook/jni/ReadableByteChannelTests", {
-    makeNativeMethod("nativeTestSmallRead", testSmallRead),
-    makeNativeMethod("nativeTestReadToBufferCapacity", testReadToBufferCapacity),
-    makeNativeMethod("nativeTestConsumeChannel", testConsumeChannel),
-    makeNativeMethod("nativeTestConsumeChannelIteratively", testConsumeChannelIteratively),
-  });
+  registerNatives(
+      "com/facebook/jni/ReadableByteChannelTests",
+      {
+          makeNativeMethod("nativeTestSmallRead", testSmallRead),
+          makeNativeMethod(
+              "nativeTestReadToBufferCapacity", testReadToBufferCapacity),
+          makeNativeMethod("nativeTestConsumeChannel", testConsumeChannel),
+          makeNativeMethod(
+              "nativeTestConsumeChannelIteratively",
+              testConsumeChannelIteratively),
+      });
 }

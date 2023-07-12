@@ -17,11 +17,11 @@
 #pragma once
 
 #ifdef _MSC_VER
-# ifdef BUILDING_FBJNI
-#  define FBJNI_API __declspec(dllexport)
-# else
-#  define FBJNI_API __declspec(dllimport)
-# endif
+#ifdef BUILDING_FBJNI
+#define FBJNI_API __declspec(dllexport)
 #else
-# define FBJNI_API
+#define FBJNI_API __declspec(dllimport)
+#endif
+#else
+#define FBJNI_API
 #endif

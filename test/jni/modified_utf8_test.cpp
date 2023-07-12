@@ -23,7 +23,10 @@
 using namespace std;
 using namespace facebook::jni;
 
-void testPair(const vector<uint8_t>& utf8, const vector<uint8_t>& modified, bool test_out_eq) {
+void testPair(
+    const vector<uint8_t>& utf8,
+    const vector<uint8_t>& modified,
+    bool test_out_eq) {
   // utf8 -> modified utf8
 
   string utf8str(reinterpret_cast<const char*>(utf8.data()), utf8.size());
@@ -32,8 +35,9 @@ void testPair(const vector<uint8_t>& utf8, const vector<uint8_t>& modified, bool
   EXPECT_EQ(modlen, modified.size());
   vector<uint8_t> out(modlen + 1);
   detail::utf8ToModifiedUTF8(utf8.data(), utf8.size(), out.data(), out.size());
-  // we expect utf8ToModified to return null terminated string, but vector in modified
-  // will not have \0 at the end, therefore we crop out buffer before comparing
+  // we expect utf8ToModified to return null terminated string, but vector in
+  // modified will not have \0 at the end, therefore we crop out buffer before
+  // comparing
   EXPECT_EQ('\0', out[modlen]);
   out.resize(modlen);
   if (test_out_eq) {
@@ -51,15 +55,18 @@ void testPair(const vector<uint8_t>& utf8, const vector<uint8_t>& modified, bool
 void testFailForTooShortBuffer(const vector<uint8_t>& utf8, int out_len) {
   const char* message =
 #ifdef __ANDROID__
-    "output buffer is too short";
+      "output buffer is too short";
 #else
-    "";
+      "";
 #endif
 
-  ASSERT_DEATH({
-      vector<uint8_t> out(out_len);
-      detail::utf8ToModifiedUTF8(utf8.data(), utf8.size(), out.data(), out.size());
-    }, message);
+  ASSERT_DEATH(
+      {
+        vector<uint8_t> out(out_len);
+        detail::utf8ToModifiedUTF8(
+            utf8.data(), utf8.size(), out.data(), out.size());
+      },
+      message);
 }
 
 void vector_append(vector<uint8_t>& target, const vector<uint8_t>& source) {
@@ -67,19 +74,19 @@ void vector_append(vector<uint8_t>& target, const vector<uint8_t>& source) {
 }
 
 TEST(ModifiedUTF8Test, pairs) {
-  vector<uint8_t> zero = { 0 }; // U+0000
-  vector<uint8_t> zero_modified = { 0xc0, 0x80 };
-  vector<uint8_t> one_byte = { 'a' };  // U+0041
-  vector<uint8_t> two_byte = { 0xd8, 0xa1 };  // U+00E1  small a with acute
-  vector<uint8_t> three_byte = { 0xe4, 0xba, 0xba };  // U+4EBA  unihan ren
-  vector<uint8_t> four_byte =
-    { 0xf0, 0x9f, 0x98, 0xb8 };  // U+1F638  grinning cat face with smiling eyes
-  vector<uint8_t> four_byte_modified = { 0xed, 0xa0, 0xbd, 0xed, 0xb8, 0xb8 };
-  vector<uint8_t> four_byte_truncated(four_byte.begin(),
-                                      four_byte.begin() + (four_byte.size() - 1));
+  vector<uint8_t> zero = {0}; // U+0000
+  vector<uint8_t> zero_modified = {0xc0, 0x80};
+  vector<uint8_t> one_byte = {'a'}; // U+0041
+  vector<uint8_t> two_byte = {0xd8, 0xa1}; // U+00E1  small a with acute
+  vector<uint8_t> three_byte = {0xe4, 0xba, 0xba}; // U+4EBA  unihan ren
+  vector<uint8_t> four_byte = {
+      0xf0, 0x9f, 0x98, 0xb8}; // U+1F638  grinning cat face with smiling eyes
+  vector<uint8_t> four_byte_modified = {0xed, 0xa0, 0xbd, 0xed, 0xb8, 0xb8};
+  vector<uint8_t> four_byte_truncated(
+      four_byte.begin(), four_byte.begin() + (four_byte.size() - 1));
   vector<uint8_t> modified_truncated(
-    four_byte_modified.begin(),
-    four_byte_modified.begin() + (four_byte_modified.size() - 1));
+      four_byte_modified.begin(),
+      four_byte_modified.begin() + (four_byte_modified.size() - 1));
 
   testPair(zero, zero_modified, true);
   testPair(one_byte, one_byte, true);
@@ -119,9 +126,9 @@ TEST(ModifiedUTF8Test, pairs) {
 }
 
 TEST(ModifiedUTF8Test, conversionFailForTooShortBuffer) {
-  vector<uint8_t> zero = { 0 };
-  vector<uint8_t> one_byte = { 'a' };
-  vector<uint8_t> four_byte = { 0xf0, 0x9f, 0x98, 0xb8 };
+  vector<uint8_t> zero = {0};
+  vector<uint8_t> one_byte = {'a'};
+  vector<uint8_t> four_byte = {0xf0, 0x9f, 0x98, 0xb8};
 
   testFailForTooShortBuffer(zero, 1);
   testFailForTooShortBuffer(zero, 2);
@@ -130,7 +137,7 @@ TEST(ModifiedUTF8Test, conversionFailForTooShortBuffer) {
   testFailForTooShortBuffer(four_byte, 4);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
 
   return RUN_ALL_TESTS();

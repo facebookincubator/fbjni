@@ -53,18 +53,20 @@ void logExceptionAndAbort() {
 ExceptionTraceHolder::~ExceptionTraceHolder() {}
 
 detail::ExceptionTraceHolder::ExceptionTraceHolder() {
-  // TODO(cjhopman): This should be done more safely (i.e. use preallocated space, etc.).
+  // TODO(cjhopman): This should be done more safely (i.e. use preallocated
+  // space, etc.).
   stackTrace_.reserve(128);
   getStackTrace(stackTrace_, 1);
 }
 
-
 void ensureRegisteredTerminateHandler() {
-  static auto initializer = (gTerminateHandler = std::set_terminate(logExceptionAndAbort));
+  static auto initializer =
+      (gTerminateHandler = std::set_terminate(logExceptionAndAbort));
   (void)initializer;
 }
 
-const std::vector<InstructionPointer>& getExceptionTrace(std::exception_ptr ptr) {
+const std::vector<InstructionPointer>& getExceptionTrace(
+    std::exception_ptr ptr) {
   static const std::vector<InstructionPointer> emptyTrace;
 #ifndef _WIN32
   auto holder = getExceptionTraceHolder(ptr);
@@ -90,5 +92,5 @@ std::string toString(std::exception_ptr ptr) {
   }
 }
 
-}
-}
+} // namespace lyra
+} // namespace facebook

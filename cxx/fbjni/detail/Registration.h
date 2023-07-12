@@ -27,15 +27,16 @@ namespace detail {
 // This uses the real JNI function as a non-type template parameter to
 // cause a (static member) function to exist with the same signature,
 // but with try/catch exception translation.
-template<typename F, F func, typename C, typename R, typename... Args>
-constexpr void* exceptionWrapJNIMethod(R (*func0)(JNIEnv*, jobject, Args... args));
+template <typename F, F func, typename C, typename R, typename... Args>
+constexpr void* exceptionWrapJNIMethod(
+    R (*func0)(JNIEnv*, jobject, Args... args));
 
 // Automatically wrap object argument, and don't take env explicitly.
-template<typename F, F func, typename C, typename R, typename... Args>
+template <typename F, F func, typename C, typename R, typename... Args>
 constexpr void* exceptionWrapJNIMethod(R (*func0)(alias_ref<C>, Args... args));
 
 // Extract C++ instance from object, and invoke given method on it,
-template<typename M, M method, typename C, typename R, typename... Args>
+template <typename M, M method, typename C, typename R, typename... Args>
 constexpr void* exceptionWrapJNIMethod(R (C::*method0)(Args... args));
 
 // This uses deduction to figure out the descriptor name if the types
@@ -44,32 +45,35 @@ constexpr void* exceptionWrapJNIMethod(R (C::*method0)(Args... args));
 // Subtlety: must return a reference to the underlying constant global
 // or the call in makeNativeMethod2 is using a pointer to a subobject
 // of a temporary!
-template<typename R, typename C, typename... Args>
-constexpr const auto& /* detail::SimpleFixedString<_> */ makeDescriptor(R (*func)(JNIEnv*, C, Args... args));
+template <typename R, typename C, typename... Args>
+constexpr const auto& /* detail::SimpleFixedString<_> */ makeDescriptor(
+    R (*func)(JNIEnv*, C, Args... args));
 
 // This uses deduction to figure out the descriptor name if the types
 // are primitive.
-template<typename R, typename C, typename... Args>
-constexpr const auto& /* detail::SimpleFixedString<_> */ makeDescriptor(R (*func)(alias_ref<C>, Args... args));
+template <typename R, typename C, typename... Args>
+constexpr const auto& /* detail::SimpleFixedString<_> */ makeDescriptor(
+    R (*func)(alias_ref<C>, Args... args));
 
 // This uses deduction to figure out the descriptor name if the types
 // are primitive.
-template<typename R, typename C, typename... Args>
-constexpr const auto& /* detail::SimpleFixedString<_> */ makeDescriptor(R (C::*method0)(Args... args));
+template <typename R, typename C, typename... Args>
+constexpr const auto& /* detail::SimpleFixedString<_> */ makeDescriptor(
+    R (C::*method0)(Args... args));
 
-template<typename F>
+template <typename F>
 struct CriticalMethod;
 
-template<typename R, typename ...Args>
-struct CriticalMethod<R(*)(Args...)> {
-  template<R(*func)(Args...)>
+template <typename R, typename... Args>
+struct CriticalMethod<R (*)(Args...)> {
+  template <R (*func)(Args...)>
   static R call(alias_ref<jclass>, Args... args) noexcept;
 
-  template<R(*func)(Args...)>
+  template <R (*func)(Args...)>
   inline static constexpr auto /* detail::SimpleFixedString<_> */ desc();
 };
 
-}
+} // namespace detail
 
 // We have to use macros here, because the func needs to be used
 // as both a decltype expression argument and as a non-type template
@@ -81,21 +85,30 @@ struct CriticalMethod<R(*)(Args...)> {
 //
 // We need to const_cast because non-Android platforms have
 // unnecessarily non-const members in JNINativeMethod.
-#define makeNativeMethod2(name, func)                                   \
-  { const_cast<char*>(name ""), const_cast<char*>(::facebook::jni::detail::makeDescriptor(&func).c_str()), \
-      ::facebook::jni::detail::exceptionWrapJNIMethod<decltype(&func), &func>(&func) }
+#define makeNativeMethod2(name, func)                                \
+  {                                                                  \
+    const_cast<char*>(name ""),                                      \
+        const_cast<char*>(                                           \
+            ::facebook::jni::detail::makeDescriptor(&func).c_str()), \
+        ::facebook::jni::detail::                                    \
+            exceptionWrapJNIMethod<decltype(&func), &func>(&func)    \
+  }
 
-#define makeNativeMethod3(name, desc, func)                             \
-  { const_cast<char*>(name ""), const_cast<char*>(desc),                \
-      ::facebook::jni::detail::exceptionWrapJNIMethod<decltype(&func), &func>(&func) }
+#define makeNativeMethod3(name, desc, func)                       \
+  {                                                               \
+    const_cast<char*>(name ""), const_cast<char*>(desc),          \
+        ::facebook::jni::detail::                                 \
+            exceptionWrapJNIMethod<decltype(&func), &func>(&func) \
+  }
 
 // Variadic template hacks to get macros with different numbers of
 // arguments. Usage instructions are in CoreClasses.h.
-// Extra level of expansion is needed for Visual Studio to treat VA_ARGS as multiple args.
+// Extra level of expansion is needed for Visual Studio to treat VA_ARGS as
+// multiple args.
 #define FBJNI_MACRO_EXPAND(tokens) tokens
-#define makeNativeMethodN(a, b, c, count, ...) makeNativeMethod ## count
-#define makeNativeMethod(...) FBJNI_MACRO_EXPAND(makeNativeMethodN(__VA_ARGS__, 3, 2)(__VA_ARGS__))
-
+#define makeNativeMethodN(a, b, c, count, ...) makeNativeMethod##count
+#define makeNativeMethod(...) \
+  FBJNI_MACRO_EXPAND(makeNativeMethodN(__VA_ARGS__, 3, 2)(__VA_ARGS__))
 
 // FAST CALLS / CRITICAL CALLS
 // Android up to and including v7 supports "fast calls" by prefixing the method
@@ -159,22 +172,24 @@ struct CriticalMethod<R(*)(Args...)> {
 #define FBJNI_PREFIX_FAST_CALL(desc) (desc)
 #endif
 
-#define makeCriticalNativeMethod3(name, desc, func) (                   \
-    []() -> JNINativeMethod {                                           \
-      static constexpr auto descString = FBJNI_PREFIX_FAST_CALL(desc);  \
-      return makeNativeMethod3(                                         \
+#define makeCriticalNativeMethod3(name, desc, func)                     \
+  ([]() -> JNINativeMethod {                                            \
+    static constexpr auto descString = FBJNI_PREFIX_FAST_CALL(desc);    \
+    return makeNativeMethod3(                                           \
         name,                                                           \
         descString.c_str(),                                             \
-        ::facebook::jni::detail::CriticalMethod<decltype(&func)>::call<&func>); \
-        }())
+        ::facebook::jni::detail::CriticalMethod<decltype(&func)>::call< \
+            &func>);                                                    \
+  }())
 
-#define makeCriticalNativeMethod2(name, func)                                \
-  makeCriticalNativeMethod3(                                                 \
-    name,                                                                    \
-    ::facebook::jni::detail::CriticalMethod<decltype(&func)>::desc<&func>(), \
-    func)
+#define makeCriticalNativeMethod2(name, func)                                  \
+  makeCriticalNativeMethod3(                                                   \
+      name,                                                                    \
+      ::facebook::jni::detail::CriticalMethod<decltype(&func)>::desc<&func>(), \
+      func)
 
-#define makeCriticalNativeMethodN(a, b, c, count, ...) makeCriticalNativeMethod ## count
+#define makeCriticalNativeMethodN(a, b, c, count, ...) \
+  makeCriticalNativeMethod##count
 
 // YOU ALMOST CERTAINLY DO NOT NEED THIS AND IT IS DANGEROUS.
 // YOU ALMOST CERTAINLY DO NOT NEED THIS AND IT IS DANGEROUS.
@@ -182,8 +197,10 @@ struct CriticalMethod<R(*)(Args...)> {
 // YOU ALMOST CERTAINLY DO NOT NEED THIS AND IT IS DANGEROUS.
 // YOU ALMOST CERTAINLY DO NOT NEED THIS AND IT IS DANGEROUS.
 // See above for an explanation.
-#define makeCriticalNativeMethod_DO_NOT_USE_OR_YOU_WILL_BE_FIRED(...) FBJNI_MACRO_EXPAND(makeCriticalNativeMethodN(__VA_ARGS__, 3, 2)(__VA_ARGS__))
+#define makeCriticalNativeMethod_DO_NOT_USE_OR_YOU_WILL_BE_FIRED(...) \
+  FBJNI_MACRO_EXPAND(makeCriticalNativeMethodN(__VA_ARGS__, 3, 2)(__VA_ARGS__))
 
-}}
+} // namespace jni
+} // namespace facebook
 
 #include "Registration-inl.h"

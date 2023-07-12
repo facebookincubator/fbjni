@@ -35,13 +35,13 @@ struct IteratorHelper : public JavaClass<IteratorHelper<E>> {
 
   bool hasNext() const {
     static auto hasNextMethod =
-      JavaBase_::javaClassStatic()->template getMethod<jboolean()>("hasNext");
+        JavaBase_::javaClassStatic()->template getMethod<jboolean()>("hasNext");
     return hasNextMethod(JavaBase_::self());
   }
 
   value_type next() {
     static auto elementField =
-      JavaBase_::javaClassStatic()->template getField<jobject>("mElement");
+        JavaBase_::javaClassStatic()->template getField<jobject>("mElement");
     return dynamic_ref_cast<E>(JavaBase_::getFieldValue(elementField));
   }
 
@@ -51,24 +51,28 @@ struct IteratorHelper : public JavaClass<IteratorHelper<E>> {
 };
 
 template <typename K, typename V>
-struct MapIteratorHelper : public JavaClass<MapIteratorHelper<K,V>> {
-  constexpr static auto kJavaDescriptor = "Lcom/facebook/jni/MapIteratorHelper;";
+struct MapIteratorHelper : public JavaClass<MapIteratorHelper<K, V>> {
+  constexpr static auto kJavaDescriptor =
+      "Lcom/facebook/jni/MapIteratorHelper;";
 
   typedef std::pair<local_ref<K>, local_ref<V>> value_type;
 
-  typedef JavaClass<MapIteratorHelper<K,V>> JavaBase_;
+  typedef JavaClass<MapIteratorHelper<K, V>> JavaBase_;
 
   bool hasNext() const {
     static auto hasNextMethod =
-      JavaBase_::javaClassStatic()->template getMethod<jboolean()>("hasNext");
+        JavaBase_::javaClassStatic()->template getMethod<jboolean()>("hasNext");
     return hasNextMethod(JavaBase_::self());
   }
 
   value_type next() {
-    static auto keyField = JavaBase_::javaClassStatic()->template getField<jobject>("mKey");
-    static auto valueField = JavaBase_::javaClassStatic()->template getField<jobject>("mValue");
-    return std::make_pair(dynamic_ref_cast<K>(JavaBase_::getFieldValue(keyField)),
-                          dynamic_ref_cast<V>(JavaBase_::getFieldValue(valueField)));
+    static auto keyField =
+        JavaBase_::javaClassStatic()->template getField<jobject>("mKey");
+    static auto valueField =
+        JavaBase_::javaClassStatic()->template getField<jobject>("mValue");
+    return std::make_pair(
+        dynamic_ref_cast<K>(JavaBase_::getFieldValue(keyField)),
+        dynamic_ref_cast<V>(JavaBase_::getFieldValue(valueField)));
   }
 
   static void reset(value_type& v) {
@@ -88,20 +92,28 @@ class Iterator {
 
   // begin ctor
   Iterator(global_ref<typename T::javaobject>&& helper)
-      : helper_(std::move(helper))
-      , i_(-1) {
+      : helper_(std::move(helper)), i_(-1) {
     ++(*this);
   }
 
   // end ctor
-  Iterator()
-      : i_(-1) {}
+  Iterator() : i_(-1) {}
 
-  bool operator==(const Iterator& it) const { return i_ == it.i_; }
-  bool operator!=(const Iterator& it) const { return !(*this == it); }
-  const value_type& operator*() const { assert(i_ != -1); return entry_; }
-  const value_type* operator->() const { assert(i_ != -1); return &entry_; }
-  Iterator& operator++() {  // preincrement
+  bool operator==(const Iterator& it) const {
+    return i_ == it.i_;
+  }
+  bool operator!=(const Iterator& it) const {
+    return !(*this == it);
+  }
+  const value_type& operator*() const {
+    assert(i_ != -1);
+    return entry_;
+  }
+  const value_type* operator->() const {
+    assert(i_ != -1);
+    return &entry_;
+  }
+  Iterator& operator++() { // preincrement
     bool hasNext = helper_->hasNext();
     if (hasNext) {
       ++i_;
@@ -112,7 +124,7 @@ class Iterator {
     }
     return *this;
   }
-  Iterator operator++(int) {  // postincrement
+  Iterator operator++(int) { // postincrement
     Iterator ret;
     ret.i_ = i_;
     ret.entry_ = std::move(entry_);
@@ -126,21 +138,23 @@ class Iterator {
   value_type entry_;
 };
 
-}
+} // namespace detail
 
 template <typename E>
-struct JIterator<E>::Iterator : public detail::Iterator<detail::IteratorHelper<E>> {
+struct JIterator<E>::Iterator
+    : public detail::Iterator<detail::IteratorHelper<E>> {
   using detail::Iterator<detail::IteratorHelper<E>>::Iterator;
 };
 
 template <typename E>
 typename JIterator<E>::Iterator JIterator<E>::begin() const {
-  static auto ctor = detail::IteratorHelper<E>::javaClassStatic()->
-    template getConstructor<typename detail::IteratorHelper<E>::javaobject(
-                              typename JIterator<E>::javaobject)>();
+  static auto ctor =
+      detail::IteratorHelper<E>::javaClassStatic()
+          ->template getConstructor<typename detail::IteratorHelper<
+              E>::javaobject(typename JIterator<E>::javaobject)>();
   return Iterator(
-    make_global(
-      detail::IteratorHelper<E>::javaClassStatic()->newObject(ctor, this->self())));
+      make_global(detail::IteratorHelper<E>::javaClassStatic()->newObject(
+          ctor, this->self())));
 }
 
 template <typename E>
@@ -149,18 +163,20 @@ typename JIterator<E>::Iterator JIterator<E>::end() const {
 }
 
 template <typename E>
-struct JIterable<E>::Iterator : public detail::Iterator<detail::IteratorHelper<E>> {
+struct JIterable<E>::Iterator
+    : public detail::Iterator<detail::IteratorHelper<E>> {
   using detail::Iterator<detail::IteratorHelper<E>>::Iterator;
 };
 
 template <typename E>
 typename JIterable<E>::Iterator JIterable<E>::begin() const {
-  static auto ctor = detail::IteratorHelper<E>::javaClassStatic()->
-    template getConstructor<typename detail::IteratorHelper<E>::javaobject(
-                              typename JIterable<E>::javaobject)>();
+  static auto ctor =
+      detail::IteratorHelper<E>::javaClassStatic()
+          ->template getConstructor<typename detail::IteratorHelper<
+              E>::javaobject(typename JIterable<E>::javaobject)>();
   return Iterator(
-    make_global(
-      detail::IteratorHelper<E>::javaClassStatic()->newObject(ctor, this->self())));
+      make_global(detail::IteratorHelper<E>::javaClassStatic()->newObject(
+          ctor, this->self())));
 }
 
 template <typename E>
@@ -171,48 +187,54 @@ typename JIterable<E>::Iterator JIterable<E>::end() const {
 template <typename E>
 size_t JCollection<E>::size() const {
   static auto sizeMethod =
-    JCollection<E>::javaClassStatic()->template getMethod<jint()>("size");
+      JCollection<E>::javaClassStatic()->template getMethod<jint()>("size");
   return sizeMethod(this->self());
 }
 
 template <typename E>
 bool JCollection<E>::add(alias_ref<E> elem) {
-  static auto addMethod = JCollection<E>::javaClassStatic()->
-    template getMethod<jboolean(alias_ref<JObject>)>("add");
+  static auto addMethod =
+      JCollection<E>::javaClassStatic()
+          ->template getMethod<jboolean(alias_ref<JObject>)>("add");
   return addMethod(this->self(), elem);
 }
 
 template <typename K, typename V>
-struct JMap<K,V>::Iterator : public detail::Iterator<detail::MapIteratorHelper<K,V>> {
-  using detail::Iterator<detail::MapIteratorHelper<K,V>>::Iterator;
+struct JMap<K, V>::Iterator
+    : public detail::Iterator<detail::MapIteratorHelper<K, V>> {
+  using detail::Iterator<detail::MapIteratorHelper<K, V>>::Iterator;
 };
 
 template <typename K, typename V>
-size_t JMap<K,V>::size() const {
+size_t JMap<K, V>::size() const {
   static auto sizeMethod =
-    JMap<K,V>::javaClassStatic()->template getMethod<jint()>("size");
+      JMap<K, V>::javaClassStatic()->template getMethod<jint()>("size");
   return sizeMethod(this->self());
 }
 
 template <typename K, typename V>
-typename JMap<K,V>::Iterator JMap<K,V>::begin() const {
-  static auto ctor = detail::MapIteratorHelper<K,V>::javaClassStatic()->
-    template getConstructor<typename detail::MapIteratorHelper<K,V>::javaobject(
-                              typename JMap<K,V>::javaobject)>();
+typename JMap<K, V>::Iterator JMap<K, V>::begin() const {
+  static auto ctor =
+      detail::MapIteratorHelper<K, V>::javaClassStatic()
+          ->template getConstructor<
+              typename detail::MapIteratorHelper<K, V>::javaobject(
+                  typename JMap<K, V>::javaobject)>();
   return Iterator(
-    make_global(
-      detail::MapIteratorHelper<K,V>::javaClassStatic()->newObject(ctor, this->self())));
+      make_global(detail::MapIteratorHelper<K, V>::javaClassStatic()->newObject(
+          ctor, this->self())));
 }
 
 template <typename K, typename V>
-typename JMap<K,V>::Iterator JMap<K,V>::end() const {
+typename JMap<K, V>::Iterator JMap<K, V>::end() const {
   return Iterator();
 }
 
 template <typename K, typename V>
-local_ref<JObject> JMap<K,V>::put(alias_ref<K> key, alias_ref<V> val) {
-  static auto putMethod = JMap<K,V>::javaClassStatic()->
-    template getMethod<JObject(alias_ref<JObject>, alias_ref<JObject>)>("put");
+local_ref<JObject> JMap<K, V>::put(alias_ref<K> key, alias_ref<V> val) {
+  static auto putMethod =
+      JMap<K, V>::javaClassStatic()
+          ->template getMethod<JObject(alias_ref<JObject>, alias_ref<JObject>)>(
+              "put");
   return putMethod(this->self(), key, val);
 }
 
@@ -227,14 +249,14 @@ local_ref<JArrayList<E>> JArrayList<E>::create(int initialCapacity) {
 }
 
 template <typename K, typename V>
-local_ref<JHashMap<K, V>> JHashMap<K,V>::create() {
-  return JHashMap<K,V>::newInstance();
+local_ref<JHashMap<K, V>> JHashMap<K, V>::create() {
+  return JHashMap<K, V>::newInstance();
 }
 
 template <typename K, typename V>
-local_ref<JHashMap<K, V>> JHashMap<K,V>::create(int initialCapacity) {
-  return JHashMap<K,V>::newInstance(initialCapacity);
+local_ref<JHashMap<K, V>> JHashMap<K, V>::create(int initialCapacity) {
+  return JHashMap<K, V>::newInstance(initialCapacity);
 }
 
-}
-}
+} // namespace jni
+} // namespace facebook

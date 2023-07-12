@@ -19,10 +19,9 @@
 #include <stdexcept>
 
 namespace nortti {
-struct NoRttiException : std::exception {
-};
+struct NoRttiException : std::exception {};
 
 void throwException() {
   throw NoRttiException();
 }
-}
+} // namespace nortti

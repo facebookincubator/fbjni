@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <string.h>
 #include <type_traits>
-#include <stdlib.h>
 
 #include "Common.h"
 #include "Exceptions.h"
@@ -28,10 +28,14 @@
 namespace facebook {
 namespace jni {
 
-// jobject /////////////////////////////////////////////////////////////////////////////////////////
+// jobject
+// /////////////////////////////////////////////////////////////////////////////////////////
 
-inline bool isSameObject(alias_ref<JObject> lhs, alias_ref<JObject> rhs) noexcept {
-  return Environment::current()->IsSameObject(lhs.get(), rhs.get()) != JNI_FALSE;
+inline bool isSameObject(
+    alias_ref<JObject> lhs,
+    alias_ref<JObject> rhs) noexcept {
+  return Environment::current()->IsSameObject(lhs.get(), rhs.get()) !=
+      JNI_FALSE;
 }
 
 inline local_ref<JClass> JObject::getClass() const noexcept {
@@ -42,32 +46,34 @@ inline bool JObject::isInstanceOf(alias_ref<JClass> cls) const noexcept {
   return Environment::current()->IsInstanceOf(self(), cls.get()) != JNI_FALSE;
 }
 
-template<typename T>
+template <typename T>
 inline T JObject::getFieldValue(JField<T> field) const noexcept {
   return field.get(self());
 }
 
-template<typename T>
+template <typename T>
 inline local_ref<T*> JObject::getFieldValue(JField<T*> field) const noexcept {
   return adopt_local(field.get(self()));
 }
 
-template<typename T>
+template <typename T>
 inline void JObject::setFieldValue(JField<T> field, T value) noexcept {
   field.set(self(), value);
 }
 
-template<typename T, typename>
-inline void JObject::setFieldValue(JField<T> field, alias_ref<T> value) noexcept {
+template <typename T, typename>
+inline void JObject::setFieldValue(
+    JField<T> field,
+    alias_ref<T> value) noexcept {
   setFieldValue(field, value.get());
 }
 
 inline std::string JObject::toString() const {
-  static const auto method = findClassLocal("java/lang/Object")->getMethod<jstring()>("toString");
+  static const auto method =
+      findClassLocal("java/lang/Object")->getMethod<jstring()>("toString");
 
   return method(self())->toStdString();
 }
-
 
 // Class is here instead of CoreClasses.h because we need
 // alias_ref to be complete.
@@ -90,8 +96,7 @@ class MonitorLock {
 
 MonitorLock::MonitorLock() noexcept : owned_(nullptr) {}
 
-MonitorLock::MonitorLock(alias_ref<JObject> object) noexcept
-    : owned_(object) {
+MonitorLock::MonitorLock(alias_ref<JObject> object) noexcept : owned_(object) {
   Environment::current()->MonitorEnter(object.get());
 }
 
@@ -109,9 +114,7 @@ MonitorLock::~MonitorLock() noexcept {
   reset();
 }
 
-MonitorLock::MonitorLock(MonitorLock&& other) noexcept
-    : owned_(other.owned_)
-{
+MonitorLock::MonitorLock(MonitorLock&& other) noexcept : owned_(other.owned_) {
   other.owned_ = nullptr;
 }
 
@@ -135,33 +138,36 @@ inline void swap(JObject& a, JObject& b) noexcept {
   swap(a.this_, b.this_);
 }
 
-// JavaClass ///////////////////////////////////////////////////////////////////////////////////////
+// JavaClass
+// ///////////////////////////////////////////////////////////////////////////////////////
 
 namespace detail {
-template<typename JC, typename... Args>
+template <typename JC, typename... Args>
 static local_ref<JC> newInstance(Args... args) {
   static auto cls = JC::javaClassStatic();
-  static const auto constructor = cls->template getConstructor<typename JC::javaobject(Args...)>();
+  static const auto constructor =
+      cls->template getConstructor<typename JC::javaobject(Args...)>();
   return cls->newObject(constructor, args...);
 }
-}
-
+} // namespace detail
 
 template <typename T, typename B, typename J>
 auto JavaClass<T, B, J>::self() const noexcept -> javaobject {
   return static_cast<javaobject>(JObject::self());
 }
 
-// jclass //////////////////////////////////////////////////////////////////////////////////////////
-
+// jclass
+// //////////////////////////////////////////////////////////////////////////////////////////
 
 inline local_ref<JClass> JClass::getSuperclass() const noexcept {
   return adopt_local(Environment::current()->GetSuperclass(self()));
 }
 
-inline void JClass::registerNatives(std::initializer_list<JNINativeMethod> methods) {
+inline void JClass::registerNatives(
+    std::initializer_list<JNINativeMethod> methods) {
   const auto env = Environment::current();
-  auto result = env->RegisterNatives(self(), methods.begin(), static_cast<int>(methods.size()));
+  auto result = env->RegisterNatives(
+      self(), methods.begin(), static_cast<int>(methods.size()));
   FACEBOOK_JNI_THROW_EXCEPTION_IF(result != JNI_OK);
 }
 
@@ -176,38 +182,39 @@ inline bool JClass::isAssignableFrom(alias_ref<JClass> other) const noexcept {
   return result;
 }
 
-template<typename F>
+template <typename F>
 inline JConstructor<F> JClass::getConstructor() const {
-  return getConstructor<F>(jmethod_traits_from_cxx<F>::kConstructorDescriptor.c_str());
+  return getConstructor<F>(
+      jmethod_traits_from_cxx<F>::kConstructorDescriptor.c_str());
 }
 
-template<typename F>
+template <typename F>
 inline JConstructor<F> JClass::getConstructor(const char* descriptor) const {
   constexpr auto constructor_method_name = "<init>";
   return getMethod<F>(constructor_method_name, descriptor);
 }
 
-template<typename F>
+template <typename F>
 inline JMethod<F> JClass::getMethod(const char* name) const {
   return getMethod<F>(name, jmethod_traits_from_cxx<F>::kDescriptor.c_str());
 }
 
-template<typename F>
-inline JMethod<F> JClass::getMethod(
-    const char* name,
-    const char* descriptor) const {
+template <typename F>
+inline JMethod<F> JClass::getMethod(const char* name, const char* descriptor)
+    const {
   const auto env = Environment::current();
   const auto method = env->GetMethodID(self(), name, descriptor);
   FACEBOOK_JNI_THROW_EXCEPTION_IF(!method);
   return JMethod<F>{method};
 }
 
-template<typename F>
+template <typename F>
 inline JStaticMethod<F> JClass::getStaticMethod(const char* name) const {
-  return getStaticMethod<F>(name, jmethod_traits_from_cxx<F>::kDescriptor.c_str());
+  return getStaticMethod<F>(
+      name, jmethod_traits_from_cxx<F>::kDescriptor.c_str());
 }
 
-template<typename F>
+template <typename F>
 inline JStaticMethod<F> JClass::getStaticMethod(
     const char* name,
     const char* descriptor) const {
@@ -217,12 +224,14 @@ inline JStaticMethod<F> JClass::getStaticMethod(
   return JStaticMethod<F>{method};
 }
 
-template<typename F>
-inline JNonvirtualMethod<F> JClass::getNonvirtualMethod(const char* name) const {
-  return getNonvirtualMethod<F>(name, jmethod_traits_from_cxx<F>::kDescriptor.c_str());
+template <typename F>
+inline JNonvirtualMethod<F> JClass::getNonvirtualMethod(
+    const char* name) const {
+  return getNonvirtualMethod<F>(
+      name, jmethod_traits_from_cxx<F>::kDescriptor.c_str());
 }
 
-template<typename F>
+template <typename F>
 inline JNonvirtualMethod<F> JClass::getNonvirtualMethod(
     const char* name,
     const char* descriptor) const {
@@ -232,13 +241,12 @@ inline JNonvirtualMethod<F> JClass::getNonvirtualMethod(
   return JNonvirtualMethod<F>{method};
 }
 
-template<typename T>
-inline JField<PrimitiveOrJniType<T>>
-JClass::getField(const char* name) const {
+template <typename T>
+inline JField<PrimitiveOrJniType<T>> JClass::getField(const char* name) const {
   return getField<T>(name, jtype_traits<T>::kDescriptor.c_str());
 }
 
-template<typename T>
+template <typename T>
 inline JField<PrimitiveOrJniType<T>> JClass::getField(
     const char* name,
     const char* descriptor) const {
@@ -248,13 +256,13 @@ inline JField<PrimitiveOrJniType<T>> JClass::getField(
   return JField<PrimitiveOrJniType<T>>{field};
 }
 
-template<typename T>
+template <typename T>
 inline JStaticField<PrimitiveOrJniType<T>> JClass::getStaticField(
     const char* name) const {
   return getStaticField<T>(name, jtype_traits<T>::kDescriptor.c_str());
 }
 
-template<typename T>
+template <typename T>
 inline JStaticField<PrimitiveOrJniType<T>> JClass::getStaticField(
     const char* name,
     const char* descriptor) const {
@@ -264,34 +272,41 @@ inline JStaticField<PrimitiveOrJniType<T>> JClass::getStaticField(
   return JStaticField<PrimitiveOrJniType<T>>{field};
 }
 
-template<typename T>
+template <typename T>
 inline T JClass::getStaticFieldValue(JStaticField<T> field) const noexcept {
   return field.get(self());
 }
 
-template<typename T>
-inline local_ref<T*> JClass::getStaticFieldValue(JStaticField<T*> field) noexcept {
+template <typename T>
+inline local_ref<T*> JClass::getStaticFieldValue(
+    JStaticField<T*> field) noexcept {
   return adopt_local(field.get(self()));
 }
 
-template<typename T>
-inline void JClass::setStaticFieldValue(JStaticField<T> field, T value) noexcept {
+template <typename T>
+inline void JClass::setStaticFieldValue(
+    JStaticField<T> field,
+    T value) noexcept {
   field.set(self(), value);
 }
 
-template<typename T, typename>
-inline void JClass::setStaticFieldValue(JStaticField<T> field, alias_ref<T> value) noexcept {
+template <typename T, typename>
+inline void JClass::setStaticFieldValue(
+    JStaticField<T> field,
+    alias_ref<T> value) noexcept {
   setStaticFieldValue(field, value.get());
 }
 
-template<typename R, typename... Args>
+template <typename R, typename... Args>
 inline local_ref<R> JClass::newObject(
     JConstructor<R(Args...)> constructor,
     Args... args) const {
   const auto env = Environment::current();
-  auto object = env->NewObject(self(), constructor.getId(),
+  auto object = env->NewObject(
+      self(),
+      constructor.getId(),
       detail::callToJni(
-        detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
+          detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
   FACEBOOK_JNI_THROW_EXCEPTION_IF(!object);
   return adopt_local(static_cast<R>(object));
 }
@@ -300,17 +315,20 @@ inline jclass JClass::self() const noexcept {
   return static_cast<jclass>(JObject::self());
 }
 
-inline void registerNatives(const char* name, std::initializer_list<JNINativeMethod> methods) {
+inline void registerNatives(
+    const char* name,
+    std::initializer_list<JNINativeMethod> methods) {
   findClassLocal(name)->registerNatives(methods);
 }
 
 inline auto JClass::getCanonicalName() -> local_ref<JString> {
-  static auto meth = javaClassStatic()->getMethod<JString::javaobject()>("getCanonicalName");
+  static auto meth =
+      javaClassStatic()->getMethod<JString::javaobject()>("getCanonicalName");
   return meth(self());
 }
 
-
-// jstring /////////////////////////////////////////////////////////////////////////////////////////
+// jstring
+// /////////////////////////////////////////////////////////////////////////////////////////
 
 inline local_ref<JString> make_jstring(const std::string& utf8) {
   return make_jstring(utf8.c_str());
@@ -344,93 +362,103 @@ struct Convert<const char*> {
     return make_jstring(t);
   }
 };
-}
+} // namespace detail
 
-// jtypeArray //////////////////////////////////////////////////////////////////////////////////////
+// jtypeArray
+// //////////////////////////////////////////////////////////////////////////////////////
 
 namespace detail {
 inline size_t JArray::size() const noexcept {
   const auto env = Environment::current();
   return env->GetArrayLength(self());
 }
-}
+} // namespace detail
 
 namespace detail {
-template<typename Target>
-inline ElementProxy<Target>::ElementProxy(
-    Target* target,
-    size_t idx)
+template <typename Target>
+inline ElementProxy<Target>::ElementProxy(Target* target, size_t idx)
     : target_{target}, idx_{idx} {}
 
-template<typename Target>
+template <typename Target>
 inline ElementProxy<Target>& ElementProxy<Target>::operator=(const T& o) {
   target_->setElement(idx_, o);
   return *this;
 }
 
-template<typename Target>
-inline ElementProxy<Target>& ElementProxy<Target>::operator=(alias_ref<typename Target::javaentry>& o) {
+template <typename Target>
+inline ElementProxy<Target>& ElementProxy<Target>::operator=(
+    alias_ref<typename Target::javaentry>& o) {
   target_->setElement(idx_, o.get());
   return *this;
 }
 
-template<typename Target>
-inline ElementProxy<Target>& ElementProxy<Target>::operator=(alias_ref<typename Target::javaentry>&& o) {
+template <typename Target>
+inline ElementProxy<Target>& ElementProxy<Target>::operator=(
+    alias_ref<typename Target::javaentry>&& o) {
   target_->setElement(idx_, o.get());
   return *this;
 }
 
-template<typename Target>
-inline ElementProxy<Target>& ElementProxy<Target>::operator=(const ElementProxy<Target>& o) {
+template <typename Target>
+inline ElementProxy<Target>& ElementProxy<Target>::operator=(
+    const ElementProxy<Target>& o) {
   auto src = o.target_->getElement(o.idx_);
   target_->setElement(idx_, src.get());
   return *this;
 }
 
-template<typename Target>
-inline ElementProxy<Target>::ElementProxy::operator const local_ref<typename Target::javaentry> () const {
+template <typename Target>
+inline ElementProxy<Target>::ElementProxy::operator const local_ref<
+    typename Target::javaentry>() const {
   return target_->getElement(idx_);
 }
 
-template<typename Target>
-inline ElementProxy<Target>::ElementProxy::operator local_ref<typename Target::javaentry> () {
+template <typename Target>
+inline ElementProxy<Target>::ElementProxy::operator local_ref<
+    typename Target::javaentry>() {
   return target_->getElement(idx_);
 }
-}
+} // namespace detail
 
-template<typename T>
+template <typename T>
 auto JArrayClass<T>::newArray(size_t size) -> local_ref<javaobject> {
-  static const auto elementClass = findClassStatic(jtype_traits<T>::kBaseName.c_str());
+  static const auto elementClass =
+      findClassStatic(jtype_traits<T>::kBaseName.c_str());
   const auto env = Environment::current();
   auto rawArray = env->NewObjectArray(size, elementClass.get(), nullptr);
   FACEBOOK_JNI_THROW_EXCEPTION_IF(!rawArray);
   return adopt_local(static_cast<javaobject>(rawArray));
 }
 
-template<typename T>
+template <typename T>
 inline void JArrayClass<T>::setElement(size_t idx, T value) {
   const auto env = Environment::current();
-  env->SetObjectArrayElement(this->self(), idx, detail::toPlainJniReference(value));
+  env->SetObjectArrayElement(
+      this->self(), idx, detail::toPlainJniReference(value));
 }
 
-template<typename T>
+template <typename T>
 inline local_ref<T> JArrayClass<T>::getElement(size_t idx) {
   const auto env = Environment::current();
-  auto rawElement = env->GetObjectArrayElement(this->self(), static_cast<jsize>(idx));
+  auto rawElement =
+      env->GetObjectArrayElement(this->self(), static_cast<jsize>(idx));
   return adopt_local(static_cast<JniType<T>>(rawElement));
 }
 
-template<typename T>
-inline detail::ElementProxy<JArrayClass<T>> JArrayClass<T>::operator[](size_t index) {
+template <typename T>
+inline detail::ElementProxy<JArrayClass<T>> JArrayClass<T>::operator[](
+    size_t index) {
   return detail::ElementProxy<JArrayClass<T>>(this, index);
 }
 
-template<typename T>
-local_ref<typename JArrayClass<T>::javaobject> adopt_local_array(jobjectArray ref) {
+template <typename T>
+local_ref<typename JArrayClass<T>::javaobject> adopt_local_array(
+    jobjectArray ref) {
   return adopt_local(static_cast<typename JArrayClass<T>::javaobject>(ref));
 }
 
-// jarray /////////////////////////////////////////////////////////////////////////////////////////
+// jarray
+// /////////////////////////////////////////////////////////////////////////////////////////
 
 template <typename JArrayType>
 auto JPrimitiveArray<JArrayType>::getRegion(jsize start, jsize length)
@@ -441,14 +469,16 @@ auto JPrimitiveArray<JArrayType>::getRegion(jsize start, jsize length)
 }
 
 template <typename JArrayType>
-auto JPrimitiveArray<JArrayType>::pin() -> PinnedPrimitiveArray<T, PinnedArrayAlloc<T>> {
+auto JPrimitiveArray<JArrayType>::pin()
+    -> PinnedPrimitiveArray<T, PinnedArrayAlloc<T>> {
   return PinnedPrimitiveArray<T, PinnedArrayAlloc<T>>{this->self(), 0, 0};
 }
 
 template <typename JArrayType>
 auto JPrimitiveArray<JArrayType>::pinRegion(jsize start, jsize length)
     -> PinnedPrimitiveArray<T, PinnedRegionAlloc<T>> {
-  return PinnedPrimitiveArray<T, PinnedRegionAlloc<T>>{this->self(), start, length};
+  return PinnedPrimitiveArray<T, PinnedRegionAlloc<T>>{
+      this->self(), start, length};
 }
 
 template <typename JArrayType>
@@ -467,8 +497,8 @@ class PinnedArrayAlloc {
       T** elements,
       size_t* size,
       jboolean* isCopy) {
-    (void) start;
-    (void) length;
+    (void)start;
+    (void)length;
     *elements = array->getElements(isCopy);
     *size = array->size();
   }
@@ -478,8 +508,8 @@ class PinnedArrayAlloc {
       jint start,
       jint size,
       jint mode) {
-    (void) start;
-    (void) size;
+    (void)start;
+    (void)size;
     array->releaseElements(elements, mode);
   }
 };
@@ -497,7 +527,8 @@ class PinnedCriticalAlloc {
     (void)start;
     (void)length;
     const auto env = Environment::current();
-    *elements = static_cast<T*>(env->GetPrimitiveArrayCritical(array.get(), isCopy));
+    *elements =
+        static_cast<T*>(env->GetPrimitiveArrayCritical(array.get(), isCopy));
     FACEBOOK_JNI_THROW_EXCEPTION_IF(!elements);
     *size = array->size();
   }
@@ -546,16 +577,17 @@ class PinnedRegionAlloc {
   }
 };
 
-// PinnedPrimitiveArray ///////////////////////////////////////////////////////////////////////////
+// PinnedPrimitiveArray
+// ///////////////////////////////////////////////////////////////////////////
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 PinnedPrimitiveArray<T, Alloc>::PinnedPrimitiveArray(PinnedPrimitiveArray&& o) {
   *this = std::move(o);
 }
 
-template<typename T, typename Alloc>
-PinnedPrimitiveArray<T, Alloc>&
-PinnedPrimitiveArray<T, Alloc>::operator=(PinnedPrimitiveArray&& o) {
+template <typename T, typename Alloc>
+PinnedPrimitiveArray<T, Alloc>& PinnedPrimitiveArray<T, Alloc>::operator=(
+    PinnedPrimitiveArray&& o) {
   if (array_) {
     release();
   }
@@ -568,23 +600,23 @@ PinnedPrimitiveArray<T, Alloc>::operator=(PinnedPrimitiveArray&& o) {
   return *this;
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 T* PinnedPrimitiveArray<T, Alloc>::get() {
   return elements_;
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 inline void PinnedPrimitiveArray<T, Alloc>::release() {
   releaseImpl(0);
   clear();
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 inline void PinnedPrimitiveArray<T, Alloc>::commit() {
   releaseImpl(JNI_COMMIT);
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 inline void PinnedPrimitiveArray<T, Alloc>::abort() {
   releaseImpl(JNI_ABORT);
   clear();
@@ -596,7 +628,7 @@ inline void PinnedPrimitiveArray<T, Alloc>::releaseImpl(jint mode) {
   Alloc::release(array_, elements_, start_, size_, mode);
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 inline void PinnedPrimitiveArray<T, Alloc>::clear() noexcept {
   array_ = nullptr;
   elements_ = nullptr;
@@ -605,46 +637,52 @@ inline void PinnedPrimitiveArray<T, Alloc>::clear() noexcept {
   size_ = 0;
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 inline T& PinnedPrimitiveArray<T, Alloc>::operator[](size_t index) {
   FACEBOOK_JNI_THROW_EXCEPTION_IF(elements_ == nullptr);
   return elements_[index];
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 inline bool PinnedPrimitiveArray<T, Alloc>::isCopy() const noexcept {
   return isCopy_ == JNI_TRUE;
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 inline size_t PinnedPrimitiveArray<T, Alloc>::size() const noexcept {
   return size_;
 }
 
-template<typename T, typename Alloc>
+template <typename T, typename Alloc>
 inline PinnedPrimitiveArray<T, Alloc>::~PinnedPrimitiveArray() noexcept {
   if (elements_) {
     release();
   }
 }
 
-template<typename T, typename Alloc>
-inline PinnedPrimitiveArray<T, Alloc>::PinnedPrimitiveArray(alias_ref<typename jtype_traits<T>::array_type> array, jint start, jint length) {
+template <typename T, typename Alloc>
+inline PinnedPrimitiveArray<T, Alloc>::PinnedPrimitiveArray(
+    alias_ref<typename jtype_traits<T>::array_type> array,
+    jint start,
+    jint length) {
   array_ = array;
   start_ = start;
   Alloc::allocate(array, start, length, &elements_, &size_, &isCopy_);
 }
 
-template<typename T, typename Base, typename JType>
+template <typename T, typename Base, typename JType>
 inline alias_ref<JClass> JavaClass<T, Base, JType>::javaClassStatic() {
-  static auto cls = findClassStatic(jtype_traits<typename T::javaobject>::kBaseName.c_str());
+  static auto cls =
+      findClassStatic(jtype_traits<typename T::javaobject>::kBaseName.c_str());
   return cls;
 }
 
-template<typename T, typename Base, typename JType>
+template <typename T, typename Base, typename JType>
 inline local_ref<JClass> JavaClass<T, Base, JType>::javaClassLocal() {
-  std::string className(jtype_traits<typename T::javaobject>::kBaseName.c_str());
+  std::string className(
+      jtype_traits<typename T::javaobject>::kBaseName.c_str());
   return findClassLocal(className.c_str());
 }
 
-}}
+} // namespace jni
+} // namespace facebook

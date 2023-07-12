@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <fbjni/fbjni.h>
 #include <fbjni/NativeRunnable.h>
+#include <fbjni/fbjni.h>
 
 namespace facebook {
 namespace jni {
@@ -41,13 +41,18 @@ class JThread : public JavaClass<JThread> {
     return newInstance(static_ref_cast<JRunnable>(jrunnable));
   }
 
-  static local_ref<JThread> create(std::function<void()>&& runnable, std::string&& name) {
+  static local_ref<JThread> create(
+      std::function<void()>&& runnable,
+      std::string&& name) {
     auto jrunnable = JNativeRunnable::newObjectCxxArgs(std::move(runnable));
-    return newInstance(static_ref_cast<JRunnable>(jrunnable), make_jstring(std::move(name)));
+    return newInstance(
+        static_ref_cast<JRunnable>(jrunnable), make_jstring(std::move(name)));
   }
 
   static local_ref<JThread> getCurrent() {
-    static const auto method = javaClassStatic()->getStaticMethod<local_ref<JThread>()>("currentThread");
+    static const auto method =
+        javaClassStatic()->getStaticMethod<local_ref<JThread>()>(
+            "currentThread");
     return method(javaClassStatic());
   }
 
@@ -62,5 +67,5 @@ class JThread : public JavaClass<JThread> {
   }
 };
 
-}
-}
+} // namespace jni
+} // namespace facebook

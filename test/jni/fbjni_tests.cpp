@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
+#include <chrono>
 #include <ios>
 #include <stdexcept>
 #include <system_error>
 #include <thread>
-#include <chrono>
 
-#include <fbjni/fbjni.h>
 #include <fbjni/JThread.h>
+#include <fbjni/fbjni.h>
 
 #include "expect.h"
 #include "no_rtti.h"
@@ -38,11 +38,13 @@ using namespace facebook::jni;
 namespace {
 
 struct Callbacks : public facebook::jni::JavaClass<Callbacks> {
-  constexpr static auto kJavaDescriptor = "Lcom/facebook/jni/FBJniTests$Callbacks;";
+  constexpr static auto kJavaDescriptor =
+      "Lcom/facebook/jni/FBJniTests$Callbacks;";
 };
 
 struct TestThing : public JavaClass<TestThing> {
-  constexpr static auto kJavaDescriptor = "Lcom/facebook/jni/FBJniTests$TestThing;";
+  constexpr static auto kJavaDescriptor =
+      "Lcom/facebook/jni/FBJniTests$TestThing;";
 };
 
 // Yes, sloppy and does not handle conversions correctly but does it's job here
@@ -60,13 +62,14 @@ static std::string ToString(JNIEnv* env, jstring java_string) {
 
 jboolean TestClassResolution(JNIEnv* env, jobject self, jstring class_name) {
   auto resolved_class = findClassLocal(ToString(env, class_name).c_str());
-  return resolved_class.get() != nullptr? JNI_TRUE : JNI_FALSE;
+  return resolved_class.get() != nullptr ? JNI_TRUE : JNI_FALSE;
 }
 
-jboolean TestLazyClassResolution(JNIEnv* env, jobject self, jstring class_name) {
+jboolean
+TestLazyClassResolution(JNIEnv* env, jobject self, jstring class_name) {
   auto resolved_class = alias_ref<jclass>{};
   resolved_class = findClassLocal(ToString(env, class_name).c_str());
-  return resolved_class.get() != nullptr? JNI_TRUE : JNI_FALSE;
+  return resolved_class.get() != nullptr ? JNI_TRUE : JNI_FALSE;
 }
 
 jobject TestCreateInstanceOf(JNIEnv* env, jobject self, jstring class_name) {
@@ -76,7 +79,7 @@ jobject TestCreateInstanceOf(JNIEnv* env, jobject self, jstring class_name) {
 }
 
 jboolean TestTypeDescriptors(JNIEnv* env, jobject self) {
-#define FIXED_STRING_EXPECT_EQ(actual, expected)                        \
+#define FIXED_STRING_EXPECT_EQ(actual, expected) \
   static_assert((actual) == (expected), "descriptor mismatch")
 
   FIXED_STRING_EXPECT_EQ(jtype_traits<jboolean>::kDescriptor, "Z");
@@ -88,22 +91,30 @@ jboolean TestTypeDescriptors(JNIEnv* env, jobject self) {
   FIXED_STRING_EXPECT_EQ(jtype_traits<jlong>::kDescriptor, "J");
   FIXED_STRING_EXPECT_EQ(jtype_traits<jshort>::kDescriptor, "S");
 
-  FIXED_STRING_EXPECT_EQ(jtype_traits<jstring>::kDescriptor, "Ljava/lang/String;");
-  FIXED_STRING_EXPECT_EQ(jtype_traits<jobject>::kDescriptor, "Ljava/lang/Object;");
+  FIXED_STRING_EXPECT_EQ(
+      jtype_traits<jstring>::kDescriptor, "Ljava/lang/String;");
+  FIXED_STRING_EXPECT_EQ(
+      jtype_traits<jobject>::kDescriptor, "Ljava/lang/Object;");
 
   FIXED_STRING_EXPECT_EQ(jtype_traits<jintArray>::kDescriptor, "[I");
-  FIXED_STRING_EXPECT_EQ(jtype_traits<jtypeArray<jstring>>::kDescriptor, "[Ljava/lang/String;");
-  FIXED_STRING_EXPECT_EQ(jtype_traits<jtypeArray<jtypeArray<jstring>>>::kDescriptor
-     , "[[Ljava/lang/String;");
-  FIXED_STRING_EXPECT_EQ(jtype_traits<jtypeArray<jintArray>>::kDescriptor, "[[I");
+  FIXED_STRING_EXPECT_EQ(
+      jtype_traits<jtypeArray<jstring>>::kDescriptor, "[Ljava/lang/String;");
+  FIXED_STRING_EXPECT_EQ(
+      jtype_traits<jtypeArray<jtypeArray<jstring>>>::kDescriptor,
+      "[[Ljava/lang/String;");
+  FIXED_STRING_EXPECT_EQ(
+      jtype_traits<jtypeArray<jintArray>>::kDescriptor, "[[I");
 
   // base_name() is meaningless for primitive types.
   FIXED_STRING_EXPECT_EQ(jtype_traits<jstring>::kBaseName, "java/lang/String");
   FIXED_STRING_EXPECT_EQ(jtype_traits<jobject>::kBaseName, "java/lang/Object");
 
   FIXED_STRING_EXPECT_EQ(jtype_traits<jintArray>::kBaseName, "[I");
-  FIXED_STRING_EXPECT_EQ(jtype_traits<jtypeArray<jstring>>::kBaseName, "[Ljava/lang/String;");
-  FIXED_STRING_EXPECT_EQ(jtype_traits<jtypeArray<jtypeArray<jstring>>>::kBaseName, "[[Ljava/lang/String;");
+  FIXED_STRING_EXPECT_EQ(
+      jtype_traits<jtypeArray<jstring>>::kBaseName, "[Ljava/lang/String;");
+  FIXED_STRING_EXPECT_EQ(
+      jtype_traits<jtypeArray<jtypeArray<jstring>>>::kBaseName,
+      "[[Ljava/lang/String;");
   FIXED_STRING_EXPECT_EQ(jtype_traits<jtypeArray<jintArray>>::kBaseName, "[[I");
 
   return JNI_TRUE;
@@ -113,11 +124,10 @@ jboolean TestVirtualMethodResolution_I(
     JNIEnv* env,
     jobject self,
     jstring class_name,
-    jstring method_name)
-{
+    jstring method_name) {
   auto resolved_class = findClassLocal(ToString(env, class_name).c_str());
   auto resolved_method =
-    resolved_class->getMethod<jint()>(ToString(env, method_name).c_str());
+      resolved_class->getMethod<jint()>(ToString(env, method_name).c_str());
   return static_cast<bool>(resolved_method);
 }
 
@@ -125,11 +135,10 @@ jboolean TestVirtualMethodResolution_arrB(
     JNIEnv* env,
     jobject self,
     jstring class_name,
-    jstring method_name)
-{
+    jstring method_name) {
   auto resolved_class = findClassLocal(ToString(env, class_name).c_str());
-  auto resolved_method =
-    resolved_class->getMethod<jbyteArray()>(ToString(env, method_name).c_str());
+  auto resolved_method = resolved_class->getMethod<jbyteArray()>(
+      ToString(env, method_name).c_str());
   return static_cast<bool>(resolved_method);
 }
 
@@ -137,11 +146,11 @@ jboolean TestVirtualMethodResolution_S_arrS(
     JNIEnv* env,
     jobject self,
     jstring class_name,
-    jstring method_name)
-{
+    jstring method_name) {
   auto resolved_class = findClassLocal(ToString(env, class_name).c_str());
   auto resolved_method =
-    resolved_class->getMethod<jtypeArray<jstring>(jstring)>(ToString(env, method_name).c_str());
+      resolved_class->getMethod<jtypeArray<jstring>(jstring)>(
+          ToString(env, method_name).c_str());
   return static_cast<bool>(resolved_method);
 }
 
@@ -149,11 +158,11 @@ jboolean TestVirtualMethodResolution_arrarrS(
     JNIEnv* env,
     jobject self,
     jstring class_name,
-    jstring method_name)
-{
+    jstring method_name) {
   auto resolved_class = findClassLocal(ToString(env, class_name).c_str());
   auto resolved_method =
-    resolved_class->getStaticMethod<jtypeArray<jtypeArray<jstring>>()>(ToString(env, method_name).c_str());
+      resolved_class->getStaticMethod<jtypeArray<jtypeArray<jstring>>()>(
+          ToString(env, method_name).c_str());
   return static_cast<bool>(resolved_method);
 }
 
@@ -161,11 +170,11 @@ jboolean TestVirtualMethodResolution_arrarrI(
     JNIEnv* env,
     jobject self,
     jstring class_name,
-    jstring method_name)
-{
+    jstring method_name) {
   auto resolved_class = findClassLocal(ToString(env, class_name).c_str());
   auto resolved_method =
-    resolved_class->getStaticMethod<jtypeArray<jintArray>()>(ToString(env, method_name).c_str());
+      resolved_class->getStaticMethod<jtypeArray<jintArray>()>(
+          ToString(env, method_name).c_str());
   return static_cast<bool>(resolved_method);
 }
 
@@ -173,21 +182,25 @@ jboolean TestLazyVirtualMethodResolution_I(
     JNIEnv* env,
     jobject self,
     jstring class_name,
-    jstring method_name)
-{
+    jstring method_name) {
   auto resolved_class = findClassLocal(ToString(env, class_name).c_str());
   auto resolved_method = JMethod<jint()>{};
-  resolved_method = resolved_class->getMethod<jint()>(ToString(env, method_name).c_str());
+  resolved_method =
+      resolved_class->getMethod<jint()>(ToString(env, method_name).c_str());
   return static_cast<bool>(resolved_method);
 }
 
-void TestJMethodCallbacks(JNIEnv* env, jobject self, Callbacks::javaobject callbacks) {
+void TestJMethodCallbacks(
+    JNIEnv* env,
+    jobject self,
+    Callbacks::javaobject callbacks) {
   static const auto callbacks_class = Callbacks::javaClassStatic();
 
   static const auto void_foo = callbacks_class->getMethod<void()>("voidFoo");
   void_foo(callbacks);
 
-  static const auto boolean_foo = callbacks_class->getMethod<jboolean()>("booleanFoo");
+  static const auto boolean_foo =
+      callbacks_class->getMethod<jboolean()>("booleanFoo");
   boolean_foo(callbacks);
 
   static const auto byte_foo = callbacks_class->getMethod<jbyte()>("byteFoo");
@@ -196,7 +209,8 @@ void TestJMethodCallbacks(JNIEnv* env, jobject self, Callbacks::javaobject callb
   static const auto char_foo = callbacks_class->getMethod<jchar()>("charFoo");
   char_foo(callbacks);
 
-  static const auto short_foo = callbacks_class->getMethod<jshort()>("shortFoo");
+  static const auto short_foo =
+      callbacks_class->getMethod<jshort()>("shortFoo");
   short_foo(callbacks);
 
   static const auto int_foo = callbacks_class->getMethod<jint()>("intFoo");
@@ -205,16 +219,20 @@ void TestJMethodCallbacks(JNIEnv* env, jobject self, Callbacks::javaobject callb
   static const auto long_foo = callbacks_class->getMethod<jlong()>("longFoo");
   long_foo(callbacks);
 
-  static const auto float_foo = callbacks_class->getMethod<jfloat()>("floatFoo");
+  static const auto float_foo =
+      callbacks_class->getMethod<jfloat()>("floatFoo");
   float_foo(callbacks);
 
-  static const auto double_foo = callbacks_class->getMethod<jdouble()>("doubleFoo");
+  static const auto double_foo =
+      callbacks_class->getMethod<jdouble()>("doubleFoo");
   double_foo(callbacks);
 
-  static const auto object_foo = callbacks_class->getMethod<jobject()>("objectFoo");
+  static const auto object_foo =
+      callbacks_class->getMethod<jobject()>("objectFoo");
   object_foo(callbacks);
 
-  static const auto string_foo = callbacks_class->getMethod<jstring()>("stringFoo");
+  static const auto string_foo =
+      callbacks_class->getMethod<jstring()>("stringFoo");
   string_foo(callbacks);
 }
 
@@ -224,45 +242,58 @@ void TestJStaticMethodCallbacks(JNIEnv* env, jobject self) {
   auto cls = findClassLocal("com/facebook/jni/FBJniTests");
   jclass jcls = env->FindClass("com/facebook/jni/FBJniTests");
 
-  static const auto void_foo_static = cls->getStaticMethod<void()>("voidFooStatic");
+  static const auto void_foo_static =
+      cls->getStaticMethod<void()>("voidFooStatic");
   void_foo_static(jcls);
 
-  static const auto boolean_foo_static = cls->getStaticMethod<jboolean()>("booleanFooStatic");
+  static const auto boolean_foo_static =
+      cls->getStaticMethod<jboolean()>("booleanFooStatic");
   boolean_foo_static(jcls);
 
-  static const auto byte_foo_static = cls->getStaticMethod<jbyte()>("byteFooStatic");
+  static const auto byte_foo_static =
+      cls->getStaticMethod<jbyte()>("byteFooStatic");
   byte_foo_static(jcls);
 
-  static const auto char_foo_static = cls->getStaticMethod<jchar(jchar, jint)>("charFooStatic");
+  static const auto char_foo_static =
+      cls->getStaticMethod<jchar(jchar, jint)>("charFooStatic");
   char_foo_static(jcls, 'c', 5);
 
-  static const auto short_foo_static = cls->getStaticMethod<jshort(jshort, jshort)>("shortFooStatic");
+  static const auto short_foo_static =
+      cls->getStaticMethod<jshort(jshort, jshort)>("shortFooStatic");
   short_foo_static(jcls, 17, 42);
 
-  static const auto int_foo_static = cls->getStaticMethod<jint(jint)>("intFooStatic");
+  static const auto int_foo_static =
+      cls->getStaticMethod<jint(jint)>("intFooStatic");
   int_foo_static(jcls, 5);
 
-  static const auto long_foo_static = cls->getStaticMethod<jlong()>("longFooStatic");
+  static const auto long_foo_static =
+      cls->getStaticMethod<jlong()>("longFooStatic");
   long_foo_static(jcls);
 
-  static const auto float_foo_static = cls->getStaticMethod<jfloat()>("floatFooStatic");
+  static const auto float_foo_static =
+      cls->getStaticMethod<jfloat()>("floatFooStatic");
   float_foo_static(jcls);
 
-  static const auto double_foo_static = cls->getStaticMethod<jdouble()>("doubleFooStatic");
+  static const auto double_foo_static =
+      cls->getStaticMethod<jdouble()>("doubleFooStatic");
   double_foo_static(jcls);
 
-  static const auto object_foo_static = cls->getStaticMethod<jobject()>("objectFooStatic");
+  static const auto object_foo_static =
+      cls->getStaticMethod<jobject()>("objectFooStatic");
   object_foo_static(jcls);
 
-  static const auto string_foo_static = cls->getStaticMethod<jstring()>("stringFooStatic");
+  static const auto string_foo_static =
+      cls->getStaticMethod<jstring()>("stringFooStatic");
   string_foo_static(jcls);
 }
 
-jboolean TestIsAssignableFrom(JNIEnv* env, jobject self, jclass cls1, jclass cls2) {
+jboolean
+TestIsAssignableFrom(JNIEnv* env, jobject self, jclass cls1, jclass cls2) {
   return adopt_local(cls1)->isAssignableFrom(cls2);
 }
 
-jboolean TestIsInstanceOf(JNIEnv* env, jobject self, jobject test_object, jclass cls) {
+jboolean
+TestIsInstanceOf(JNIEnv* env, jobject self, jobject test_object, jclass cls) {
   auto clsref = adopt_local(test_object);
   return clsref->isInstanceOf(cls);
 }
@@ -271,50 +302,81 @@ jboolean TestIsSameObject(JNIEnv* env, jobject self, jobject a, jobject b) {
   return isSameObject(a, b);
 }
 
-jboolean TestGetSuperclass(JNIEnv* env, jobject self, jclass test_class, jclass super_class) {
-  return isSameObject(adopt_local(test_class)->getSuperclass().get(), super_class);
+jboolean TestGetSuperclass(
+    JNIEnv* env,
+    jobject self,
+    jclass test_class,
+    jclass super_class) {
+  return isSameObject(
+      adopt_local(test_class)->getSuperclass().get(), super_class);
 }
 
-jboolean StaticCastAliasRefToString(JNIEnv *, jobject , jobject string_as_object) {
-  alias_ref<jobject> string_as_object_alias_ref { string_as_object };
-  alias_ref<jstring> string_alias_ref = static_ref_cast<jstring>(string_as_object_alias_ref);
+jboolean
+StaticCastAliasRefToString(JNIEnv*, jobject, jobject string_as_object) {
+  alias_ref<jobject> string_as_object_alias_ref{string_as_object};
+  alias_ref<jstring> string_alias_ref =
+      static_ref_cast<jstring>(string_as_object_alias_ref);
   return isSameObject(string_alias_ref.get(), string_as_object_alias_ref.get());
 }
 
-jboolean DynamicCastAliasRefToThrowable(JNIEnv *, jobject , jobject might_actually_be_throwable) {
-  alias_ref<jobject> might_actually_be_throwable_alias_ref { might_actually_be_throwable };
+jboolean DynamicCastAliasRefToThrowable(
+    JNIEnv*,
+    jobject,
+    jobject might_actually_be_throwable) {
+  alias_ref<jobject> might_actually_be_throwable_alias_ref{
+      might_actually_be_throwable};
   // If the next line fails, it will throw an exception.
-  alias_ref<jthrowable> throwable_alias_ref = dynamic_ref_cast<jthrowable>(might_actually_be_throwable_alias_ref);
-  return isSameObject(throwable_alias_ref.get(), might_actually_be_throwable_alias_ref.get());
+  alias_ref<jthrowable> throwable_alias_ref =
+      dynamic_ref_cast<jthrowable>(might_actually_be_throwable_alias_ref);
+  return isSameObject(
+      throwable_alias_ref.get(), might_actually_be_throwable_alias_ref.get());
 }
 
-jboolean StaticCastLocalRefToString(JNIEnv *, jobject , jobject string_as_object) {
+jboolean
+StaticCastLocalRefToString(JNIEnv*, jobject, jobject string_as_object) {
   local_ref<jobject> string_as_object_local_ref = adopt_local(string_as_object);
-  local_ref<jstring> string_local_ref = static_ref_cast<jstring>(string_as_object_local_ref);
+  local_ref<jstring> string_local_ref =
+      static_ref_cast<jstring>(string_as_object_local_ref);
   return isSameObject(string_local_ref.get(), string_as_object_local_ref.get());
 }
 
-jboolean DynamicCastLocalRefToString(JNIEnv *, jobject , jobject might_actually_be_string) {
-  local_ref<jobject> might_actually_be_string_local_ref = adopt_local(might_actually_be_string);
+jboolean DynamicCastLocalRefToString(
+    JNIEnv*,
+    jobject,
+    jobject might_actually_be_string) {
+  local_ref<jobject> might_actually_be_string_local_ref =
+      adopt_local(might_actually_be_string);
   // If the next line fails, it will throw an exception.
-  local_ref<jstring> string_local_ref = dynamic_ref_cast<jstring>(might_actually_be_string_local_ref);
-  return isSameObject(string_local_ref.get(), might_actually_be_string_local_ref.get());
+  local_ref<jstring> string_local_ref =
+      dynamic_ref_cast<jstring>(might_actually_be_string_local_ref);
+  return isSameObject(
+      string_local_ref.get(), might_actually_be_string_local_ref.get());
 }
 
-jboolean StaticCastGlobalRefToString(JNIEnv *, jobject , jobject string_as_object) {
-  global_ref<jobject> string_as_object_global_ref = make_global(string_as_object);
-  global_ref<jstring> string_global_ref = static_ref_cast<jstring>(string_as_object_global_ref);
-  return isSameObject(string_global_ref.get(), string_as_object_global_ref.get());
+jboolean
+StaticCastGlobalRefToString(JNIEnv*, jobject, jobject string_as_object) {
+  global_ref<jobject> string_as_object_global_ref =
+      make_global(string_as_object);
+  global_ref<jstring> string_global_ref =
+      static_ref_cast<jstring>(string_as_object_global_ref);
+  return isSameObject(
+      string_global_ref.get(), string_as_object_global_ref.get());
 }
 
-jboolean DynamicCastGlobalRefToString(JNIEnv *, jobject , jobject might_actually_be_string) {
-  global_ref<jobject> might_actually_be_string_global_ref = make_global(might_actually_be_string);
+jboolean DynamicCastGlobalRefToString(
+    JNIEnv*,
+    jobject,
+    jobject might_actually_be_string) {
+  global_ref<jobject> might_actually_be_string_global_ref =
+      make_global(might_actually_be_string);
   // If the next line fails, it will throw an exception.
-  global_ref<jstring> string_global_ref = dynamic_ref_cast<jstring>(might_actually_be_string_global_ref);
-  return isSameObject(string_global_ref.get(), might_actually_be_string_global_ref.get());
+  global_ref<jstring> string_global_ref =
+      dynamic_ref_cast<jstring>(might_actually_be_string_global_ref);
+  return isSameObject(
+      string_global_ref.get(), might_actually_be_string_global_ref.get());
 }
 
-template<typename... Args>
+template <typename... Args>
 static void Use(Args&&... args) {}
 
 jboolean TestWeakRefs(JNIEnv*, jobject self) {
@@ -350,7 +412,9 @@ jboolean TestWeakRefs(JNIEnv*, jobject self) {
 
   return (g_reference_stats.locals_deleted == 2 &&
           g_reference_stats.globals_deleted == 2 &&
-          g_reference_stats.weaks_deleted == 2)? JNI_TRUE : JNI_FALSE;
+          g_reference_stats.weaks_deleted == 2)
+      ? JNI_TRUE
+      : JNI_FALSE;
 }
 
 jboolean TestAlias(JNIEnv* env, jobject self) {
@@ -366,7 +430,7 @@ jboolean testAliasRefConversions(JNIEnv*, jobject self) {
   anObject = aString;
   // aString = anObject; // Shouldn't compile
 
-  return isSameObject(aString, anObject)? JNI_TRUE : JNI_FALSE;
+  return isSameObject(aString, anObject) ? JNI_TRUE : JNI_FALSE;
 }
 
 void TestAutoAliasRefReturningVoid(facebook::jni::alias_ref<jobject> self) {
@@ -470,8 +534,11 @@ jboolean testLockingWeakReferences(JNIEnv*, jobject self) {
   return JNI_TRUE;
 }
 
-jboolean TestFieldAccess(alias_ref<jobject> self, const std::string& field_name,
-                         jint oldval, jint newval) {
+jboolean TestFieldAccess(
+    alias_ref<jobject> self,
+    const std::string& field_name,
+    jint oldval,
+    jint newval) {
   auto cls = self->getClass();
   auto fld = cls->getField<jint>(field_name.c_str());
   auto method = cls->getMethod<jint(jdouble)>("bar");
@@ -526,7 +593,8 @@ jboolean TestReferenceFieldAccess(
     jobject newval,
     jboolean useWrapper) {
   auto cls = self->getClass();
-  auto rawfld = cls->getField<jobject>(field_name.c_str(), TestThing::kJavaDescriptor);
+  auto rawfld =
+      cls->getField<jobject>(field_name.c_str(), TestThing::kJavaDescriptor);
 
   if (self->getFieldValue(rawfld) != oldval) {
     return JNI_FALSE;
@@ -590,7 +658,8 @@ jboolean TestStaticReferenceFieldAccess(
     jobject newval,
     jboolean useWrapper) {
   auto cls = self->getClass();
-  auto rawfld = cls->getStaticField<jobject>(field_name.c_str(), TestThing::kJavaDescriptor);
+  auto rawfld = cls->getStaticField<jobject>(
+      field_name.c_str(), TestThing::kJavaDescriptor);
 
   auto curvalRef = cls->getStaticFieldValue(rawfld);
   if (curvalRef != oldval) {
@@ -618,15 +687,20 @@ jboolean TestNonVirtualMethod(JNIEnv* env, jobject self, jboolean s) {
   if (!cls) {
     return JNI_FALSE;
   }
-  auto method = cls->getNonvirtualMethod<jboolean(jboolean)>("nonVirtualMethod");
+  auto method =
+      cls->getNonvirtualMethod<jboolean(jboolean)>("nonVirtualMethod");
 
   jclass jcls = env->FindClass("com/facebook/jni/FBJniTests");
 
   return method(self, jcls, s);
 }
 
-jtypeArray<jstring>
-TestArrayCreation(JNIEnv* env, jobject self, jstring s0, jstring s1, jstring s2) {
+jtypeArray<jstring> TestArrayCreation(
+    JNIEnv* env,
+    jobject self,
+    jstring s0,
+    jstring s1,
+    jstring s2) {
   auto array = JArrayClass<jstring>::newArray(3);
   array->setElement(0, s0);
   array->setElement(1, s1);
@@ -634,8 +708,12 @@ TestArrayCreation(JNIEnv* env, jobject self, jstring s0, jstring s1, jstring s2)
   return static_cast<jtypeArray<jstring>>(array.release());
 }
 
-jtypeArray<jtypeArray<jstring>>
-TestMultidimensionalObjectArray(JNIEnv* env, jobject self, jstring s0, jstring s1, jstring s2) {
+jtypeArray<jtypeArray<jstring>> TestMultidimensionalObjectArray(
+    JNIEnv* env,
+    jobject self,
+    jstring s0,
+    jstring s1,
+    jstring s2) {
   auto array = JArrayClass<jtypeArray<jstring>>::newArray(2);
   auto row = JArrayClass<jstring>::newArray(2);
   row->setElement(0, s0);
@@ -647,8 +725,12 @@ TestMultidimensionalObjectArray(JNIEnv* env, jobject self, jstring s0, jstring s
   return array.release();
 }
 
-jtypeArray<jintArray>
-TestMultidimensionalPrimitiveArray(JNIEnv* env, jobject self, jint i0, jint i1, jint i2) {
+jtypeArray<jintArray> TestMultidimensionalPrimitiveArray(
+    JNIEnv* env,
+    jobject self,
+    jint i0,
+    jint i1,
+    jint i2) {
   auto array = JArrayClass<jintArray>::newArray(2);
   auto row = JArrayInt::newArray(2);
   row->setRegion(0, 1, &i0);
@@ -660,35 +742,37 @@ TestMultidimensionalPrimitiveArray(JNIEnv* env, jobject self, jint i0, jint i1, 
   return array.release();
 }
 
-jstring TestBuildStringArray(JNIEnv* env, jobject self, jtypeArray<jstring> input) {
+jstring
+TestBuildStringArray(JNIEnv* env, jobject self, jtypeArray<jstring> input) {
   auto me = adopt_local(self);
   auto cls = me->getClass();
-  auto method = cls->getMethod<jstring(jtypeArray<jstring>)>("captureStringArray");
+  auto method =
+      cls->getMethod<jstring(jtypeArray<jstring>)>("captureStringArray");
 
   auto niceInput = adopt_local_array<jstring>(input);
   auto length = niceInput->size();
   auto inputCopy = JArrayClass<jstring>::newArray(length);
   for (size_t idx = 0; idx < length; idx++) {
     switch (idx % 3) {
-    case 0: {
-      // Verify that assignment from a T works.
-      jstring value = (jstring)env->GetObjectArrayElement(input, idx);
-      (*inputCopy)[idx] = value; // Assignment from actual type.
-      env->DeleteLocalRef(value);
-      break;
-    }
-    case 1: {
-      // Verify that direct assignment from an ElementProxy works.
-      (*inputCopy)[idx] = (*niceInput)[idx];
-      break;
-    }
-    case 2:
-    default: {
-      // Verify that assignment from a smart reference works.
-      auto smartRef = adopt_local((*niceInput)[idx]);
-      (*inputCopy)[idx] = smartRef;
-      break;
-    }
+      case 0: {
+        // Verify that assignment from a T works.
+        jstring value = (jstring)env->GetObjectArrayElement(input, idx);
+        (*inputCopy)[idx] = value; // Assignment from actual type.
+        env->DeleteLocalRef(value);
+        break;
+      }
+      case 1: {
+        // Verify that direct assignment from an ElementProxy works.
+        (*inputCopy)[idx] = (*niceInput)[idx];
+        break;
+      }
+      case 2:
+      default: {
+        // Verify that assignment from a smart reference works.
+        auto smartRef = adopt_local((*niceInput)[idx]);
+        (*inputCopy)[idx] = smartRef;
+        break;
+      }
     }
   }
 
@@ -696,10 +780,15 @@ jstring TestBuildStringArray(JNIEnv* env, jobject self, jtypeArray<jstring> inpu
 }
 
 template <typename F, typename... Args>
-void tryResolveMethodWithCxxTypes(std::string sig, alias_ref<jobject> me, std::string methodName, Args... args) {
+void tryResolveMethodWithCxxTypes(
+    std::string sig,
+    alias_ref<jobject> me,
+    std::string methodName,
+    Args... args) {
   auto cls = me->getClass();
   auto method = cls->getMethod<F>(methodName.c_str());
-  if (!method) throw std::runtime_error("method lookup failed with signature=" + sig);
+  if (!method)
+    throw std::runtime_error("method lookup failed with signature=" + sig);
   try {
     method(me, args...);
   } catch (std::exception&) {
@@ -707,7 +796,8 @@ void tryResolveMethodWithCxxTypes(std::string sig, alias_ref<jobject> me, std::s
   }
 
   auto nonVirtualMethod = cls->getNonvirtualMethod<F>(methodName.c_str());
-  if (!nonVirtualMethod) throw std::runtime_error("method lookup failed with signature=" + sig);
+  if (!nonVirtualMethod)
+    throw std::runtime_error("method lookup failed with signature=" + sig);
   try {
     nonVirtualMethod(me, cls.get(), args...);
   } catch (std::exception&) {
@@ -715,11 +805,14 @@ void tryResolveMethodWithCxxTypes(std::string sig, alias_ref<jobject> me, std::s
   }
 
   auto staticMethod = cls->getStaticMethod<F>((methodName + "Static").c_str());
-  if (!staticMethod) throw std::runtime_error("static method lookup failed with signature=" + sig);
+  if (!staticMethod)
+    throw std::runtime_error(
+        "static method lookup failed with signature=" + sig);
   try {
     staticMethod(cls, args...);
   } catch (std::exception&) {
-    throw std::runtime_error("calling static method failed with signature=" + sig);
+    throw std::runtime_error(
+        "calling static method failed with signature=" + sig);
   }
 }
 
@@ -727,7 +820,11 @@ void tryResolveMethodWithCxxTypes(std::string sig, alias_ref<jobject> me, std::s
 #define runTest(sig, ...) \
   tryResolveMethodWithCxxTypes<sig>(#sig, self, method, __VA_ARGS__);
 
-void TestMethodResolutionWithCxxTypes(alias_ref<jobject> self, alias_ref<jstring> jmethod, alias_ref<jstring> str, jlong v) {
+void TestMethodResolutionWithCxxTypes(
+    alias_ref<jobject> self,
+    alias_ref<jstring> jmethod,
+    alias_ref<jstring> str,
+    jlong v) {
   auto method = jmethod->toStdString();
   runTest(jobject(jstring, jlong), str.get(), v);
   runTest(local_ref<jobject>(jstring, jlong), str.get(), v);
@@ -738,7 +835,8 @@ void TestMethodResolutionWithCxxTypes(alias_ref<jobject> self, alias_ref<jstring
   runTest(jobject(alias_ref<jstring>, int64_t), str, (int64_t)v);
   runTest(jobject(alias_ref<jstring>, long long), str, (long long)v);
 
-  runTest(jobject(const char*, int64_t), str->toStdString().c_str(), (int64_t)v);
+  runTest(
+      jobject(const char*, int64_t), str->toStdString().c_str(), (int64_t)v);
 
   method = jmethod->toStdString() + "Void";
   runTest(void(jstring, int64_t), str.get(), v);
@@ -797,7 +895,8 @@ jstring TestCopyConstructor(JNIEnv* env, jobject self) {
   try {
     method(self);
     return env->NewStringUTF("method did not throw");
-  } catch (JniException ex) { // No & -- we're intentionally invoking the copy constructor.
+  } catch (JniException ex) { // No & -- we're intentionally invoking the copy
+                              // constructor.
     return env->NewStringUTF(ex.what());
   }
 }
@@ -867,22 +966,24 @@ void TestHandleCppCharPointerThrow(JNIEnv* env, jobject self) {
 }
 
 void TestThrowJavaExceptionByName(JNIEnv* env, jobject self) {
-  throwNewJavaException("java/lang/IllegalArgumentException", "bad news: %s", "it didn't work");
+  throwNewJavaException(
+      "java/lang/IllegalArgumentException", "bad news: %s", "it didn't work");
 }
 
 jint TestJThread(JNIEnv* env, jobject self) {
   jint i = -1;
   auto thread = JThread::create([&] {
-      i = 0;
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
-      i = 1;
-    });
+    i = 0;
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    i = 1;
+  });
   thread->start();
   thread->join();
   return i;
 }
 
-// Global for simpleWorker tests. Relies on thread sync points (constructor, join) for "locking".
+// Global for simpleWorker tests. Relies on thread sync points (constructor,
+// join) for "locking".
 jint gWorkerValue;
 
 void simpleWorker(jobject grefSelf, jdouble input) {
@@ -894,7 +995,8 @@ void simpleWorker(jobject grefSelf, jdouble input) {
 }
 
 void nestedSimpleWorker(jobject grefSelf, jdouble input) {
-  ThreadScope attachGuard; // More efficient version of guard; no move constructor required.
+  ThreadScope attachGuard; // More efficient version of guard; no move
+                           // constructor required.
   simpleWorker(grefSelf, input);
 }
 
@@ -982,7 +1084,7 @@ void testNewObject(JNIEnv*, jobject self) {
   Use(str);
 }
 
-template<typename T>
+template <typename T>
 static jboolean copyAndVerify(T& orig) {
   T copy{orig};
   EXPECT(orig == copy);
@@ -990,7 +1092,7 @@ static jboolean copyAndVerify(T& orig) {
   return JNI_TRUE;
 }
 
-template<typename T>
+template <typename T>
 static jboolean assignAndVerify(T& orig) {
   T copy{};
   copy = orig;
@@ -1106,14 +1208,15 @@ jboolean testAssignmentAndCopyConstructors(JNIEnv*, jobject self) {
   FBJNI_LOGE("globals: %d", g_reference_stats.globals_deleted.load());
   FBJNI_LOGE("weaks: %d", g_reference_stats.weaks_deleted.load());
 
-  EXPECT(g_reference_stats.locals_deleted == 3 &&
-        g_reference_stats.globals_deleted == 7 &&
-        g_reference_stats.weaks_deleted == 3);
+  EXPECT(
+      g_reference_stats.locals_deleted == 3 &&
+      g_reference_stats.globals_deleted == 7 &&
+      g_reference_stats.weaks_deleted == 3);
 
   return JNI_TRUE;
 }
 
-template<template <typename> class RefType, typename T>
+template <template <typename> class RefType, typename T>
 static jboolean copyAndVerifyCross(RefType<T>& orig) {
   RefType<ReprType<T>> reprCopy{orig};
   RefType<JniType<T>> jniCopy{orig};
@@ -1122,7 +1225,7 @@ static jboolean copyAndVerifyCross(RefType<T>& orig) {
   return JNI_TRUE;
 }
 
-template<template <typename> class RefType, typename T>
+template <template <typename> class RefType, typename T>
 static jboolean assignAndVerifyCross(RefType<T>& orig) {
   RefType<ReprType<T>> reprCopy{};
   reprCopy = orig;
@@ -1133,7 +1236,7 @@ static jboolean assignAndVerifyCross(RefType<T>& orig) {
   return JNI_TRUE;
 }
 
-template<template <typename> class RefType, typename T>
+template <template <typename> class RefType, typename T>
 static jboolean verifyMakeCross(RefType<T>& orig) {
   RefType<ReprType<T>> copy{orig};
   {
@@ -1163,22 +1266,31 @@ static jboolean verifyMakeCross(RefType<T>& orig) {
   return JNI_TRUE;
 }
 
-
 jboolean testAssignmentAndCopyCrossTypes(JNIEnv*, jobject self) {
   using facebook::jni::internal::g_reference_stats;
 
   size_t locals = 0, globals = 0, weaks = 0;
   g_reference_stats.reset();
-#define VERIFY_REFERENCE_STATS() do {                                   \
+#define VERIFY_REFERENCE_STATS()                                             \
+  do {                                                                       \
     bool referenceStatsMatch = g_reference_stats.locals_deleted == locals && \
-      g_reference_stats.globals_deleted == globals &&                   \
-      g_reference_stats.weaks_deleted == weaks;                         \
-    if (!referenceStatsMatch) {                                         \
-      FBJNI_LOGE("locals: %d, expected: %zd", g_reference_stats.locals_deleted.load(), locals); \
-      FBJNI_LOGE("globals: %d, expected: %zd", g_reference_stats.globals_deleted.load(), globals); \
-      FBJNI_LOGE("weaks: %d, expected: %zd", g_reference_stats.weaks_deleted.load(), weaks); \
-    }                                                                   \
-    EXPECT(referenceStatsMatch);                                        \
+        g_reference_stats.globals_deleted == globals &&                      \
+        g_reference_stats.weaks_deleted == weaks;                            \
+    if (!referenceStatsMatch) {                                              \
+      FBJNI_LOGE(                                                            \
+          "locals: %d, expected: %zd",                                       \
+          g_reference_stats.locals_deleted.load(),                           \
+          locals);                                                           \
+      FBJNI_LOGE(                                                            \
+          "globals: %d, expected: %zd",                                      \
+          g_reference_stats.globals_deleted.load(),                          \
+          globals);                                                          \
+      FBJNI_LOGE(                                                            \
+          "weaks: %d, expected: %zd",                                        \
+          g_reference_stats.weaks_deleted.load(),                            \
+          weaks);                                                            \
+    }                                                                        \
+    EXPECT(referenceStatsMatch);                                             \
   } while (0)
 
   {
@@ -1243,16 +1355,15 @@ jboolean testAssignmentAndCopyCrossTypes(JNIEnv*, jobject self) {
     alias = global;
     // alias = weak; // Should not compile
 
-    weaks += 1;   // `weakCopy` going out of scope
-    weaks += 1;   // `weak` going out of scope
+    weaks += 1; // `weakCopy` going out of scope
+    weaks += 1; // `weak` going out of scope
     globals += 1; // `global` going out of scope
-    locals += 1;  // `local` going out of scope
+    locals += 1; // `local` going out of scope
   }
 
   VERIFY_REFERENCE_STATS();
 
   return JNI_TRUE;
-
 }
 
 jboolean testToString(JNIEnv* env, jobject self) {
@@ -1305,11 +1416,12 @@ struct SomeJavaFoo;
 struct OtherJavaFoo;
 
 struct SomeJavaFoo : JavaClass<SomeJavaFoo> {
-  // Ensure that smart references can be used in declarations using forward-declared types.
+  // Ensure that smart references can be used in declarations using
+  // forward-declared types.
   alias_ref<OtherJavaFoo> call(alias_ref<SomeJavaFoo>);
-  static alias_ref<OtherJavaFoo> funcWithForwardDeclaredRefs(local_ref<OtherJavaFoo> foo);
+  static alias_ref<OtherJavaFoo> funcWithForwardDeclaredRefs(
+      local_ref<OtherJavaFoo> foo);
 };
-
 
 using sjf = SomeJavaFoo::javaobject;
 
@@ -1328,7 +1440,6 @@ static_assert(!IsNonWeakReference<jint*>(), "");
 static_assert(!IsNonWeakReference<void>(), "");
 static_assert(!IsNonWeakReference<int>(), "");
 
-
 static_assert(IsAnyReference<local_ref<jobject>>(), "");
 static_assert(IsAnyReference<local_ref<sjf>>(), "");
 static_assert(IsAnyReference<global_ref<jobject>>(), "");
@@ -1344,7 +1455,6 @@ static_assert(!IsAnyReference<jint*>(), "");
 static_assert(!IsAnyReference<void>(), "");
 static_assert(!IsAnyReference<int>(), "");
 
-
 static_assert(IsPlainJniReference<jobject>(), "");
 static_assert(IsPlainJniReference<sjf>(), "");
 static_assert(IsPlainJniReference<jintArray>(), "");
@@ -1359,7 +1469,6 @@ static_assert(!IsPlainJniReference<std::string>(), "");
 static_assert(!IsPlainJniReference<jint*>(), "");
 static_assert(!IsPlainJniReference<void>(), "");
 static_assert(!IsPlainJniReference<int>(), "");
-
 
 static_assert(IsJniPrimitive<int>(), "");
 static_assert(IsJniPrimitive<jint>(), "");
@@ -1378,7 +1487,6 @@ static_assert(!IsJniPrimitive<std::string>(), "");
 static_assert(!IsJniPrimitive<jint*>(), "");
 static_assert(!IsJniPrimitive<void>(), "");
 
-
 static_assert(IsJniPrimitiveArray<jintArray>(), "");
 static_assert(IsJniPrimitiveArray<jbooleanArray>(), "");
 
@@ -1396,7 +1504,6 @@ static_assert(!IsJniPrimitiveArray<std::string>(), "");
 static_assert(!IsJniPrimitiveArray<jint*>(), "");
 static_assert(!IsJniPrimitiveArray<void>(), "");
 
-
 static_assert(IsJniScalar<jintArray>(), "");
 static_assert(IsJniScalar<jbooleanArray>(), "");
 static_assert(IsJniScalar<int>(), "");
@@ -1413,7 +1520,6 @@ static_assert(!IsJniScalar<weak_ref<sjf>>(), "");
 static_assert(!IsJniScalar<std::string>(), "");
 static_assert(!IsJniScalar<jint*>(), "");
 static_assert(!IsJniScalar<void>(), "");
-
 
 static_assert(IsJniType<jintArray>(), "");
 static_assert(IsJniType<jbooleanArray>(), "");
@@ -1455,101 +1561,162 @@ void RegisterFbjniTests() {
   StaticAssertSame<PrimitiveOrJniType<jint>, jint>();
   StaticAssertSame<PrimitiveOrJniType<TestThing>, TestThing::javaobject>();
 
-  registerNatives(jaccess_class_name, {
-      makeNativeMethod("nativeTestClassResolution", TestClassResolution),
-      makeNativeMethod("nativeTestLazyClassResolution", TestLazyClassResolution),
-      makeNativeMethod("nativeCreateInstanceOf", TestCreateInstanceOf),
-      makeNativeMethod("nativeTestVirtualMethodResolution_I", TestVirtualMethodResolution_I),
-      makeNativeMethod("nativeTestTypeDescriptors", TestTypeDescriptors),
-      makeNativeMethod(
-          "nativeTestVirtualMethodResolution_arrB",
-          TestVirtualMethodResolution_arrB),
-      makeNativeMethod(
-          "nativeTestVirtualMethodResolution_S_arrS",
-          TestVirtualMethodResolution_S_arrS),
-      makeNativeMethod(
-          "nativeTestVirtualMethodResolution_arrarrS",
-          TestVirtualMethodResolution_arrarrS),
-      makeNativeMethod(
-          "nativeTestVirtualMethodResolution_arrarrI",
-          TestVirtualMethodResolution_arrarrI),
-      makeNativeMethod(
-          "nativeTestLazyVirtualMethodResolution_I",
-          TestLazyVirtualMethodResolution_I),
-      makeNativeMethod(
-          "nativeTestJMethodCallbacks",
-          "(Lcom/facebook/jni/FBJniTests$Callbacks;)V",
-          TestJMethodCallbacks),
-      makeNativeMethod("nativeTestJStaticMethodCallbacks", TestJStaticMethodCallbacks),
-      makeNativeMethod("nativeTestIsAssignableFrom", TestIsAssignableFrom),
-      makeNativeMethod("nativeTestIsInstanceOf", TestIsInstanceOf),
-      makeNativeMethod("nativeTestIsSameObject", TestIsSameObject),
-      makeNativeMethod("nativeTestGetSuperclass", TestGetSuperclass),
-      makeNativeMethod("nativeTestWeakRefs", TestWeakRefs),
-      makeNativeMethod("nativeTestAlias", TestAlias),
-      makeNativeMethod("nativeTestAutoAliasRefReturningVoid", TestAutoAliasRefReturningVoid),
-      makeNativeMethod("nativeTestAliasRefConversions", testAliasRefConversions),
-      makeNativeMethod("nativeTestCreatingReferences", testCreatingReferences),
-      makeNativeMethod(
-          "nativeTestAssignmentAndCopyConstructors",
-          testAssignmentAndCopyConstructors),
-      makeNativeMethod(
-          "nativeTestAssignmentAndCopyCrossTypes",
-          testAssignmentAndCopyCrossTypes),
-      makeNativeMethod("nativeTestNullReferences", testNullReferences),
-      makeNativeMethod("nativeTestFieldAccess", TestFieldAccess),
-      makeNativeMethod("nativeTestStringFieldAccess", TestStringFieldAccess),
-      makeNativeMethod("nativeTestReferenceFieldAccess", TestReferenceFieldAccess),
-      makeNativeMethod("nativeTestStaticFieldAccess", TestStaticFieldAccess),
-      makeNativeMethod("nativeTestStaticStringFieldAccess", TestStaticStringFieldAccess),
-      makeNativeMethod("nativeTestStaticReferenceFieldAccess", TestStaticReferenceFieldAccess),
-      makeNativeMethod("nativeTestNonVirtualMethod", TestNonVirtualMethod),
-      makeNativeMethod("nativeTestArrayCreation", TestArrayCreation),
-      makeNativeMethod("nativeTestMultidimensionalObjectArray", TestMultidimensionalObjectArray),
-      makeNativeMethod("nativeTestMultidimensionalPrimitiveArray", TestMultidimensionalPrimitiveArray),
-      makeNativeMethod("nativeTestBuildStringArray", TestBuildStringArray),
-      makeNativeMethod("testHandleJavaCustomExceptionNative", TestHandleJavaCustomException),
-      makeNativeMethod("testHandleNullExceptionMessageNative", TestHandleNullExceptionMessage),
-      makeNativeMethod("nativeTestHandleNestedException", TestHandleNestedException),
-      makeNativeMethod("nativeTestHandleNoRttiException", TestHandleNoRttiException),
-      makeNativeMethod("nativeTestCopyConstructor", TestCopyConstructor),
-      makeNativeMethod(
-          "nativeTestMoveConstructorWithEmptyWhat",
-          TestMoveConstructorWithEmptyWhat),
-      makeNativeMethod(
-          "nativeTestMoveConstructorWithPopulatedWhat",
-          TestMoveConstructorWithPopulatedWhat),
-      makeNativeMethod("nativeTestHandleCppRuntimeError", TestHandleCppRuntimeError),
-      makeNativeMethod("nativeTestHandleCppIOBaseFailure", TestHandleCppIOBaseFailure),
-      makeNativeMethod("nativeTestHandleCppSystemError", TestHandleCppSystemError),
-      makeNativeMethod("nativeTestInterDsoExceptionHandlingA", TestInterDsoExceptionHandlingA),
-      makeNativeMethod("nativeTestInterDsoExceptionHandlingB", TestInterDsoExceptionHandlingB),
-      makeNativeMethod("nativeTestHandleNonStdExceptionThrow", TestHandleNonStdException),
-      makeNativeMethod("nativeTestHandleCppIntThrow", TestHandleCppIntThrow),
-      makeNativeMethod("nativeTestHandleCppCharPointerThrow", TestHandleCppCharPointerThrow),
-      makeNativeMethod("nativeTestThrowJavaExceptionByName", TestThrowJavaExceptionByName),
-      makeNativeMethod("nativeTestJThread", TestJThread),
-      makeNativeMethod("nativeTestThreadScopeGuard", TestThreadScopeGuard),
-      makeNativeMethod("nativeTestNestedThreadScopeGuard", TestNestedThreadScopeGuard),
-      makeNativeMethod("nativeTestClassLoadInWorker", TestClassLoadInWorker),
-      makeNativeMethod("nativeTestClassLoadWorkerFastPath", TestClassLoadWorkerFastPath),
-      makeNativeMethod("nativeTestHandleCppCharPointerThrow", TestHandleCppCharPointerThrow),
-      makeNativeMethod("nativeTestToString", testToString),
-      makeNativeMethod("nativeTestThrowJavaExceptionByName", TestThrowJavaExceptionByName),
-      makeNativeMethod("nativeTestThreadScopeGuard", TestThreadScopeGuard),
-      makeNativeMethod("nativeTestNestedThreadScopeGuard", TestNestedThreadScopeGuard),
-      makeNativeMethod("nativeTestNullJString", testNullJString),
-      makeNativeMethod("nativeTestSwap", testSwap),
-      makeNativeMethod("nativeTestEqualOperator", testEqualOperator),
-      makeNativeMethod("nativeTestReleaseAlias", testReleaseAlias),
-      makeNativeMethod("nativeTestLockingWeakReferences", testLockingWeakReferences),
-      makeNativeMethod("nativeStaticCastAliasRefToString", StaticCastAliasRefToString),
-      makeNativeMethod("nativeDynamicCastAliasRefToThrowable", DynamicCastAliasRefToThrowable),
-      makeNativeMethod("nativeStaticCastLocalRefToString", StaticCastLocalRefToString),
-      makeNativeMethod("nativeDynamicCastLocalRefToString", DynamicCastLocalRefToString),
-      makeNativeMethod("nativeStaticCastGlobalRefToString", StaticCastGlobalRefToString),
-      makeNativeMethod("nativeDynamicCastGlobalRefToString", DynamicCastGlobalRefToString),
-      makeNativeMethod("testMethodResolutionWithCxxTypesNative", TestMethodResolutionWithCxxTypes),
-      makeCriticalNativeMethod_DO_NOT_USE_OR_YOU_WILL_BE_FIRED("nativeCriticalNativeMethodBindsAndCanBeInvoked", testCriticalNativeMethodBindsAndCanBeInvoked),
-  });
+  registerNatives(
+      jaccess_class_name,
+      {
+          makeNativeMethod("nativeTestClassResolution", TestClassResolution),
+          makeNativeMethod(
+              "nativeTestLazyClassResolution", TestLazyClassResolution),
+          makeNativeMethod("nativeCreateInstanceOf", TestCreateInstanceOf),
+          makeNativeMethod(
+              "nativeTestVirtualMethodResolution_I",
+              TestVirtualMethodResolution_I),
+          makeNativeMethod("nativeTestTypeDescriptors", TestTypeDescriptors),
+          makeNativeMethod(
+              "nativeTestVirtualMethodResolution_arrB",
+              TestVirtualMethodResolution_arrB),
+          makeNativeMethod(
+              "nativeTestVirtualMethodResolution_S_arrS",
+              TestVirtualMethodResolution_S_arrS),
+          makeNativeMethod(
+              "nativeTestVirtualMethodResolution_arrarrS",
+              TestVirtualMethodResolution_arrarrS),
+          makeNativeMethod(
+              "nativeTestVirtualMethodResolution_arrarrI",
+              TestVirtualMethodResolution_arrarrI),
+          makeNativeMethod(
+              "nativeTestLazyVirtualMethodResolution_I",
+              TestLazyVirtualMethodResolution_I),
+          makeNativeMethod(
+              "nativeTestJMethodCallbacks",
+              "(Lcom/facebook/jni/FBJniTests$Callbacks;)V",
+              TestJMethodCallbacks),
+          makeNativeMethod(
+              "nativeTestJStaticMethodCallbacks", TestJStaticMethodCallbacks),
+          makeNativeMethod("nativeTestIsAssignableFrom", TestIsAssignableFrom),
+          makeNativeMethod("nativeTestIsInstanceOf", TestIsInstanceOf),
+          makeNativeMethod("nativeTestIsSameObject", TestIsSameObject),
+          makeNativeMethod("nativeTestGetSuperclass", TestGetSuperclass),
+          makeNativeMethod("nativeTestWeakRefs", TestWeakRefs),
+          makeNativeMethod("nativeTestAlias", TestAlias),
+          makeNativeMethod(
+              "nativeTestAutoAliasRefReturningVoid",
+              TestAutoAliasRefReturningVoid),
+          makeNativeMethod(
+              "nativeTestAliasRefConversions", testAliasRefConversions),
+          makeNativeMethod(
+              "nativeTestCreatingReferences", testCreatingReferences),
+          makeNativeMethod(
+              "nativeTestAssignmentAndCopyConstructors",
+              testAssignmentAndCopyConstructors),
+          makeNativeMethod(
+              "nativeTestAssignmentAndCopyCrossTypes",
+              testAssignmentAndCopyCrossTypes),
+          makeNativeMethod("nativeTestNullReferences", testNullReferences),
+          makeNativeMethod("nativeTestFieldAccess", TestFieldAccess),
+          makeNativeMethod(
+              "nativeTestStringFieldAccess", TestStringFieldAccess),
+          makeNativeMethod(
+              "nativeTestReferenceFieldAccess", TestReferenceFieldAccess),
+          makeNativeMethod(
+              "nativeTestStaticFieldAccess", TestStaticFieldAccess),
+          makeNativeMethod(
+              "nativeTestStaticStringFieldAccess", TestStaticStringFieldAccess),
+          makeNativeMethod(
+              "nativeTestStaticReferenceFieldAccess",
+              TestStaticReferenceFieldAccess),
+          makeNativeMethod("nativeTestNonVirtualMethod", TestNonVirtualMethod),
+          makeNativeMethod("nativeTestArrayCreation", TestArrayCreation),
+          makeNativeMethod(
+              "nativeTestMultidimensionalObjectArray",
+              TestMultidimensionalObjectArray),
+          makeNativeMethod(
+              "nativeTestMultidimensionalPrimitiveArray",
+              TestMultidimensionalPrimitiveArray),
+          makeNativeMethod("nativeTestBuildStringArray", TestBuildStringArray),
+          makeNativeMethod(
+              "testHandleJavaCustomExceptionNative",
+              TestHandleJavaCustomException),
+          makeNativeMethod(
+              "testHandleNullExceptionMessageNative",
+              TestHandleNullExceptionMessage),
+          makeNativeMethod(
+              "nativeTestHandleNestedException", TestHandleNestedException),
+          makeNativeMethod(
+              "nativeTestHandleNoRttiException", TestHandleNoRttiException),
+          makeNativeMethod("nativeTestCopyConstructor", TestCopyConstructor),
+          makeNativeMethod(
+              "nativeTestMoveConstructorWithEmptyWhat",
+              TestMoveConstructorWithEmptyWhat),
+          makeNativeMethod(
+              "nativeTestMoveConstructorWithPopulatedWhat",
+              TestMoveConstructorWithPopulatedWhat),
+          makeNativeMethod(
+              "nativeTestHandleCppRuntimeError", TestHandleCppRuntimeError),
+          makeNativeMethod(
+              "nativeTestHandleCppIOBaseFailure", TestHandleCppIOBaseFailure),
+          makeNativeMethod(
+              "nativeTestHandleCppSystemError", TestHandleCppSystemError),
+          makeNativeMethod(
+              "nativeTestInterDsoExceptionHandlingA",
+              TestInterDsoExceptionHandlingA),
+          makeNativeMethod(
+              "nativeTestInterDsoExceptionHandlingB",
+              TestInterDsoExceptionHandlingB),
+          makeNativeMethod(
+              "nativeTestHandleNonStdExceptionThrow",
+              TestHandleNonStdException),
+          makeNativeMethod(
+              "nativeTestHandleCppIntThrow", TestHandleCppIntThrow),
+          makeNativeMethod(
+              "nativeTestHandleCppCharPointerThrow",
+              TestHandleCppCharPointerThrow),
+          makeNativeMethod(
+              "nativeTestThrowJavaExceptionByName",
+              TestThrowJavaExceptionByName),
+          makeNativeMethod("nativeTestJThread", TestJThread),
+          makeNativeMethod("nativeTestThreadScopeGuard", TestThreadScopeGuard),
+          makeNativeMethod(
+              "nativeTestNestedThreadScopeGuard", TestNestedThreadScopeGuard),
+          makeNativeMethod(
+              "nativeTestClassLoadInWorker", TestClassLoadInWorker),
+          makeNativeMethod(
+              "nativeTestClassLoadWorkerFastPath", TestClassLoadWorkerFastPath),
+          makeNativeMethod(
+              "nativeTestHandleCppCharPointerThrow",
+              TestHandleCppCharPointerThrow),
+          makeNativeMethod("nativeTestToString", testToString),
+          makeNativeMethod(
+              "nativeTestThrowJavaExceptionByName",
+              TestThrowJavaExceptionByName),
+          makeNativeMethod("nativeTestThreadScopeGuard", TestThreadScopeGuard),
+          makeNativeMethod(
+              "nativeTestNestedThreadScopeGuard", TestNestedThreadScopeGuard),
+          makeNativeMethod("nativeTestNullJString", testNullJString),
+          makeNativeMethod("nativeTestSwap", testSwap),
+          makeNativeMethod("nativeTestEqualOperator", testEqualOperator),
+          makeNativeMethod("nativeTestReleaseAlias", testReleaseAlias),
+          makeNativeMethod(
+              "nativeTestLockingWeakReferences", testLockingWeakReferences),
+          makeNativeMethod(
+              "nativeStaticCastAliasRefToString", StaticCastAliasRefToString),
+          makeNativeMethod(
+              "nativeDynamicCastAliasRefToThrowable",
+              DynamicCastAliasRefToThrowable),
+          makeNativeMethod(
+              "nativeStaticCastLocalRefToString", StaticCastLocalRefToString),
+          makeNativeMethod(
+              "nativeDynamicCastLocalRefToString", DynamicCastLocalRefToString),
+          makeNativeMethod(
+              "nativeStaticCastGlobalRefToString", StaticCastGlobalRefToString),
+          makeNativeMethod(
+              "nativeDynamicCastGlobalRefToString",
+              DynamicCastGlobalRefToString),
+          makeNativeMethod(
+              "testMethodResolutionWithCxxTypesNative",
+              TestMethodResolutionWithCxxTypes),
+          makeCriticalNativeMethod_DO_NOT_USE_OR_YOU_WILL_BE_FIRED(
+              "nativeCriticalNativeMethodBindsAndCanBeInvoked",
+              testCriticalNativeMethodBindsAndCanBeInvoked),
+      });
 }

@@ -49,7 +49,7 @@ TEST(Utf16toUTF8_test, goodUtf16String) {
   EXPECT_EQ(utf8String, "a\xC4\xA3\xE1\x88\xB4\xF0\x94\xA0\xB4");
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

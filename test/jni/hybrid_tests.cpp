@@ -15,36 +15,35 @@
  */
 
 #include <fbjni/fbjni.h>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 using namespace facebook::jni;
 
 class TestException : public std::runtime_error {
-public:
+ public:
   TestException() : std::runtime_error("fail") {}
 };
 
 // The C++ half of a hybrid class must extend HybridClass like this.
 // HybridClass is default constructible.
 class TestHybridClass : public facebook::jni::HybridClass<TestHybridClass> {
-public:
+ public:
   static constexpr const char* const kJavaDescriptor =
-    "Lcom/facebook/jni/HybridTests$TestHybridClass;";
+      "Lcom/facebook/jni/HybridTests$TestHybridClass;";
 
   TestHybridClass() {}
 
   TestHybridClass(int i, std::string s, bool b)
-    : i_(i)
-    , s_(std::move(s))
-    , b_(b) {}
+      : i_(i), s_(std::move(s)), b_(b) {}
 
   // The C++ implementation of initHybrid must be a static C++ method,
   // since it has no C++ instance (it creates it).  But it's a normal
   // java method, because it gets a java this passed in (which is
   // often unused).  It must call makeCxxInstance and return its
   // result.
-  static jhybriddata initHybrid(alias_ref<jhybridobject>, jint i, jstring s, jboolean b) {
+  static jhybriddata
+  initHybrid(alias_ref<jhybridobject>, jint i, jstring s, jboolean b) {
     // The arguments will be forwarded to the ctor, and the result
     // will be saved in mHybridPointer in the java object.
     return makeCxxInstance(i, wrap_alias(s)->toStdString(), b).release();
@@ -55,10 +54,8 @@ public:
   // It's also ok to make initHybrid work like a factory, which
   // eliminates the need to define a ctor and reduces boilerplate
   // code.  This is a member, so fields can be initialized directly.
-  static local_ref<jhybriddata> initHybrid3(alias_ref<jhybridobject>,
-                                            std::string s,
-                                            int i,
-                                            bool b) {
+  static local_ref<jhybriddata>
+  initHybrid3(alias_ref<jhybridobject>, std::string s, int i, bool b) {
     auto cxxPart = std::unique_ptr<TestHybridClass>(new TestHybridClass);
     cxxPart->s_ = std::move(s);
     cxxPart->i_ = i;
@@ -120,14 +117,13 @@ public:
 
   static local_ref<jhybridobject> makeWithThree(alias_ref<jclass> jthis) {
     // The args are passed to C++ initialization directly.
-   return newObjectCxxArgs(3, "three", true);
+    return newObjectCxxArgs(3, "three", true);
   }
 
   static void mapException(std::exception_ptr ex) {
     try {
       std::rethrow_exception(ex);
-    }
-    catch (const TestException &ex) {
+    } catch (const TestException& ex) {
       throwNewJavaException("java/lang/ArrayStoreException", "");
     }
   }
@@ -169,10 +165,10 @@ public:
         makeNativeMethod("makeWithTwo", TestHybridClass::makeWithTwo),
         makeNativeMethod("makeWithThree", TestHybridClass::makeWithThree),
         makeNativeMethod("autoconvertMany", TestHybridClass::autoconvertMany),
-      });
+    });
   }
 
-private:
+ private:
   friend HybridBase;
 
   int i_ = 0;
@@ -181,21 +177,23 @@ private:
   global_ref<jstring> global_;
 };
 
-class AbstractTestHybrid : public facebook::jni::HybridClass<AbstractTestHybrid> {
-public:
+class AbstractTestHybrid
+    : public facebook::jni::HybridClass<AbstractTestHybrid> {
+ public:
   static constexpr const char* const kJavaDescriptor =
-    "Lcom/facebook/jni/HybridTests$AbstractTestHybrid;";
+      "Lcom/facebook/jni/HybridTests$AbstractTestHybrid;";
 
-  AbstractTestHybrid(int nn)
-      : nativeNum_(nn) {}
+  AbstractTestHybrid(int nn) : nativeNum_(nn) {}
 
-  int nativeNum() { return nativeNum_; }
+  int nativeNum() {
+    return nativeNum_;
+  }
   // This is different than the java method!
   virtual int sum() = 0;
 
   static void registerNatives() {
     registerHybrid({
-      makeNativeMethod("nativeNum", AbstractTestHybrid::nativeNum),
+        makeNativeMethod("nativeNum", AbstractTestHybrid::nativeNum),
     });
   }
 
@@ -204,10 +202,11 @@ public:
 };
 
 class ConcreteTestHybrid
-    : public facebook::jni::HybridClass<ConcreteTestHybrid, AbstractTestHybrid> {
+    : public facebook::jni::
+          HybridClass<ConcreteTestHybrid, AbstractTestHybrid> {
  public:
   static constexpr const char* const kJavaDescriptor =
-    "Lcom/facebook/jni/HybridTests$ConcreteTestHybrid;";
+      "Lcom/facebook/jni/HybridTests$ConcreteTestHybrid;";
 
   static local_ref<jhybriddata> initHybrid(alias_ref<jclass>, int nn, int cn) {
     return makeCxxInstance(nn, cn);
@@ -222,16 +221,14 @@ class ConcreteTestHybrid
 
   static void registerNatives() {
     registerHybrid({
-      makeNativeMethod("initHybrid", ConcreteTestHybrid::initHybrid),
-      makeNativeMethod("concreteNum", ConcreteTestHybrid::concreteNum),
+        makeNativeMethod("initHybrid", ConcreteTestHybrid::initHybrid),
+        makeNativeMethod("concreteNum", ConcreteTestHybrid::concreteNum),
     });
   }
 
  private:
   friend HybridBase;
-  ConcreteTestHybrid(int nn, int cn)
-      : HybridBase(nn)
-      , concreteNum_(cn) {}
+  ConcreteTestHybrid(int nn, int cn) : HybridBase(nn), concreteNum_(cn) {}
 
   int concreteNum_;
 };
@@ -250,22 +247,26 @@ static jboolean cxxTestInheritance(alias_ref<jclass>, AbstractTestHybrid* ath) {
   return ret;
 }
 
-static local_ref<AbstractTestHybrid::jhybridobject> makeAbstractHybrid(alias_ref<jclass>) {
-  auto cth = ConcreteTestHybrid::newObjectJavaArgs(0,0,0);
+static local_ref<AbstractTestHybrid::jhybridobject> makeAbstractHybrid(
+    alias_ref<jclass>) {
+  auto cth = ConcreteTestHybrid::newObjectJavaArgs(0, 0, 0);
   weak_ref<ConcreteTestHybrid::jhybridobject> wcth = make_weak(cth);
   weak_ref<AbstractTestHybrid::jhybridobject> wath = wcth;
 
   local_ref<AbstractTestHybrid::jhybridobject> ath = cth;
-  return ConcreteTestHybrid::newObjectJavaArgs(cthis(ath)->nativeNum() + 7, 8, 9);
+  return ConcreteTestHybrid::newObjectJavaArgs(
+      cthis(ath)->nativeNum() + 7, 8, 9);
 }
 
 struct Base : public JavaClass<Base> {
-  static constexpr const char* const kJavaDescriptor = "Lcom/facebook/jni/HybridTests$Base;";
+  static constexpr const char* const kJavaDescriptor =
+      "Lcom/facebook/jni/HybridTests$Base;";
 };
 
 class Derived : public HybridClass<Derived, Base> {
  public:
-  static constexpr const char* const kJavaDescriptor = "Lcom/facebook/jni/HybridTests$Derived;";
+  static constexpr const char* const kJavaDescriptor =
+      "Lcom/facebook/jni/HybridTests$Derived;";
 
  private:
   friend HybridBase;
@@ -274,7 +275,8 @@ class Derived : public HybridClass<Derived, Base> {
 
 struct Destroyable : public HybridClass<Destroyable> {
  public:
-  static constexpr const char* const kJavaDescriptor = "Lcom/facebook/jni/HybridTests$Destroyable;";
+  static constexpr const char* const kJavaDescriptor =
+      "Lcom/facebook/jni/HybridTests$Destroyable;";
 
   ~Destroyable() override {
     std::lock_guard<std::mutex> lk(*mtx_);
@@ -286,10 +288,11 @@ struct Destroyable : public HybridClass<Destroyable> {
 
  private:
   friend HybridBase;
-  Destroyable(std::shared_ptr<std::mutex> mtx,
+  Destroyable(
+      std::shared_ptr<std::mutex> mtx,
       std::shared_ptr<bool> dead,
       std::shared_ptr<std::condition_variable> cv)
-    : mtx_(mtx), dead_(dead), cv_(cv) {}
+      : mtx_(mtx), dead_(dead), cv_(cv) {}
 
   std::shared_ptr<std::mutex> mtx_;
   std::shared_ptr<bool> dead_;
@@ -305,7 +308,6 @@ static jboolean cxxTestHybridDestruction(alias_ref<jclass>) {
   cv->wait(lk, [&] { return dead; });
   return JNI_TRUE;
 }
-
 
 static jboolean cxxTestDerivedJavaClass(alias_ref<jclass>) {
   bool ret = true;
@@ -326,50 +328,51 @@ static jboolean cxxTestDerivedJavaClass(alias_ref<jclass>) {
 }
 
 class TestHybridClassBase
-: public facebook::jni::HybridClass<TestHybridClassBase> {
-  public:
-    static constexpr const char* const kJavaDescriptor =
+    : public facebook::jni::HybridClass<TestHybridClassBase> {
+ public:
+  static constexpr const char* const kJavaDescriptor =
       "Lcom/facebook/jni/HybridTests$TestHybridClassBase;";
 
-    TestHybridClassBase() {}
+  TestHybridClassBase() {}
 
-    explicit TestHybridClassBase(int i)
-      : i_(i) {}
+  explicit TestHybridClassBase(int i) : i_(i) {}
 
-    static void initHybrid(alias_ref<jhybridobject> o, jint i) {
-      // The arguments will be forwarded to the ctor, and the result
-      // will be saved in mHybridPointer in the java object.
-      setCxxInstance(o, i);
-    }
+  static void initHybrid(alias_ref<jhybridobject> o, jint i) {
+    // The arguments will be forwarded to the ctor, and the result
+    // will be saved in mHybridPointer in the java object.
+    setCxxInstance(o, i);
+  }
 
-    static void initHybrid2(alias_ref<jhybridobject> o) {
-      setCxxInstance(o);
-    }
+  static void initHybrid2(alias_ref<jhybridobject> o) {
+    setCxxInstance(o);
+  }
 
-    virtual jint getInt() {
-      return i_;
-    }
+  virtual jint getInt() {
+    return i_;
+  }
 
-    void setInt(int i) {
-      i_ = i;
-    }
+  void setInt(int i) {
+    i_ = i;
+  }
 
-    static local_ref<jhybridobject> makeWithThree(alias_ref<jclass> /* unused */) {
-      // The args are passed to C++ initialization directly.
-      return newObjectCxxArgs(3);
-    }
+  static local_ref<jhybridobject> makeWithThree(
+      alias_ref<jclass> /* unused */) {
+    // The args are passed to C++ initialization directly.
+    return newObjectCxxArgs(3);
+  }
 
-    static void registerNatives() {
-      registerHybrid({
-          makeNativeMethod("initHybrid", TestHybridClassBase::initHybrid),
-          makeNativeMethod("initHybrid", TestHybridClassBase::initHybrid2),
-          makeNativeMethod("getInt", TestHybridClassBase::getInt),
-          makeNativeMethod("setInt", TestHybridClassBase::setInt),
-          makeNativeMethod("makeWithThree", TestHybridClassBase::makeWithThree),
-          });
-    }
-  private:
-    int i_ = 0;
+  static void registerNatives() {
+    registerHybrid({
+        makeNativeMethod("initHybrid", TestHybridClassBase::initHybrid),
+        makeNativeMethod("initHybrid", TestHybridClassBase::initHybrid2),
+        makeNativeMethod("getInt", TestHybridClassBase::getInt),
+        makeNativeMethod("setInt", TestHybridClassBase::setInt),
+        makeNativeMethod("makeWithThree", TestHybridClassBase::makeWithThree),
+    });
+  }
+
+ private:
+  int i_ = 0;
 };
 
 void RegisterTestHybridClass() {
@@ -378,10 +381,13 @@ void RegisterTestHybridClass() {
   ConcreteTestHybrid::registerNatives();
   TestHybridClassBase::registerNatives();
 
-  registerNatives("com/facebook/jni/HybridTests", {
-    makeNativeMethod("cxxTestInheritance", cxxTestInheritance),
-    makeNativeMethod("makeAbstractHybrid", makeAbstractHybrid),
-    makeNativeMethod("cxxTestDerivedJavaClass", cxxTestDerivedJavaClass),
-    makeNativeMethod("cxxTestHybridDestruction", cxxTestHybridDestruction),
-  });
+  registerNatives(
+      "com/facebook/jni/HybridTests",
+      {
+          makeNativeMethod("cxxTestInheritance", cxxTestInheritance),
+          makeNativeMethod("makeAbstractHybrid", makeAbstractHybrid),
+          makeNativeMethod("cxxTestDerivedJavaClass", cxxTestDerivedJavaClass),
+          makeNativeMethod(
+              "cxxTestHybridDestruction", cxxTestHybridDestruction),
+      });
 }

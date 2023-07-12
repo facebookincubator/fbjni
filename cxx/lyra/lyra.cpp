@@ -17,10 +17,10 @@
 #include <lyra/lyra.h>
 
 #include <atomic>
-#include <ios>
-#include <ostream>
 #include <iomanip>
+#include <ios>
 #include <memory>
+#include <ostream>
 #include <vector>
 
 #ifndef _WIN32
@@ -42,10 +42,7 @@ class IosFlagsSaver {
   ios_base::fmtflags flags_;
 
  public:
-  IosFlagsSaver(ios_base& ios)
-  : ios_(ios),
-    flags_(ios.flags())
-  {}
+  IosFlagsSaver(ios_base& ios) : ios_(ios), flags_(ios.flags()) {}
 
   ~IosFlagsSaver() {
     ios_.flags(flags_);
@@ -92,7 +89,7 @@ void captureBacktrace(size_t skip, vector<InstructionPointer>& stackTrace) {
 // this is a pointer to a function
 std::atomic<LibraryIdentifierFunctionType> gLibraryIdentifierFunction{nullptr};
 
-}
+} // namespace
 
 void setLibraryIdentifierFunction(LibraryIdentifierFunctionType func) {
   gLibraryIdentifierFunction.store(func, std::memory_order_relaxed);
@@ -100,7 +97,8 @@ void setLibraryIdentifierFunction(LibraryIdentifierFunctionType func) {
 
 std::string StackTraceElement::buildId() const {
   if (!hasBuildId_) {
-    auto getBuildId = gLibraryIdentifierFunction.load(std::memory_order_relaxed);
+    auto getBuildId =
+        gLibraryIdentifierFunction.load(std::memory_order_relaxed);
     if (getBuildId) {
       buildId_ = getBuildId(libraryName());
     } else {
@@ -117,8 +115,9 @@ void getStackTrace(vector<InstructionPointer>& stackTrace, size_t skip) {
 }
 
 // TODO(t10737622): Improve on-device symbolification
-void getStackTraceSymbols(vector<StackTraceElement>& symbols,
-                          const vector<InstructionPointer>& trace) {
+void getStackTraceSymbols(
+    vector<StackTraceElement>& symbols,
+    const vector<InstructionPointer>& trace) {
   symbols.clear();
   symbols.reserve(trace.size());
 
@@ -126,9 +125,12 @@ void getStackTraceSymbols(vector<StackTraceElement>& symbols,
   for (size_t i = 0; i < trace.size(); ++i) {
     Dl_info info;
     if (dladdr(trace[i], &info)) {
-      symbols.emplace_back(trace[i], info.dli_fbase, info.dli_saddr,
-                           info.dli_fname ? info.dli_fname : "",
-                           info.dli_sname ? info.dli_sname : "");
+      symbols.emplace_back(
+          trace[i],
+          info.dli_fbase,
+          info.dli_saddr,
+          info.dli_fname ? info.dli_fname : "",
+          info.dli_sname ? info.dli_sname : "");
     }
   }
 #endif
@@ -137,15 +139,14 @@ void getStackTraceSymbols(vector<StackTraceElement>& symbols,
 ostream& operator<<(ostream& out, const StackTraceElement& elm) {
   IosFlagsSaver flags{out};
 
-  out << "{dso=" << elm.libraryName() << " offset=" << hex
-      << showbase << elm.libraryOffset();
+  out << "{dso=" << elm.libraryName() << " offset=" << hex << showbase
+      << elm.libraryOffset();
 
   if (!elm.functionName().empty()) {
     out << " func=" << elm.functionName() << "()+" << elm.functionOffset();
   }
 
-  out << " build-id=" << hex << setw(8) << elm.buildId()
-      << "}";
+  out << " build-id=" << hex << setw(8) << elm.buildId() << "}";
 
   return out;
 }
@@ -158,7 +159,8 @@ ostream& operator<<(ostream& out, const vector<StackTraceElement>& trace) {
   auto i = 0;
   out << "Backtrace:\n";
   for (auto& elm : trace) {
-    out << "    #" << dec << setfill('0') << setw(2) << i++ << " " << elm << '\n';
+    out << "    #" << dec << setfill('0') << setw(2) << i++ << " " << elm
+        << '\n';
   }
 
   return out;
@@ -169,7 +171,8 @@ void logStackTrace(const vector<StackTraceElement>& trace) {
   FBJNI_LOGE("Backtrace:");
   for (auto& elm : trace) {
     if (!elm.functionName().empty()) {
-      FBJNI_LOGE("    #%02d |lyra|{dso=%s offset=%#tx func=%s+%#x build-id=%s}",
+      FBJNI_LOGE(
+          "    #%02d |lyra|{dso=%s offset=%#tx func=%s+%#x build-id=%s}",
           i++,
           elm.libraryName().c_str(),
           elm.libraryOffset(),
@@ -177,7 +180,8 @@ void logStackTrace(const vector<StackTraceElement>& trace) {
           elm.functionOffset(),
           elm.buildId().c_str());
     } else {
-      FBJNI_LOGE("    #%02d |lyra|{dso=%s offset=%#tx build-id=%s}",
+      FBJNI_LOGE(
+          "    #%02d |lyra|{dso=%s offset=%#tx build-id=%s}",
           i++,
           elm.libraryName().c_str(),
           elm.libraryOffset(),
@@ -186,5 +190,5 @@ void logStackTrace(const vector<StackTraceElement>& trace) {
   }
 }
 
-}
-}
+} // namespace lyra
+} // namespace facebook

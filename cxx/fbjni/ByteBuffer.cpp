@@ -22,36 +22,37 @@ namespace facebook {
 namespace jni {
 
 void JBuffer::rewind() const {
-  static auto meth = javaClassStatic()->getMethod<alias_ref<JBuffer>()>("rewind");
+  static auto meth =
+      javaClassStatic()->getMethod<alias_ref<JBuffer>()>("rewind");
   meth(self());
 }
 
 void* JBuffer::getDirectAddress() const {
   if (!self()) {
-    throwNewJavaException("java/lang/NullPointerException", "java.lang.NullPointerException");
+    throwNewJavaException(
+        "java/lang/NullPointerException", "java.lang.NullPointerException");
   }
   void* addr = Environment::current()->GetDirectBufferAddress(self());
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
   if (!addr) {
     throw std::runtime_error(
-        isDirect() ?
-          "Attempt to get direct bytes of non-direct buffer." :
-          "Error getting direct bytes of buffer.");
+        isDirect() ? "Attempt to get direct bytes of non-direct buffer."
+                   : "Error getting direct bytes of buffer.");
   }
   return addr;
 }
 
 size_t JBuffer::getDirectCapacity() const {
   if (!self()) {
-    throwNewJavaException("java/lang/NullPointerException", "java.lang.NullPointerException");
+    throwNewJavaException(
+        "java/lang/NullPointerException", "java.lang.NullPointerException");
   }
   int size = Environment::current()->GetDirectBufferCapacity(self());
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
   if (size < 0) {
     throw std::runtime_error(
-        isDirect() ?
-          "Attempt to get direct size of non-direct buffer." :
-          "Error getting direct size of buffer.");
+        isDirect() ? "Attempt to get direct size of non-direct buffer."
+                   : "Error getting direct size of buffer.");
   }
   return static_cast<size_t>(size);
 }
@@ -62,9 +63,9 @@ bool JBuffer::isDirect() const {
 }
 
 local_ref<JByteOrder> JByteOrder::nativeOrder() {
-  static auto meth = JByteOrder::javaClassStatic()->getStaticMethod<
-      local_ref<JByteOrder>()>
-      ("nativeOrder");
+  static auto meth =
+      JByteOrder::javaClassStatic()->getStaticMethod<local_ref<JByteOrder>()>(
+          "nativeOrder");
   return meth(JByteOrder::javaClassStatic());
 }
 
@@ -75,7 +76,8 @@ local_ref<JByteBuffer> JByteBuffer::wrapBytes(uint8_t* data, size_t size) {
   if (!size) {
     return allocateDirect(0);
   }
-  auto res = adopt_local(static_cast<javaobject>(Environment::current()->NewDirectByteBuffer(data, size)));
+  auto res = adopt_local(static_cast<javaobject>(
+      Environment::current()->NewDirectByteBuffer(data, size)));
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
   if (!res) {
     throw std::runtime_error("Direct byte buffers are unsupported.");
@@ -90,10 +92,11 @@ local_ref<JByteBuffer> JByteBuffer::allocateDirect(jint size) {
 }
 
 local_ref<JByteBuffer> JByteBuffer::order(alias_ref<JByteOrder> order) {
-  static auto meth = JByteBuffer::javaClassStatic()->getMethod<
-      local_ref<JByteBuffer>(alias_ref<JByteOrder>)>
-      ("order");
+  static auto meth =
+      JByteBuffer::javaClassStatic()
+          ->getMethod<local_ref<JByteBuffer>(alias_ref<JByteOrder>)>("order");
   return meth(self(), order);
 }
 
-}}
+} // namespace jni
+} // namespace facebook

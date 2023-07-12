@@ -61,7 +61,8 @@ struct JIterator : JavaClass<JIterator<E>> {
    *
    * std::vector<std::string> vs;
    * std::transform(jiter->begin(), jiter->end(), std::back_inserter(vs),
-   *                [](const local_ref<jstring>& elem) { return elem->toStdString(); });
+   *                [](const local_ref<jstring>& elem) { return
+   * elem->toStdString(); });
    *
    * The iterator is a InputIterator.
    */
@@ -98,7 +99,8 @@ struct JCollection : JavaClass<JCollection<E>, JIterable<E>> {
   size_t size() const;
 
   /**
-   * Adds and element to the collection.  Returns true if the collection was changed.
+   * Adds and element to the collection.  Returns true if the collection was
+   * changed.
    */
   bool add(alias_ref<E> elem);
 };
@@ -125,7 +127,7 @@ struct JSet : JavaClass<JSet<E>, JCollection<E>> {
  * for example in a method declaration.
  */
 template <typename K = jobject, typename V = jobject>
-struct JMap : JavaClass<JMap<K,V>> {
+struct JMap : JavaClass<JMap<K, V>> {
   constexpr static auto kJavaDescriptor = "Ljava/util/Map;";
 
   struct Iterator;
@@ -152,8 +154,9 @@ struct JMap : JavaClass<JMap<K,V>> {
   Iterator end() const;
 
   /**
-   * Inserts an entry to the map.  Returns the old value if there was one, else null.
-   * We return JObject to avoid a dynamic_ref_cast when the return value is not needed.
+   * Inserts an entry to the map.  Returns the old value if there was one, else
+   * null. We return JObject to avoid a dynamic_ref_cast when the return value
+   * is not needed.
    */
   local_ref<JObject> put(alias_ref<K> key, alias_ref<V> val);
 };
@@ -174,7 +177,7 @@ struct JHashMap : JavaClass<JHashMap<K, V>, JMap<K, V>> {
   static local_ref<JHashMap<K, V>> create(int initialCapacity);
 };
 
-}
-}
+} // namespace jni
+} // namespace facebook
 
 #include "Iterator-inl.h"

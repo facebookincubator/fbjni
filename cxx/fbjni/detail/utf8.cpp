@@ -23,11 +23,11 @@ namespace jni {
 
 namespace {
 
-const uint16_t kUtf8OneByteBoundary       = 0x80;
-const uint16_t kUtf8TwoBytesBoundary      = 0x800;
-const uint16_t kUtf16HighSubLowBoundary   = 0xD800;
-const uint16_t kUtf16HighSubHighBoundary  = 0xDC00;
-const uint16_t kUtf16LowSubHighBoundary   = 0xE000;
+const uint16_t kUtf8OneByteBoundary = 0x80;
+const uint16_t kUtf8TwoBytesBoundary = 0x800;
+const uint16_t kUtf16HighSubLowBoundary = 0xD800;
+const uint16_t kUtf16HighSubHighBoundary = 0xDC00;
+const uint16_t kUtf16LowSubHighBoundary = 0xE000;
 
 inline void encode3ByteUTF8(char32_t code, uint8_t* out) {
   if ((code & 0xffff0000) != 0) {
@@ -40,9 +40,7 @@ inline void encode3ByteUTF8(char32_t code, uint8_t* out) {
 }
 
 inline char32_t decode3ByteUTF8(const uint8_t* in) {
-  return (((in[0] & 0x0f) << 12) |
-          ((in[1] & 0x3f) << 6) |
-          ( in[2] & 0x3f));
+  return (((in[0] & 0x0f) << 12) | ((in[1] & 0x3f) << 6) | (in[2] & 0x3f));
 }
 
 inline void encode4ByteUTF8(char32_t code, std::string& out, size_t offset) {
@@ -50,10 +48,10 @@ inline void encode4ByteUTF8(char32_t code, std::string& out, size_t offset) {
     FBJNI_LOGF("4 byte utf-8 encodings only valid for up to 21 bits");
   }
 
-  out[offset] =     (char) (0xF0 | (code >> 18));
-  out[offset + 1] = (char) (0x80 | ((code >> 12) & 0x3F));
-  out[offset + 2] = (char) (0x80 | ((code >> 6) & 0x3F));
-  out[offset + 3] = (char) (0x80 | (code & 0x3F));
+  out[offset] = (char)(0xF0 | (code >> 18));
+  out[offset + 1] = (char)(0x80 | ((code >> 12) & 0x3F));
+  out[offset + 2] = (char)(0x80 | ((code >> 6) & 0x3F));
+  out[offset + 3] = (char)(0x80 | (code & 0x3F));
 }
 
 template <typename T>
@@ -61,19 +59,18 @@ inline bool isFourByteUTF8Encoding(const T* utf8) {
   return ((*utf8 & 0xF8) == 0xF0);
 }
 
-}
+} // namespace
 
 namespace detail {
 
 size_t modifiedLength(const std::string& str) {
   // Scan for supplementary characters
   size_t j = 0;
-  for (size_t i = 0; i < str.size(); ) {
+  for (size_t i = 0; i < str.size();) {
     if (str[i] == 0) {
       i += 1;
       j += 2;
-    } else if (i + 4 > str.size() ||
-               !isFourByteUTF8Encoding(&(str[i]))) {
+    } else if (i + 4 > str.size() || !isFourByteUTF8Encoding(&(str[i]))) {
       // See the code in utf8ToModifiedUTF8 for what's happening here.
       i += 1;
       j += 1;
@@ -92,9 +89,7 @@ size_t modifiedLength(const uint8_t* str, size_t* length) {
   size_t i = 0;
   size_t j = 0;
   while (str[i] != 0) {
-    if (str[i + 1] == 0 ||
-        str[i + 2] == 0 ||
-        str[i + 3] == 0 ||
+    if (str[i + 1] == 0 || str[i + 2] == 0 || str[i + 3] == 0 ||
         !isFourByteUTF8Encoding(&(str[i]))) {
       i += 1;
       j += 1;
@@ -108,10 +103,13 @@ size_t modifiedLength(const uint8_t* str, size_t* length) {
   return j;
 }
 
-void utf8ToModifiedUTF8(const uint8_t* utf8, size_t len, uint8_t* modified, size_t modifiedBufLen)
-{
+void utf8ToModifiedUTF8(
+    const uint8_t* utf8,
+    size_t len,
+    uint8_t* modified,
+    size_t modifiedBufLen) {
   size_t j = 0;
-  for (size_t i = 0; i < len; ) {
+  for (size_t i = 0; i < len;) {
     if (j >= modifiedBufLen) {
       FBJNI_LOGF("output buffer is too short");
     }
@@ -126,8 +124,7 @@ void utf8ToModifiedUTF8(const uint8_t* utf8, size_t len, uint8_t* modified, size
       continue;
     }
 
-    if (i + 4 > len ||
-        !isFourByteUTF8Encoding(utf8 + i)) {
+    if (i + 4 > len || !isFourByteUTF8Encoding(utf8 + i)) {
       // If the input is too short for this to be a four-byte
       // encoding, or it isn't one for real, just copy it on through.
       modified[j] = utf8[i];
@@ -137,17 +134,16 @@ void utf8ToModifiedUTF8(const uint8_t* utf8, size_t len, uint8_t* modified, size
     }
 
     // Convert 4 bytes of input to 2 * 3 bytes of output
-    char32_t code = (((utf8[i]     & 0x07) << 18) |
-                     ((utf8[i + 1] & 0x3f) << 12) |
-                     ((utf8[i + 2] & 0x3f) << 6) |
-                     ( utf8[i + 3] & 0x3f));
+    char32_t code =
+        (((utf8[i] & 0x07) << 18) | ((utf8[i + 1] & 0x3f) << 12) |
+         ((utf8[i + 2] & 0x3f) << 6) | (utf8[i + 3] & 0x3f));
     char32_t first;
     char32_t second;
 
     if (code > 0x10ffff) {
-      // These could be valid utf-8, but cannot be represented as modified UTF-8, due to the 20-bit
-      // limit on that representation.  Encode two replacement characters, so the expected output
-      // length lines up.
+      // These could be valid utf-8, but cannot be represented as modified
+      // UTF-8, due to the 20-bit limit on that representation.  Encode two
+      // replacement characters, so the expected output length lines up.
       const char32_t kUnicodeReplacementChar = 0xfffd;
       first = kUnicodeReplacementChar;
       second = kUnicodeReplacementChar;
@@ -174,40 +170,38 @@ void utf8ToModifiedUTF8(const uint8_t* utf8, size_t len, uint8_t* modified, size
 }
 
 std::string modifiedUTF8ToUTF8(const uint8_t* modified, size_t len) noexcept {
-  // Converting from modified utf8 to utf8 will always shrink, so this will always be sufficient
+  // Converting from modified utf8 to utf8 will always shrink, so this will
+  // always be sufficient
   std::string utf8(len, 0);
   size_t j = 0;
-  for (size_t i = 0; i < len; ) {
+  for (size_t i = 0; i < len;) {
     // surrogate pair: 1101 10xx  xxxx xxxx  1101 11xx  xxxx xxxx
-    // encoded pair: 1110 1101  1010 xxxx  10xx xxxx  1110 1101  1011 xxxx  10xx xxxx
+    // encoded pair: 1110 1101  1010 xxxx  10xx xxxx  1110 1101  1011 xxxx  10xx
+    // xxxx
 
-    if (len >= i + 6 &&
-        modified[i] == 0xed &&
-        (modified[i + 1] & 0xf0) == 0xa0 &&
-        modified[i + 3] == 0xed &&
+    if (len >= i + 6 && modified[i] == 0xed &&
+        (modified[i + 1] & 0xf0) == 0xa0 && modified[i + 3] == 0xed &&
         (modified[i + 4] & 0xf0) == 0xb0) {
       // Valid surrogate pair
       char32_t pair1 = decode3ByteUTF8(modified + i);
       char32_t pair2 = decode3ByteUTF8(modified + i + 3);
-      char32_t ch = 0x10000 + (((pair1 & 0x3ff) << 10) |
-                               ( pair2 & 0x3ff));
+      char32_t ch = 0x10000 + (((pair1 & 0x3ff) << 10) | (pair2 & 0x3ff));
       encode4ByteUTF8(ch, utf8, j);
       i += 6;
       j += 4;
       continue;
-    } else if (len >= i + 2 &&
-               modified[i] == 0xc0 &&
-               modified[i + 1] == 0x80) {
+    } else if (len >= i + 2 && modified[i] == 0xc0 && modified[i + 1] == 0x80) {
       utf8[j] = 0;
       i += 2;
       j += 1;
       continue;
     }
 
-    // copy one byte.  This might be a one, two, or three-byte encoding.  It might be an invalid
-    // encoding of some sort, but garbage in garbage out is ok.
+    // copy one byte.  This might be a one, two, or three-byte encoding.  It
+    // might be an invalid encoding of some sort, but garbage in garbage out is
+    // ok.
 
-    utf8[j] = (char) modified[i];
+    utf8[j] = (char)modified[i];
     i++;
     j++;
   }
@@ -235,8 +229,8 @@ size_t utf16toUTF8Length(const uint16_t* utf16String, size_t utf16StringLen) {
       utf8StringLen += 2;
     } else if (
         (ch >= kUtf16HighSubLowBoundary) && (ch < kUtf16HighSubHighBoundary) &&
-        (idx16 < utf16StringEnd) &&
-        (*idx16 >= kUtf16HighSubHighBoundary) && (*idx16 < kUtf16LowSubHighBoundary)) {
+        (idx16 < utf16StringEnd) && (*idx16 >= kUtf16HighSubHighBoundary) &&
+        (*idx16 < kUtf16LowSubHighBoundary)) {
       utf8StringLen += 4;
       idx16++;
     } else {
@@ -247,7 +241,9 @@ size_t utf16toUTF8Length(const uint16_t* utf16String, size_t utf16StringLen) {
   return utf8StringLen;
 }
 
-std::string utf16toUTF8(const uint16_t* utf16String, size_t utf16StringLen) noexcept {
+std::string utf16toUTF8(
+    const uint16_t* utf16String,
+    size_t utf16StringLen) noexcept {
   if (!utf16String || utf16StringLen <= 0) {
     return "";
   }
@@ -265,8 +261,8 @@ std::string utf16toUTF8(const uint16_t* utf16String, size_t utf16StringLen) noex
       *idx8++ = 0b10000000 | (ch & 0x3F);
     } else if (
         (ch >= kUtf16HighSubLowBoundary) && (ch < kUtf16HighSubHighBoundary) &&
-        (idx16 < utf16StringEnd) &&
-        (*idx16 >= kUtf16HighSubHighBoundary) && (*idx16 < kUtf16LowSubHighBoundary)) {
+        (idx16 < utf16StringEnd) && (*idx16 >= kUtf16HighSubHighBoundary) &&
+        (*idx16 < kUtf16LowSubHighBoundary)) {
       auto ch2 = *idx16++;
       uint8_t trunc_byte = (((ch >> 6) & 0x0F) + 1);
       *idx8++ = 0b11110000 | (trunc_byte >> 2);
@@ -283,6 +279,6 @@ std::string utf16toUTF8(const uint16_t* utf16String, size_t utf16StringLen) noex
   return utf8String;
 }
 
-}
-}
-}
+} // namespace detail
+} // namespace jni
+} // namespace facebook

@@ -25,18 +25,21 @@ local_ref<HybridData> HybridData::create() {
   return newInstance();
 }
 
-}
+} // namespace detail
 
 namespace {
 void deleteNative(alias_ref<jclass>, jlong ptr) {
   delete reinterpret_cast<detail::BaseHybridClass*>(ptr);
 }
-}
+} // namespace
 
 void HybridDataOnLoad() {
-  registerNatives("com/facebook/jni/HybridData$Destructor", {
-      makeNativeMethod("deleteNative", deleteNative),
-  });
+  registerNatives(
+      "com/facebook/jni/HybridData$Destructor",
+      {
+          makeNativeMethod("deleteNative", deleteNative),
+      });
 }
 
-}}
+} // namespace jni
+} // namespace facebook

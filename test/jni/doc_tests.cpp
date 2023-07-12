@@ -16,8 +16,8 @@
 
 #include <cassert>
 #include <cstring>
-#include <type_traits>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 // SECTION registration
@@ -32,7 +32,6 @@ using namespace facebook::jni;
 // We can put all of our code in an anonymous namespace if
 // it is not used from any other C++ code.
 namespace {
-
 
 // SECTION inheritance
 struct JMyBaseClass : JavaClass<JMyBaseClass> {
@@ -61,7 +60,8 @@ struct JNested : JavaClass<JNested> {
 // SECTION constructor
 struct JDataHolder : JavaClass<JDataHolder> {
   static constexpr auto kJavaDescriptor = "Lcom/facebook/jni/DataHolder;";
-  // newInstance should be wrapped to ensure compile-time checking of call sites.
+  // newInstance should be wrapped to ensure compile-time checking of call
+  // sites.
   static local_ref<JDataHolder> create(int i, std::string const& s) {
     // Constructor is looked up by argument types at *runtime*.
     return newInstance(i, s);
@@ -83,7 +83,8 @@ struct JDataHolder : JavaClass<JDataHolder> {
     this->setFieldValue(sField, make_jstring(s->toStdString() + "1").get());
     // Static fields work the same, but getStaticField, getStaticFieldValue,
     // and setStaticFieldValue must all be called on the class object.
-    static const auto someInstanceField = cls->getStaticField<JDataHolder>("someInstance");
+    static const auto someInstanceField =
+        cls->getStaticField<JDataHolder>("someInstance");
     auto inst = cls->getStaticFieldValue(someInstanceField);
     if (!inst) {
       // NOTE: Can't use cls here because it is declared const.
@@ -99,7 +100,6 @@ struct JDataHolder : JavaClass<JDataHolder> {
   }
 };
 
-
 // SECTION registration
 // Standard declaration for a normal class (no C++ fields).
 struct DocTests : JavaClass<DocTests> {
@@ -108,8 +108,7 @@ struct DocTests : JavaClass<DocTests> {
 
   // SECTION constructor
   // Call-site in another file.
-  static local_ref<JDataHolder> runConstructor(
-      alias_ref<JClass> clazz) {
+  static local_ref<JDataHolder> runConstructor(alias_ref<JClass> clazz) {
     // Call to ordinatry C++ function is checked at *compile time*.
     return JDataHolder::create(1, "hi");
   }
@@ -150,7 +149,8 @@ struct DocTests : JavaClass<DocTests> {
   // END
 
   // SECTION primitives
-  static jlong addSomeNumbers(alias_ref<JClass> clazz, jbyte b, jshort s, jint i) {
+  static jlong
+  addSomeNumbers(alias_ref<JClass> clazz, jbyte b, jshort s, jint i) {
     static const auto doubler = clazz->getStaticMethod<jlong(jint)>("doubler");
     jlong l = doubler(clazz, 4);
     return b + s + i + l;
@@ -175,22 +175,27 @@ struct DocTests : JavaClass<DocTests> {
   // SECTION strings
   static std::string fancyCat(
       alias_ref<JClass> clazz,
-      // Native methods can receive strings as JString (direct JNI reference) ...
+      // Native methods can receive strings as JString (direct JNI reference)
+      // ...
       alias_ref<JString> s1,
       // or as std::string (converted to real UTF-8).
       std::string s2) {
     // Convert JString to std::string.
     std::string result = s1->toStdString();
     // Java methods can receive and return JString ...
-    static const auto doubler_java = clazz->getStaticMethod<JString(JString)>("doubler");
+    static const auto doubler_java =
+        clazz->getStaticMethod<JString(JString)>("doubler");
     result += doubler_java(clazz, *s1)->toStdString();
     // and also std::string (converted from real UTF-8).
-    static const auto doubler_std = clazz->getStaticMethod<std::string(std::string)>("doubler");
+    static const auto doubler_std =
+        clazz->getStaticMethod<std::string(std::string)>("doubler");
     result += doubler_std(clazz, s2)->toStdString();
     // They can also receive const char*, but not return it.
-    static const auto doubler_char = clazz->getStaticMethod<std::string(const char*)>("doubler");
+    static const auto doubler_char =
+        clazz->getStaticMethod<std::string(const char*)>("doubler");
     result += doubler_char(clazz, s2.c_str())->toStdString();
-    // All 3 formats can be returned (std::string shown here, const char* below).
+    // All 3 formats can be returned (std::string shown here, const char*
+    // below).
     return result;
   }
 
@@ -250,16 +255,18 @@ struct DocTests : JavaClass<DocTests> {
   It is used almost exclusively for function arguments.
 
   ### `local_ref<JFoo>`
-  `local_ref` is a ref-counted thread-specific pointer that is invalidated upon returning to Java.
-  For variables used within a function, use `local_ref`.
-  Most functions should return `local_ref` (and let the caller convert to a `global_ref` if necessary).
+  `local_ref` is a ref-counted thread-specific pointer that is invalidated upon
+  returning to Java. For variables used within a function, use `local_ref`. Most
+  functions should return `local_ref` (and let the caller convert to a
+  `global_ref` if necessary).
 
   ### `global_ref<JFoo>`
   `global_ref` is a ref-counted pointer.
   Use this for storing a reference to a Java object that may
   outlive the current call from Java into C++
   (e.g. class member fields are usually global refs).
-  You can create a new `global_ref` (from an `alias_ref`/`local_ref`) by calling `make_global`.
+  You can create a new `global_ref` (from an `alias_ref`/`local_ref`) by calling
+  `make_global`.
   // END
   */
   // SECTION references
@@ -280,11 +287,14 @@ struct DocTests : JavaClass<DocTests> {
     // Just like raw pointers, upcasting is implicit.
     alias_ref<JObject> obj = base;
     // static_ref_cast is like C++ static_cast.  No runtime checking is done.
-    alias_ref<JMyDerivedClass> derived_1 = static_ref_cast<JMyDerivedClass>(base);
+    alias_ref<JMyDerivedClass> derived_1 =
+        static_ref_cast<JMyDerivedClass>(base);
     // dynamic_ref_cast is like C++ dynamic_cast.
-    // It will check that the runtime Java type is actually derived from the target type.
+    // It will check that the runtime Java type is actually derived from the
+    // target type.
     try {
-      alias_ref<JMyDerivedClass> derived_2 = dynamic_ref_cast<JMyDerivedClass>(base);
+      alias_ref<JMyDerivedClass> derived_2 =
+          dynamic_ref_cast<JMyDerivedClass>(base);
       (void)derived_2;
     } catch (const JniException& exn) {
       // Throws ClassCastException if the cast fails.
@@ -305,7 +315,8 @@ struct DocTests : JavaClass<DocTests> {
   // SECTION jobject_jclass
   static std::string showJObject(
       alias_ref<JClass> clazz,
-      // JObject is the base class of all fbjni types.  It corresponds to java.lang.Object.
+      // JObject is the base class of all fbjni types.  It corresponds to
+      // java.lang.Object.
       alias_ref<JObject> obj,
       alias_ref<JDataHolder> data) {
     local_ref<JClass> objClass = obj->getClass();
@@ -321,23 +332,25 @@ struct DocTests : JavaClass<DocTests> {
       // Calls Object.toString and converts to std::string.
       str += data->toString();
     }
-    // All JavaClass types have a `javaobject` typedef, which is their raw JNI type.
+    // All JavaClass types have a `javaobject` typedef, which is their raw JNI
+    // type.
     static_assert(std::is_same<JObject::javaobject, jobject>::value, "");
     static_assert(std::is_same<JClass::javaobject, jclass>::value, "");
     static_assert(!std::is_same<JDataHolder::javaobject, jobject>::value, "");
-    static_assert(std::is_convertible<JDataHolder::javaobject, jobject>::value, "");
+    static_assert(
+        std::is_convertible<JDataHolder::javaobject, jobject>::value, "");
     return str;
   }
   // END
 
   // SECTION simple_exceptions
-  static void catchAndThrow(
-      alias_ref<JClass> clazz) {
+  static void catchAndThrow(alias_ref<JClass> clazz) {
     try {
       clazz->getStaticMethod<void()>("doesNotExist");
       assert(!"Exception wasn't thrown.");
     } catch (JniException& exn) {
-      // JniException extends std::exception, so "catch (std::exception& exn)" also works.
+      // JniException extends std::exception, so "catch (std::exception& exn)"
+      // also works.
       local_ref<JThrowable> underlying = exn.getThrowable();
       const char* msg = exn.what();
       // Throwing exceptions from C++ is fine.
@@ -402,7 +415,8 @@ struct DocTests : JavaClass<DocTests> {
   static local_ref<JByteBuffer> transformBuffer(
       alias_ref<JClass> clazz,
       alias_ref<JByteBuffer> data) {
-    // Direct ByteBuffers are an efficient way to transfer bulk data between Java and C++.
+    // Direct ByteBuffers are an efficient way to transfer bulk data between
+    // Java and C++.
     if (!data->isDirect()) {
       throw std::runtime_error("Argument is not a direct buffer.");
     }
@@ -414,8 +428,10 @@ struct DocTests : JavaClass<DocTests> {
     }
     // Wrap our data in a buffer and pass to Java.
     // Note that the buffer *directly* references our memory.
-    local_ref<JByteBuffer> wrapper = JByteBuffer::wrapBytes(buffer.data(), buffer.size());
-    static const auto receiver = clazz->getStaticMethod<void(alias_ref<JByteBuffer>)>("receiveBuffer");
+    local_ref<JByteBuffer> wrapper =
+        JByteBuffer::wrapBytes(buffer.data(), buffer.size());
+    static const auto receiver =
+        clazz->getStaticMethod<void(alias_ref<JByteBuffer>)>("receiveBuffer");
     receiver(clazz, wrapper);
     // We can create a new buffer that owns its own memory and safely return it.
     local_ref<JByteBuffer> ret = JByteBuffer::allocateDirect(buffer.size());
@@ -424,41 +440,37 @@ struct DocTests : JavaClass<DocTests> {
   }
   // END
 
-
  public:
   // SECTION registration
   // NOTE: The name of this method doesn't matter.
   static void registerNatives() {
     javaClassStatic()->registerNatives({
-      makeNativeMethod("nativeVoidMethod", DocTests::nativeVoidMethod),
-      makeNativeMethod("staticNativeVoidMethod", DocTests::staticNativeVoidMethod),
-      // END
-      makeNativeMethod("addSomeNumbers", DocTests::addSomeNumbers),
-      makeNativeMethod("fancyCat", DocTests::fancyCat),
-      makeNativeMethod("getCString", DocTests::getCString),
-      makeNativeMethod("primitiveArrays", DocTests::primitiveArrays),
-      makeNativeMethod("convertReferences", DocTests::convertReferences),
-      makeNativeMethod("castReferences", DocTests::castReferences),
-      makeNativeMethod("runConstructor", DocTests::runConstructor),
-      makeNativeMethod("callGetAndSetFields", DocTests::callGetAndSetFields),
-      makeNativeMethod("showJObject", DocTests::showJObject),
-      makeNativeMethod("catchAndThrow", DocTests::catchAndThrow),
-      makeNativeMethod("scaleUp", DocTests::scaleUp),
-      makeNativeMethod("concatMatches", DocTests::concatMatches),
-      makeNativeMethod("buildCollections", DocTests::buildCollections),
-      makeNativeMethod("transformBuffer", DocTests::transformBuffer),
+        makeNativeMethod("nativeVoidMethod", DocTests::nativeVoidMethod),
+        makeNativeMethod(
+            "staticNativeVoidMethod", DocTests::staticNativeVoidMethod),
+        // END
+        makeNativeMethod("addSomeNumbers", DocTests::addSomeNumbers),
+        makeNativeMethod("fancyCat", DocTests::fancyCat),
+        makeNativeMethod("getCString", DocTests::getCString),
+        makeNativeMethod("primitiveArrays", DocTests::primitiveArrays),
+        makeNativeMethod("convertReferences", DocTests::convertReferences),
+        makeNativeMethod("castReferences", DocTests::castReferences),
+        makeNativeMethod("runConstructor", DocTests::runConstructor),
+        makeNativeMethod("callGetAndSetFields", DocTests::callGetAndSetFields),
+        makeNativeMethod("showJObject", DocTests::showJObject),
+        makeNativeMethod("catchAndThrow", DocTests::catchAndThrow),
+        makeNativeMethod("scaleUp", DocTests::scaleUp),
+        makeNativeMethod("concatMatches", DocTests::concatMatches),
+        makeNativeMethod("buildCollections", DocTests::buildCollections),
+        makeNativeMethod("transformBuffer", DocTests::transformBuffer),
     });
   }
 };
 
-
 } // Anonymous namespace
-
 
 // SECTION registration
 jint JNI_OnLoad(JavaVM* vm, void*) {
-  return facebook::jni::initialize(vm, [] {
-      DocTests::registerNatives();
-  });
+  return facebook::jni::initialize(vm, [] { DocTests::registerNatives(); });
 }
 // END

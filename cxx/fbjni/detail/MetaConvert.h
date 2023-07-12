@@ -40,12 +40,12 @@ inline JniType<T> callToJni(local_ref<T>&& sref) {
   return sref.get();
 }
 
-template<typename T>
+template <typename T>
 enable_if_t<IsPlainJniReference<T>(), T> toPlainJniReference(T obj) {
   return obj;
 }
 
-template<typename T>
+template <typename T>
 enable_if_t<IsJavaClassType<T>(), JniType<T>> toPlainJniReference(T repr) {
   return ReprAccess<T>::get(repr);
 }
@@ -72,7 +72,7 @@ struct Convert<void> {
 };
 
 // jboolean is an unsigned char, not a bool. Allow it to work either way.
-template<>
+template <>
 struct Convert<bool> {
   typedef jboolean jniType;
   static bool fromJni(jniType t) {
@@ -88,11 +88,13 @@ struct Convert<bool> {
 
 // Sometimes (64-bit Android) jlong is "long long", but int64_t is "long".
 // Allow int64_t to work as jlong.
-template<typename T>
-struct Convert<T,
+template <typename T>
+struct Convert<
+    T,
     typename std::enable_if<
-      (std::is_same<T, long long>::value || std::is_same<T, int64_t>::value) && !std::is_same<T, jlong>::value
-    >::type> {
+        (std::is_same<T, long long>::value ||
+         std::is_same<T, int64_t>::value) &&
+        !std::is_same<T, jlong>::value>::type> {
   typedef jlong jniType;
   static T fromJni(jniType t) {
     return t;
@@ -160,11 +162,13 @@ struct Convert<global_ref<T>> {
   }
 };
 
-template <typename T> struct jni_sig_from_cxx_t;
+template <typename T>
+struct jni_sig_from_cxx_t;
 template <typename R, typename... Args>
 struct jni_sig_from_cxx_t<R(Args...)> {
   using JniRet = typename Convert<typename std::decay<R>::type>::jniType;
-  using JniSig = JniRet(typename Convert<typename std::decay<Args>::type>::jniType...);
+  using JniSig =
+      JniRet(typename Convert<typename std::decay<Args>::type>::jniType...);
 };
 
 template <typename T>
@@ -173,7 +177,8 @@ using jni_sig_from_cxx = typename jni_sig_from_cxx_t<T>::JniSig;
 } // namespace detail
 
 template <typename R, typename... Args>
-struct jmethod_traits_from_cxx<R(Args...)> : jmethod_traits<detail::jni_sig_from_cxx<R(Args...)>> {
-};
+struct jmethod_traits_from_cxx<R(Args...)>
+    : jmethod_traits<detail::jni_sig_from_cxx<R(Args...)>> {};
 
-}}
+} // namespace jni
+} // namespace facebook

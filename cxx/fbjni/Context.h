@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <fbjni/File.h>
 #include <fbjni/Application.h>
+#include <fbjni/File.h>
 #include <fbjni/fbjni.h>
 
 namespace facebook {
@@ -45,7 +45,8 @@ class AContext : public JavaClass<AContext> {
   }
 
   local_ref<AApplication> getApplication() {
-    static const auto method = getClass()->getMethod<AApplication()>("getApplication");
+    static const auto method =
+        getClass()->getMethod<AApplication()>("getApplication");
     return method(self());
   }
 };

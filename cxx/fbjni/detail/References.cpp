@@ -19,8 +19,7 @@
 namespace facebook {
 namespace jni {
 
-JniLocalScope::JniLocalScope(JNIEnv* env, jint capacity)
-    : env_(env) {
+JniLocalScope::JniLocalScope(JNIEnv* env, jint capacity) : env_(env) {
   hasFrame_ = false;
   auto pushResult = env->PushLocalFrame(capacity);
   FACEBOOK_JNI_THROW_EXCEPTION_IF(pushResult < 0);
@@ -46,8 +45,8 @@ int32_t getAndroidApiLevel() {
 
   JNIEnv* env = Environment::current();
   jclass cls = detail::findClass(env, "android/os/Build$VERSION");
-  jfieldID field = env->GetStaticFieldID(cls, "SDK_INT",
-                                         jtype_traits<jint>::kDescriptor.c_str());
+  jfieldID field = env->GetStaticFieldID(
+      cls, "SDK_INT", jtype_traits<jint>::kDescriptor.c_str());
   if (!field) {
     env->DeleteLocalRef(cls);
   }
@@ -71,7 +70,7 @@ bool doesGetObjectRefTypeWork() {
 
 #endif
 
-}
+} // namespace
 
 bool isObjectRefType(jobject reference, jobjectRefType refType) {
   // null-check first so that we short-circuit during (safe) global
@@ -82,10 +81,9 @@ bool isObjectRefType(jobject reference, jobjectRefType refType) {
 
   static bool getObjectRefTypeWorks = doesGetObjectRefTypeWork();
 
-  return
-    !getObjectRefTypeWorks ||
-    Environment::current()->GetObjectRefType(reference) == refType;
+  return !getObjectRefTypeWorks ||
+      Environment::current()->GetObjectRefType(reference) == refType;
 }
 
-}
-}
+} // namespace jni
+} // namespace facebook

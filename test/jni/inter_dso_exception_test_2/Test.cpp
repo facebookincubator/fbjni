@@ -15,8 +15,8 @@
  */
 
 #include "Test.h"
-#include <inter_dso_exception_test_1/Test.h>
 #include <fbjni/fbjni.h>
+#include <inter_dso_exception_test_1/Test.h>
 
 void inter_dso_exception_test_2a() {
   inter_dso_exception_test_1();
@@ -26,9 +26,9 @@ bool inter_dso_exception_test_2b() {
   try {
     inter_dso_exception_test_1();
     return false;
-  } catch(const facebook::jni::JniException& ex) {
+  } catch (const facebook::jni::JniException& ex) {
     return true;
-  } catch(...) {
+  } catch (...) {
     return false;
   }
 }

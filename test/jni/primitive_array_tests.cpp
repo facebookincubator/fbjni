@@ -55,7 +55,9 @@ local_ref<jdoubleArray> testMakeDoubleArray(alias_ref<jclass>, jint size) {
   return make_double_array(size);
 }
 
-jboolean testGetSetBooleanArray(alias_ref<jclass>, alias_ref<jbooleanArray> array) {
+jboolean testGetSetBooleanArray(
+    alias_ref<jclass>,
+    alias_ref<jbooleanArray> array) {
   EXPECT(array);
 
   auto n = array->size();
@@ -77,7 +79,9 @@ jboolean testGetSetBooleanArray(alias_ref<jclass>, alias_ref<jbooleanArray> arra
   return JNI_TRUE;
 }
 
-jboolean testPinBooleanArray(alias_ref<jclass>, alias_ref<jbooleanArray> array) {
+jboolean testPinBooleanArray(
+    alias_ref<jclass>,
+    alias_ref<jbooleanArray> array) {
   EXPECT(array);
 
   auto n = static_cast<jboolean>(array->size());
@@ -204,25 +208,35 @@ jboolean testIndexOutOfBoundsInRegions(alias_ref<jclass>) {
   return JNI_TRUE;
 }
 
-jboolean TestBooleanArrayIndexing(alias_ref<jobject> self, alias_ref<jbooleanArray> input, jint idx) {
+jboolean TestBooleanArrayIndexing(
+    alias_ref<jobject> self,
+    alias_ref<jbooleanArray> input,
+    jint idx) {
   auto array = input->pin();
   jboolean value = array[idx];
   return value;
 }
 
-jint TestIntegerArrayIndexing(alias_ref<jobject> self, alias_ref<jintArray> input, jint idx) {
+jint TestIntegerArrayIndexing(
+    alias_ref<jobject> self,
+    alias_ref<jintArray> input,
+    jint idx) {
   auto array = input->pin();
   jint value = array[idx];
   return value;
 }
 
-jsize TestIntegerArraySize(alias_ref<jobject> self, alias_ref<jintArray> input) {
+jsize TestIntegerArraySize(
+    alias_ref<jobject> self,
+    alias_ref<jintArray> input) {
   auto array = input->pin();
   jsize size = array.size();
   return size;
 }
 
-alias_ref<jintArray> TestIntegerArrayIncrement(alias_ref<jobject> self, alias_ref<jintArray> input) {
+alias_ref<jintArray> TestIntegerArrayIncrement(
+    alias_ref<jobject> self,
+    alias_ref<jintArray> input) {
   auto array = input->pin();
   for (size_t ii = 0; ii < array.size(); ii++) {
     array[ii]++;
@@ -230,7 +244,9 @@ alias_ref<jintArray> TestIntegerArrayIncrement(alias_ref<jobject> self, alias_re
   return input;
 }
 
-void TestIntegerArrayMoveAssignment(alias_ref<jobject> self, alias_ref<jintArray> input) {
+void TestIntegerArrayMoveAssignment(
+    alias_ref<jobject> self,
+    alias_ref<jintArray> input) {
   auto array = input->pin();
   array[0] = 0;
   array.release();
@@ -263,7 +279,9 @@ jboolean testCopiedPinnedArray(alias_ref<jobject>, alias_ref<jintArray> input) {
   return JNI_TRUE;
 }
 
-jboolean testNonCopiedPinnedArray(alias_ref<jobject>, alias_ref<jintArray> input) {
+jboolean testNonCopiedPinnedArray(
+    alias_ref<jobject>,
+    alias_ref<jintArray> input) {
   EXPECT(input->size() > 0);
   auto pin = input->pin();
   EXPECT(!pin.isCopy());
@@ -278,69 +296,104 @@ jboolean testNonCopiedPinnedArray(alias_ref<jobject>, alias_ref<jintArray> input
   return JNI_TRUE;
 }
 
-
 void RegisterPrimitiveArrayTests() {
-  registerNatives("com/facebook/jni/PrimitiveArrayTests", {
-    makeNativeMethod("nativeTestMakeBooleanArray", testMakeBoolArray),
-    makeNativeMethod("nativeTestMakeByteArray", testMakeByteArray),
-    makeNativeMethod("nativeTestMakeCharArray", testMakeCharArray),
-    makeNativeMethod("nativeTestMakeShortArray", testMakeShortArray),
-    makeNativeMethod("nativeTestMakeIntArray", testMakeIntArray),
-    makeNativeMethod("nativeTestMakeLongArray", testMakeLongArray),
-    makeNativeMethod("nativeTestMakeFloatArray", testMakeFloatArray),
-    makeNativeMethod("nativeTestMakeDoubleArray", testMakeDoubleArray),
+  registerNatives(
+      "com/facebook/jni/PrimitiveArrayTests",
+      {
+          makeNativeMethod("nativeTestMakeBooleanArray", testMakeBoolArray),
+          makeNativeMethod("nativeTestMakeByteArray", testMakeByteArray),
+          makeNativeMethod("nativeTestMakeCharArray", testMakeCharArray),
+          makeNativeMethod("nativeTestMakeShortArray", testMakeShortArray),
+          makeNativeMethod("nativeTestMakeIntArray", testMakeIntArray),
+          makeNativeMethod("nativeTestMakeLongArray", testMakeLongArray),
+          makeNativeMethod("nativeTestMakeFloatArray", testMakeFloatArray),
+          makeNativeMethod("nativeTestMakeDoubleArray", testMakeDoubleArray),
 
-    makeNativeMethod("nativeTestGetSetBooleanArray", testGetSetBooleanArray),
-    makeNativeMethod("nativeTestGetSetByteArray", testGetSetArray<jbyteArray>),
-    makeNativeMethod("nativeTestGetSetCharArray", testGetSetArray<jcharArray>),
-    makeNativeMethod("nativeTestGetSetShortArray", testGetSetArray<jshortArray>),
-    makeNativeMethod("nativeTestGetSetIntArray", testGetSetArray<jintArray>),
-    makeNativeMethod("nativeTestGetSetLongArray", testGetSetArray<jlongArray>),
-    makeNativeMethod("nativeTestGetSetFloatArray", testGetSetArray<jfloatArray>),
-    makeNativeMethod("nativeTestGetSetDoubleArray", testGetSetArray<jdoubleArray>),
+          makeNativeMethod(
+              "nativeTestGetSetBooleanArray", testGetSetBooleanArray),
+          makeNativeMethod(
+              "nativeTestGetSetByteArray", testGetSetArray<jbyteArray>),
+          makeNativeMethod(
+              "nativeTestGetSetCharArray", testGetSetArray<jcharArray>),
+          makeNativeMethod(
+              "nativeTestGetSetShortArray", testGetSetArray<jshortArray>),
+          makeNativeMethod(
+              "nativeTestGetSetIntArray", testGetSetArray<jintArray>),
+          makeNativeMethod(
+              "nativeTestGetSetLongArray", testGetSetArray<jlongArray>),
+          makeNativeMethod(
+              "nativeTestGetSetFloatArray", testGetSetArray<jfloatArray>),
+          makeNativeMethod(
+              "nativeTestGetSetDoubleArray", testGetSetArray<jdoubleArray>),
 
-    makeNativeMethod("nativeTestPinBooleanArray", testPinBooleanArray),
-    makeNativeMethod("nativeTestPinByteArray", testPinArray<jbyteArray>),
-    makeNativeMethod("nativeTestPinCharArray", testPinArray<jcharArray>),
-    makeNativeMethod("nativeTestPinShortArray", testPinArray<jshortArray>),
-    makeNativeMethod("nativeTestPinIntArray", testPinArray<jintArray>),
-    makeNativeMethod("nativeTestPinLongArray", testPinArray<jlongArray>),
-    makeNativeMethod("nativeTestPinFloatArray", testPinArray<jfloatArray>),
-    makeNativeMethod("nativeTestPinDoubleArray", testPinArray<jdoubleArray>),
+          makeNativeMethod("nativeTestPinBooleanArray", testPinBooleanArray),
+          makeNativeMethod("nativeTestPinByteArray", testPinArray<jbyteArray>),
+          makeNativeMethod("nativeTestPinCharArray", testPinArray<jcharArray>),
+          makeNativeMethod(
+              "nativeTestPinShortArray", testPinArray<jshortArray>),
+          makeNativeMethod("nativeTestPinIntArray", testPinArray<jintArray>),
+          makeNativeMethod("nativeTestPinLongArray", testPinArray<jlongArray>),
+          makeNativeMethod(
+              "nativeTestPinFloatArray", testPinArray<jfloatArray>),
+          makeNativeMethod(
+              "nativeTestPinDoubleArray", testPinArray<jdoubleArray>),
 
-    makeNativeMethod("nativeTestPinByteArrayRegion", testPinArrayRegion<jbyteArray>),
-    makeNativeMethod("nativeTestPinCharArrayRegion", testPinArrayRegion<jcharArray>),
-    makeNativeMethod("nativeTestPinShortArrayRegion", testPinArrayRegion<jshortArray>),
-    makeNativeMethod("nativeTestPinIntArrayRegion", testPinArrayRegion<jintArray>),
-    makeNativeMethod("nativeTestPinLongArrayRegion", testPinArrayRegion<jlongArray>),
-    makeNativeMethod("nativeTestPinFloatArrayRegion", testPinArrayRegion<jfloatArray>),
-    makeNativeMethod("nativeTestPinDoubleArrayRegion", testPinArrayRegion<jdoubleArray>),
+          makeNativeMethod(
+              "nativeTestPinByteArrayRegion", testPinArrayRegion<jbyteArray>),
+          makeNativeMethod(
+              "nativeTestPinCharArrayRegion", testPinArrayRegion<jcharArray>),
+          makeNativeMethod(
+              "nativeTestPinShortArrayRegion", testPinArrayRegion<jshortArray>),
+          makeNativeMethod(
+              "nativeTestPinIntArrayRegion", testPinArrayRegion<jintArray>),
+          makeNativeMethod(
+              "nativeTestPinLongArrayRegion", testPinArrayRegion<jlongArray>),
+          makeNativeMethod(
+              "nativeTestPinFloatArrayRegion", testPinArrayRegion<jfloatArray>),
+          makeNativeMethod(
+              "nativeTestPinDoubleArrayRegion",
+              testPinArrayRegion<jdoubleArray>),
 
-    makeNativeMethod("nativeTestPinByteArrayCritical", testPinArrayCritical<jbyteArray>),
-    makeNativeMethod("nativeTestPinCharArrayCritical", testPinArrayCritical<jcharArray>),
-    makeNativeMethod("nativeTestPinShortArrayCritical", testPinArrayCritical<jshortArray>),
-    makeNativeMethod("nativeTestPinIntArrayCritical", testPinArrayCritical<jintArray>),
-    makeNativeMethod("nativeTestPinLongArrayCritical", testPinArrayCritical<jlongArray>),
-    makeNativeMethod("nativeTestPinFloatArrayCritical", testPinArrayCritical<jfloatArray>),
-    makeNativeMethod("nativeTestPinDoubleArrayCritical", testPinArrayCritical<jdoubleArray>),
+          makeNativeMethod(
+              "nativeTestPinByteArrayCritical",
+              testPinArrayCritical<jbyteArray>),
+          makeNativeMethod(
+              "nativeTestPinCharArrayCritical",
+              testPinArrayCritical<jcharArray>),
+          makeNativeMethod(
+              "nativeTestPinShortArrayCritical",
+              testPinArrayCritical<jshortArray>),
+          makeNativeMethod(
+              "nativeTestPinIntArrayCritical", testPinArrayCritical<jintArray>),
+          makeNativeMethod(
+              "nativeTestPinLongArrayCritical",
+              testPinArrayCritical<jlongArray>),
+          makeNativeMethod(
+              "nativeTestPinFloatArrayCritical",
+              testPinArrayCritical<jfloatArray>),
+          makeNativeMethod(
+              "nativeTestPinDoubleArrayCritical",
+              testPinArrayCritical<jdoubleArray>),
 
-    makeNativeMethod("nativeTestIndexOutOfBoundsInRegions", testIndexOutOfBoundsInRegions),
+          makeNativeMethod(
+              "nativeTestIndexOutOfBoundsInRegions",
+              testIndexOutOfBoundsInRegions),
 
-    makeNativeMethod("nativeTestBooleanArrayIndexing",
-                     TestBooleanArrayIndexing),
-    makeNativeMethod("nativeTestIntegerArrayIndexing",
-                     TestIntegerArrayIndexing),
-    makeNativeMethod("nativeTestIntegerArraySize",
-                     TestIntegerArraySize),
-    makeNativeMethod("nativeTestIntegerArrayIncrement",
-                     TestIntegerArrayIncrement),
-    makeNativeMethod("nativeTestIntegerArrayMoveAssignment",
-                     TestIntegerArrayMoveAssignment),
+          makeNativeMethod(
+              "nativeTestBooleanArrayIndexing", TestBooleanArrayIndexing),
+          makeNativeMethod(
+              "nativeTestIntegerArrayIndexing", TestIntegerArrayIndexing),
+          makeNativeMethod("nativeTestIntegerArraySize", TestIntegerArraySize),
+          makeNativeMethod(
+              "nativeTestIntegerArrayIncrement", TestIntegerArrayIncrement),
+          makeNativeMethod(
+              "nativeTestIntegerArrayMoveAssignment",
+              TestIntegerArrayMoveAssignment),
 
-    makeNativeMethod("nativeIsPinnedArrayACopy", isPinnedArrayACopy),
-    makeNativeMethod("nativeTestCopiedPinnedArray",
-                     testCopiedPinnedArray),
-    makeNativeMethod("nativeTestNonCopiedPinnedArray",
-                     testNonCopiedPinnedArray),
-  });
+          makeNativeMethod("nativeIsPinnedArrayACopy", isPinnedArrayACopy),
+          makeNativeMethod(
+              "nativeTestCopiedPinnedArray", testCopiedPinnedArray),
+          makeNativeMethod(
+              "nativeTestNonCopiedPinnedArray", testNonCopiedPinnedArray),
+      });
 }

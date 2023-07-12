@@ -20,8 +20,8 @@
 #include <sys/prctl.h>
 #endif // __ANDROID__
 
-#include <vector>
 #include <functional>
+#include <vector>
 #ifndef _WIN32
 #include <pthread.h>
 #else
@@ -37,9 +37,9 @@ JavaVM* g_vm = nullptr;
 
 struct EnvironmentInitializer {
   EnvironmentInitializer(JavaVM* vm) {
-      FBJNI_ASSERT(!g_vm);
-      FBJNI_ASSERT(vm);
-      g_vm = vm;
+    FBJNI_ASSERT(!g_vm);
+    FBJNI_ASSERT(vm);
+    g_vm = vm;
   }
 };
 
@@ -61,12 +61,12 @@ template <typename>
 struct AttachTraits;
 
 template <>
-struct AttachTraits<jint(JavaVM::*)(JNIEnv**, void*)> {
+struct AttachTraits<jint (JavaVM::*)(JNIEnv**, void*)> {
   using EnvType = JNIEnv*;
 };
 
 template <>
-struct AttachTraits<jint(JavaVM::*)(void**, void*)> {
+struct AttachTraits<jint (JavaVM::*)(void**, void*)> {
   using EnvType = void*;
 };
 
@@ -108,7 +108,7 @@ JNIEnv* attachCurrentThread() {
   return reinterpret_cast<JNIEnv*>(env);
 }
 
-}
+} // namespace
 
 /* static */
 void Environment::initialize(JavaVM* vm) {
@@ -158,7 +158,7 @@ inline void setTLData(tls_key_t key, detail::TLData* data) {
 #ifndef _WIN32
   int ret = pthread_setspecific(key, data);
   if (ret != 0) {
-    (void) ret;
+    (void)ret;
     FBJNI_LOGF("pthread_setspecific failed: %d", ret);
   }
 #else
@@ -176,7 +176,7 @@ inline JNIEnv* cachedOrNull() {
   return (pdata ? pdata->env : nullptr);
 }
 
-}
+} // namespace
 
 namespace detail {
 
@@ -224,9 +224,7 @@ JNIEnv* currentOrNull() {
 // first/last interesting objects, but this is not true of
 // JniEnvCacher.
 
-JniEnvCacher::JniEnvCacher(JNIEnv* env)
-  : thisCached_(false)
-{
+JniEnvCacher::JniEnvCacher(JNIEnv* env) : thisCached_(false) {
   FBJNI_ASSERT(env);
 
   tls_key_t key = getTLKey();
@@ -263,13 +261,12 @@ JniEnvCacher::~JniEnvCacher() {
   }
 }
 
-}
+} // namespace detail
 
-ThreadScope::ThreadScope()
-  : thisAttached_(false)
-{
+ThreadScope::ThreadScope() : thisAttached_(false) {
   if (g_vm == nullptr) {
-    throw std::runtime_error("fbjni is uninitialized; no thread can be attached.");
+    throw std::runtime_error(
+        "fbjni is uninitialized; no thread can be attached.");
   }
 
   JNIEnv* env;
@@ -319,7 +316,8 @@ JNIEnv* Environment::current() {
   FBJNI_ASSERT(g_vm);
   JNIEnv* env = detail::currentOrNull();
   if (env == nullptr) {
-    throw std::runtime_error("Unable to retrieve jni environment. Is the thread attached?");
+    throw std::runtime_error(
+        "Unable to retrieve jni environment. Is the thread attached?");
   }
   return env;
 }
@@ -342,11 +340,14 @@ bool Environment::isGlobalJvmAvailable() {
 
 namespace {
 struct JThreadScopeSupport : JavaClass<JThreadScopeSupport> {
-  static auto constexpr kJavaDescriptor = "Lcom/facebook/jni/ThreadScopeSupport;";
+  static auto constexpr kJavaDescriptor =
+      "Lcom/facebook/jni/ThreadScopeSupport;";
 
-  // These reinterpret_casts are a totally dangerous pattern. Don't use them. Use HybridData instead.
+  // These reinterpret_casts are a totally dangerous pattern. Don't use them.
+  // Use HybridData instead.
   static void runStdFunction(std::function<void()>&& func) {
-    static const auto method = javaClassStatic()->getStaticMethod<void(jlong)>("runStdFunction");
+    static const auto method =
+        javaClassStatic()->getStaticMethod<void(jlong)>("runStdFunction");
     method(javaClassStatic(), reinterpret_cast<jlong>(&func));
   }
 
@@ -359,14 +360,15 @@ struct JThreadScopeSupport : JavaClass<JThreadScopeSupport> {
     // runStdFunction can be called from a ThreadScope-attached thread.
     javaClassStatic()->registerNatives({
         makeNativeMethod("runStdFunctionImpl", runStdFunctionImpl),
-      });
+    });
   }
 };
-}
+} // namespace
 
 /* static */
 void ThreadScope::OnLoad() {
-  // These classes are required for ScopeWithClassLoader. Ensure they are looked up when loading.
+  // These classes are required for ScopeWithClassLoader. Ensure they are looked
+  // up when loading.
   JThreadScopeSupport::OnLoad();
 }
 
@@ -380,4 +382,5 @@ void ThreadScope::WithClassLoader(std::function<void()>&& runnable) {
   }
 }
 
-} }
+} // namespace jni
+} // namespace facebook

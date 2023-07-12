@@ -22,7 +22,7 @@ namespace facebook {
 namespace jni {
 
 class JBuffer : public JavaClass<JBuffer> {
-public:
+ public:
   static constexpr const char* kJavaDescriptor = "Ljava/nio/Buffer;";
 
   void rewind() const;
@@ -33,9 +33,9 @@ public:
 
 class JByteOrder : public JavaClass<JByteOrder> {
  public:
-    constexpr static const char* kJavaDescriptor = "Ljava/nio/ByteOrder;";
+  constexpr static const char* kJavaDescriptor = "Ljava/nio/ByteOrder;";
 
-    static local_ref<JByteOrder> nativeOrder();
+  static local_ref<JByteOrder> nativeOrder();
 };
 
 // JNI's NIO support has some awkward preconditions and error reporting. This
@@ -58,4 +58,5 @@ class JByteBuffer : public JavaClass<JByteBuffer, JBuffer> {
   }
 };
 
-}}
+} // namespace jni
+} // namespace facebook

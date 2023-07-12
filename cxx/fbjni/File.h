@@ -27,11 +27,11 @@ class JFile : public JavaClass<JFile> {
 
   // Define a method that calls into the represented Java class
   std::string getAbsolutePath() {
-    static const auto method = getClass()->getMethod<jstring()>("getAbsolutePath");
+    static const auto method =
+        getClass()->getMethod<jstring()>("getAbsolutePath");
     return method(self())->toStdString();
   }
-
 };
 
-}
-}
+} // namespace jni
+} // namespace facebook

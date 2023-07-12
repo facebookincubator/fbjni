@@ -15,10 +15,9 @@
  */
 
 #pragma once
+#include <jni.h>
 #include <functional>
 #include <string>
-#include <jni.h>
-
 
 namespace facebook {
 namespace jni {
@@ -73,7 +72,7 @@ struct TLData {
  * from a registered fbjni function.
  */
 class JniEnvCacher {
-public:
+ public:
   JniEnvCacher(JNIEnv* env);
   JniEnvCacher(JniEnvCacher&) = delete;
   JniEnvCacher(JniEnvCacher&&) = default;
@@ -81,7 +80,7 @@ public:
   JniEnvCacher& operator=(JniEnvCacher&&) = delete;
   ~JniEnvCacher();
 
-private:
+ private:
   // If this flag is set, then, this object needs to clear the cache.
   bool thisCached_;
 
@@ -89,32 +88,37 @@ private:
   detail::TLData data_;
 };
 
-}
+} // namespace detail
 
 /**
- * RAII Object that attaches a thread to the JVM. Failing to detach from a thread before it
- * exits will cause a crash, as will calling Detach an extra time, and this guard class helps
- * keep that straight. In addition, it remembers whether it performed the attach or not, so it
- * is safe to nest it with itself or with non-fbjni code that manages the attachment correctly.
+ * RAII Object that attaches a thread to the JVM. Failing to detach from a
+ * thread before it exits will cause a crash, as will calling Detach an extra
+ * time, and this guard class helps keep that straight. In addition, it
+ * remembers whether it performed the attach or not, so it is safe to nest it
+ * with itself or with non-fbjni code that manages the attachment correctly.
  *
  * Potential concerns:
- *  - Attaching to the JVM is fast (~100us on MotoG), but ideally you would attach while the
- *    app is not busy.
- *  - Having a thread detach at arbitrary points is not safe in Dalvik; you need to be sure that
- *    there is no Java code on the current stack or you run the risk of a crash like:
- *      ERROR: detaching thread with interp frames (count=18)
- *    (More detail at https://groups.google.com/forum/#!topic/android-ndk/2H8z5grNqjo)
- *    ThreadScope won't do a detach if the thread was already attached before the guard is
+ *  - Attaching to the JVM is fast (~100us on MotoG), but ideally you would
+ * attach while the app is not busy.
+ *  - Having a thread detach at arbitrary points is not safe in Dalvik; you need
+ * to be sure that there is no Java code on the current stack or you run the
+ * risk of a crash like: ERROR: detaching thread with interp frames (count=18)
+ *    (More detail at
+ * https://groups.google.com/forum/#!topic/android-ndk/2H8z5grNqjo) ThreadScope
+ * won't do a detach if the thread was already attached before the guard is
  *    instantiated, but there's probably some usage that could trip this up.
- *  - Newly attached C++ threads only get the bootstrap class loader -- i.e. java language
- *    classes, not any of our application's classes. This will be different behavior than threads
- *    that were initiated on the Java side. A workaround is to pass a global reference for a
- *    class or instance to the new thread; this bypasses the need for the class loader.
- *    (See http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html#attach_current_thread)
- *    If you need access to the application's classes, you can use ThreadScope::WithClassLoader.
- *  - If fbjni has never been initialized, there will be no JavaVM object to attach with.
- *    In that case, a std::runtime_error will be thrown.  This is only likely to happen in a
- *    standalone C++ application, or if Environment::initialize is not used.
+ *  - Newly attached C++ threads only get the bootstrap class loader -- i.e.
+ * java language classes, not any of our application's classes. This will be
+ * different behavior than threads that were initiated on the Java side. A
+ * workaround is to pass a global reference for a class or instance to the new
+ * thread; this bypasses the need for the class loader. (See
+ * http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html#attach_current_thread)
+ *    If you need access to the application's classes, you can use
+ * ThreadScope::WithClassLoader.
+ *  - If fbjni has never been initialized, there will be no JavaVM object to
+ * attach with. In that case, a std::runtime_error will be thrown.  This is only
+ * likely to happen in a standalone C++ application, or if
+ * Environment::initialize is not used.
  */
 class ThreadScope {
  public:
@@ -143,5 +147,5 @@ class ThreadScope {
   detail::TLData data_;
 };
 
-}
-}
+} // namespace jni
+} // namespace facebook

@@ -29,21 +29,23 @@ using InstructionPointer = const void*;
 
 class StackTraceElement {
  public:
-  StackTraceElement(InstructionPointer absoluteProgramCounter,
-                    InstructionPointer libraryBase,
-                    InstructionPointer functionAddress,
-                    std::string libraryName,
-                    std::string functionName)
+  StackTraceElement(
+      InstructionPointer absoluteProgramCounter,
+      InstructionPointer libraryBase,
+      InstructionPointer functionAddress,
+      std::string libraryName,
+      std::string functionName)
       : absoluteProgramCounter_{absoluteProgramCounter},
         libraryBase_{libraryBase},
         functionAddress_{functionAddress},
         libraryName_{std::move(libraryName)},
         functionName_{std::move(functionName)},
         hasBuildId_{false},
-        buildId_{}
-  {}
+        buildId_{} {}
 
-  InstructionPointer libraryBase() const noexcept { return libraryBase_; }
+  InstructionPointer libraryBase() const noexcept {
+    return libraryBase_;
+  }
 
   InstructionPointer functionAddress() const noexcept {
     return functionAddress_;
@@ -53,9 +55,13 @@ class StackTraceElement {
     return absoluteProgramCounter_;
   }
 
-  const std::string& libraryName() const noexcept { return libraryName_; }
+  const std::string& libraryName() const noexcept {
+    return libraryName_;
+  }
 
-  const std::string& functionName() const noexcept { return functionName_; }
+  const std::string& functionName() const noexcept {
+    return functionName_;
+  }
 
   /**
    * The offset of the program counter to the base of the library (i.e. the
@@ -79,6 +85,7 @@ class StackTraceElement {
   }
 
   std::string buildId() const;
+
  private:
   const InstructionPointer absoluteProgramCounter_;
   const InstructionPointer libraryBase_;
@@ -116,7 +123,9 @@ void setLibraryIdentifierFunction(LibraryIdentifierFunctionType func);
  *
  * @param skip The number of frames to skip before capturing the trace
  */
-void getStackTrace(std::vector<InstructionPointer>& stackTrace, size_t skip = 0);
+void getStackTrace(
+    std::vector<InstructionPointer>& stackTrace,
+    size_t skip = 0);
 
 /**
  * Creates a vector and populates it with the current stack trace
@@ -149,8 +158,9 @@ inline std::vector<InstructionPointer> getStackTrace(
  *
  * @param stackTrace The input stack trace
  */
-void getStackTraceSymbols(std::vector<StackTraceElement>& symbols,
-                          const std::vector<InstructionPointer>& trace);
+void getStackTraceSymbols(
+    std::vector<StackTraceElement>& symbols,
+    const std::vector<InstructionPointer>& trace);
 
 /**
  * Symbolicates a stack trace into a new vector
@@ -163,7 +173,6 @@ inline std::vector<StackTraceElement> getStackTraceSymbols(
   getStackTraceSymbols(symbols, trace);
   return symbols;
 }
-
 
 /**
  * Captures and symbolicates a stack trace
@@ -190,8 +199,9 @@ std::ostream& operator<<(std::ostream& out, const StackTraceElement& elm);
 /**
  * Formatting a stack trace
  */
-std::ostream& operator<<(std::ostream& out,
-                         const std::vector<StackTraceElement>& trace);
+std::ostream& operator<<(
+    std::ostream& out,
+    const std::vector<StackTraceElement>& trace);
 
 /**
  * Log stack trace
@@ -201,5 +211,5 @@ std::ostream& operator<<(std::ostream& out,
  */
 void logStackTrace(const std::vector<StackTraceElement>& trace);
 
-}
-}
+} // namespace lyra
+} // namespace facebook

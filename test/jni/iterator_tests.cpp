@@ -43,24 +43,31 @@ jboolean nativeTestListIterator(
   EXPECT(vs1[2] == "blue");
 
   std::vector<std::string> vs2;
-  std::transform(jlist->begin(), jlist->end(), std::back_inserter(vs2),
-                 [](local_ref<jstring> elem) { return elem->toStdString(); });
+  std::transform(
+      jlist->begin(),
+      jlist->end(),
+      std::back_inserter(vs2),
+      [](local_ref<jstring> elem) { return elem->toStdString(); });
 
   EXPECT(vs1 == vs2);
 
-  std::vector<std::string> vs3 = { "red", "green", "blue" };
+  std::vector<std::string> vs3 = {"red", "green", "blue"};
 
   EXPECT(vs1 == vs3);
 
   static auto iteratorMethod =
-    JIterable<jstring>::javaClassStatic()->getMethod<JIterator<jstring>()>("iterator");
+      JIterable<jstring>::javaClassStatic()->getMethod<JIterator<jstring>()>(
+          "iterator");
   auto iter = iteratorMethod(jlist);
 
   EXPECT(std::equal(iter->begin(), iter->end(), jlist->begin()));
-  EXPECT(std::equal(iter->begin(), iter->end(), vs3.begin(),
-                    [](const local_ref<jstring>& a, const std::string& b) {
-                      return a->toStdString() == b;
-                    }));
+  EXPECT(std::equal(
+      iter->begin(),
+      iter->end(),
+      vs3.begin(),
+      [](const local_ref<jstring>& a, const std::string& b) {
+        return a->toStdString() == b;
+      }));
 
   return JNI_TRUE;
 }
@@ -88,8 +95,8 @@ jboolean nativeTestMapIterator(
   // pointers, which will always succeed.
   typedef JHashMap<jclass, jthrowable> TestMap;
 
-  static auto testmapCtor = TestMap::javaClassStatic()->
-    getConstructor<TestMap::javaobject()>();
+  static auto testmapCtor =
+      TestMap::javaClassStatic()->getConstructor<TestMap::javaobject()>();
   auto emptyMap = TestMap::javaClassStatic()->newObject(testmapCtor);
   EXPECT(emptyMap->size() == 0);
 
@@ -109,7 +116,7 @@ jboolean nativeTestIterateWrongType(
   EXPECT(jmap->size() == 3);
 
   for (const auto& entry : *jmap) {
-    (void) entry;
+    (void)entry;
   }
 
   // The above should throw an exception.
@@ -162,11 +169,16 @@ jboolean nativeTestLargeMapIteration(
 }
 
 void RegisterIteratorTests() {
-  registerNatives("com/facebook/jni/IteratorTests", {
-    makeNativeMethod("nativeTestListIterator", nativeTestListIterator),
-    makeNativeMethod("nativeTestMapIterator", nativeTestMapIterator),
-    makeNativeMethod("nativeTestIterateWrongType", nativeTestIterateWrongType),
-    makeNativeMethod("nativeTestIterateNullKey", nativeTestIterateNullKey),
-    makeNativeMethod("nativeTestLargeMapIteration", nativeTestLargeMapIteration),
-  });
+  registerNatives(
+      "com/facebook/jni/IteratorTests",
+      {
+          makeNativeMethod("nativeTestListIterator", nativeTestListIterator),
+          makeNativeMethod("nativeTestMapIterator", nativeTestMapIterator),
+          makeNativeMethod(
+              "nativeTestIterateWrongType", nativeTestIterateWrongType),
+          makeNativeMethod(
+              "nativeTestIterateNullKey", nativeTestIterateNullKey),
+          makeNativeMethod(
+              "nativeTestLargeMapIteration", nativeTestLargeMapIteration),
+      });
 }

@@ -26,9 +26,10 @@ namespace lyra {
 #ifndef _MSC_VER
 __attribute__((weak))
 #endif
-std::string getBreakpadId(const std::string& library) {
+std::string
+getBreakpadId(const std::string& library) {
   return "<unimplemented>";
 }
 
-}
-}
+} // namespace lyra
+} // namespace facebook
