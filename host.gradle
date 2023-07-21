@@ -16,7 +16,8 @@
 
 plugins {
     id 'java-library'
-    id 'com.vanniktech.maven.publish' version '0.18.0' apply false
+    id 'maven-publish'
+    id 'com.vanniktech.maven.publish' version '0.25.2' apply false
 }
 
 repositories {
