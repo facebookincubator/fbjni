@@ -17,7 +17,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'com.vanniktech.maven.publish' version '0.25.3' apply false
+    id 'com.vanniktech.maven.publish' version '0.25.3'
 }
 
 repositories {
@@ -41,6 +41,21 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.28.2'
 }
 
-// Overriding the artifacts name globally defined in gradle.properties
-POM_PACKAGING = 'jar'
-POM_ARTIFACT_ID = 'fbjni-java-only'
+mavenPublishing {
+  coordinates(GROUP, "fbjni-java-only", VERSION_NAME)
+}
+
+task headersJar(type: Jar) {
+    archiveClassifier.set('headers')
+    from("$rootDir/cxx/") {
+        include '**/*.h'
+    }
+}
+
+publishing {
+    publications {
+        withType(MavenPublication).configureEach {
+            artifact(headersJar)
+        }
+    }
+}

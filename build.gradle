@@ -82,3 +82,18 @@ dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     implementation 'com.facebook.soloader:nativeloader:0.10.5'
 }
+
+task headersJar(type: Jar) {
+    archiveClassifier.set('headers')
+    from("$rootDir/cxx/") {
+        include '**/*.h'
+    }
+}
+
+publishing {
+    publications {
+        withType(MavenPublication).configureEach {
+            artifact(headersJar)
+        }
+    }
+}
