@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:8.0.2'
-    }
-}
-
 plugins {
-    id 'com.vanniktech.maven.publish' version '0.25.2' apply false
+    id 'com.android.library' version '8.0.2'
+    id 'maven-publish'
+    id 'com.vanniktech.maven.publish' version '0.25.3'
 }
-
-apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
-apply plugin: 'com.vanniktech.maven.publish'
 
 repositories {
     google()
