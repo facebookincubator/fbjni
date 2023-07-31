@@ -18,6 +18,8 @@
 
 #include <fbjni/detail/utf8.h>
 
+#include <security/lionhead/utils/lib_ftest/ftest.h>
+
 using namespace std;
 using namespace facebook::jni;
 
@@ -49,7 +51,22 @@ TEST(Utf16toUTF8_test, goodUtf16String) {
   EXPECT_EQ(utf8String, "a\xC4\xA3\xE1\x88\xB4\xF0\x94\xA0\xB4");
 }
 
+FUZZ(Utf16toUTF8_test, fuzz_utf16toUTF8) {
+  try {
+    auto utf16String = f.bytes("utf16string");
+    if (utf16String.empty() || utf16String.size() % 2 != 0) {
+      return;
+    }
+    auto utf8String = detail::utf16toUTF8(
+        (uint16_t*)utf16String.data(), utf16String.size() / 2);
+    (void)utf8String;
+  } catch (...) {
+  }
+}
+
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
+#endif
