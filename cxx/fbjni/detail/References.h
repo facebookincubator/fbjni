@@ -277,7 +277,7 @@ struct ReprStorage {
  */
 template <typename T>
 enable_if_t<IsNonWeakReference<T>(), local_ref<plain_jni_reference_t<T>>>
-make_local(const T& r);
+make_local(const T& ref);
 
 /**
  * Create a new global reference from an existing reference
@@ -288,7 +288,7 @@ make_local(const T& r);
  */
 template <typename T>
 enable_if_t<IsNonWeakReference<T>(), global_ref<plain_jni_reference_t<T>>>
-make_global(const T& r);
+make_global(const T& ref);
 
 /**
  * Create a new weak global reference from an existing reference
@@ -299,7 +299,7 @@ make_global(const T& r);
  */
 template <typename T>
 enable_if_t<IsNonWeakReference<T>(), weak_ref<plain_jni_reference_t<T>>>
-make_weak(const T& r);
+make_weak(const T& ref);
 
 /**
  * Compare two references to see if they refer to the same object
