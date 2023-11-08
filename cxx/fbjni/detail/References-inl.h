@@ -316,14 +316,10 @@ inline weak_ref<T>& weak_ref<T>::operator=(const weak_ref& other) {
 }
 
 template <typename T>
-inline weak_ref<T>& weak_ref<T>::operator=(weak_ref<T>&& other) noexcept {
+inline weak_ref<T>& weak_ref<T>::operator=(weak_ref<T>&& rhs) noexcept {
   internal::dbglog(
-      "Op= move ref=%p this=%p oref=%p other=%p",
-      get(),
-      this,
-      other.get(),
-      &other);
-  reset(other.release());
+      "Op= move ref=%p this=%p oref=%p other=%p", get(), this, rhs.get(), &rhs);
+  reset(rhs.release());
   return *this;
 }
 
@@ -359,14 +355,10 @@ inline basic_strong_ref<T, Alloc>& basic_strong_ref<T, Alloc>::operator=(
 
 template <typename T, typename Alloc>
 inline basic_strong_ref<T, Alloc>& basic_strong_ref<T, Alloc>::operator=(
-    basic_strong_ref<T, Alloc>&& other) noexcept {
+    basic_strong_ref<T, Alloc>&& rhs) noexcept {
   internal::dbglog(
-      "Op= move ref=%p this=%p oref=%p other=%p",
-      get(),
-      this,
-      other.get(),
-      &other);
-  reset(other.release());
+      "Op= move ref=%p this=%p oref=%p other=%p", get(), this, rhs.get(), &rhs);
+  reset(rhs.release());
   return *this;
 }
 

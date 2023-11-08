@@ -171,14 +171,14 @@ inline void JClass::registerNatives(
   FACEBOOK_JNI_THROW_EXCEPTION_IF(result != JNI_OK);
 }
 
-inline bool JClass::isAssignableFrom(alias_ref<JClass> other) const noexcept {
+inline bool JClass::isAssignableFrom(alias_ref<JClass> cls) const noexcept {
   const auto env = Environment::current();
   // Ths method has behavior compatible with the
   // java.lang.Class#isAssignableFrom method.  The order of the
   // arguments to the JNI IsAssignableFrom C function is "opposite"
   // from what some might expect, which makes this code look a little
   // odd, but it is correct.
-  const auto result = env->IsAssignableFrom(other.get(), self());
+  const auto result = env->IsAssignableFrom(cls.get(), self());
   return result;
 }
 
@@ -421,11 +421,11 @@ inline ElementProxy<Target>::ElementProxy::operator local_ref<
 } // namespace detail
 
 template <typename T>
-auto JArrayClass<T>::newArray(size_t size) -> local_ref<javaobject> {
+auto JArrayClass<T>::newArray(size_t count) -> local_ref<javaobject> {
   static const auto elementClass =
       findClassStatic(jtype_traits<T>::kBaseName.c_str());
   const auto env = Environment::current();
-  auto rawArray = env->NewObjectArray(size, elementClass.get(), nullptr);
+  auto rawArray = env->NewObjectArray(count, elementClass.get(), nullptr);
   FACEBOOK_JNI_THROW_EXCEPTION_IF(!rawArray);
   return adopt_local(static_cast<javaobject>(rawArray));
 }
@@ -447,8 +447,8 @@ inline local_ref<T> JArrayClass<T>::getElement(size_t idx) {
 
 template <typename T>
 inline detail::ElementProxy<JArrayClass<T>> JArrayClass<T>::operator[](
-    size_t index) {
-  return detail::ElementProxy<JArrayClass<T>>(this, index);
+    size_t idx) {
+  return detail::ElementProxy<JArrayClass<T>>(this, idx);
 }
 
 template <typename T>
