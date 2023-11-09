@@ -36,7 +36,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 15
+        minSdkVersion 21
         targetSdkVersion 34
         buildConfigField "boolean", "IS_INTERNAL_BUILD", 'true'
         namespace "com.facebook.fbjni"
