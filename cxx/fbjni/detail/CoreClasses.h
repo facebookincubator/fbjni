@@ -268,7 +268,7 @@ class JClass : public JavaClass<JClass, JObject, jclass> {
 
   /// Check to see if the class is assignable from another class
   /// @pre cls != nullptr
-  bool isAssignableFrom(alias_ref<JClass> other) const noexcept;
+  bool isAssignableFrom(alias_ref<JClass> cls) const noexcept;
 
   /// Convenience method to lookup the constructor with descriptor as specified
   /// by the type arguments
@@ -454,7 +454,7 @@ class JArrayClass : public JavaClass<JArrayClass<T>, detail::JTypeArray> {
   /// Allocate a new array from Java heap, for passing as a JNI parameter or
   /// return value. NOTE: if using as a return value, you want to call release()
   /// instead of get() on the smart pointer.
-  static local_ref<javaobject> newArray(size_t size);
+  static local_ref<javaobject> newArray(size_t count);
 
   /// Assign an object to the array.
   /// Typically you will use the shorthand (*ref)[idx]=value;
@@ -477,7 +477,7 @@ class JArrayClass : public JavaClass<JArrayClass<T>, detail::JTypeArray> {
   /// yourself warned. On the other hand, it does make for some idiomatic
   /// assignment code; see TestBuildStringArray in fbjni_tests for some
   /// examples.
-  detail::ElementProxy<JArrayClass> operator[](size_t index);
+  detail::ElementProxy<JArrayClass> operator[](size_t idx);
 };
 
 template <typename T>

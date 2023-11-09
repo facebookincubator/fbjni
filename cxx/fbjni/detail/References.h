@@ -449,7 +449,7 @@ class weak_ref : public base_owned_ref<T, WeakGlobalReferenceAllocator> {
   weak_ref& operator=(const weak_ref& other);
 
   /// Assignment by moving a reference thus not creating a new reference
-  weak_ref& operator=(weak_ref&& other) noexcept;
+  weak_ref& operator=(weak_ref&& rhs) noexcept;
 
   // Creates an owned local reference to the referred object or to null if the
   // object is reclaimed
@@ -526,7 +526,7 @@ class basic_strong_ref : public base_owned_ref<T, Alloc> {
   basic_strong_ref& operator=(const basic_strong_ref& other);
 
   /// Assignment by moving a reference thus not creating a new reference
-  basic_strong_ref& operator=(basic_strong_ref&& other) noexcept;
+  basic_strong_ref& operator=(basic_strong_ref&& rhs) noexcept;
 
   /// Get the plain JNI reference
   using base_owned_ref<T, Allocator>::get;
