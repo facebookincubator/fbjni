@@ -65,6 +65,12 @@ class JThread : public JavaClass<JThread> {
     static const auto method = getClass()->getMethod<void(int)>("setPriority");
     method(self(), priority);
   }
+
+  void setName(const std::string& name) {
+    static const auto method =
+        getClass()->getMethod<void(alias_ref<JString>)>("setName");
+    method(self(), make_jstring(std::move(name)));
+  }
 };
 
 } // namespace jni
