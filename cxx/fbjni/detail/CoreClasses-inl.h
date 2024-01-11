@@ -425,7 +425,8 @@ auto JArrayClass<T>::newArray(size_t count) -> local_ref<javaobject> {
   static const auto elementClass =
       findClassStatic(jtype_traits<T>::kBaseName.c_str());
   const auto env = Environment::current();
-  auto rawArray = env->NewObjectArray(count, elementClass.get(), nullptr);
+  auto rawArray = env->NewObjectArray(
+      static_cast<jsize>(count), elementClass.get(), nullptr);
   FACEBOOK_JNI_THROW_EXCEPTION_IF(!rawArray);
   return adopt_local(static_cast<javaobject>(rawArray));
 }
@@ -434,7 +435,9 @@ template <typename T>
 inline void JArrayClass<T>::setElement(size_t idx, T value) {
   const auto env = Environment::current();
   env->SetObjectArrayElement(
-      this->self(), idx, detail::toPlainJniReference(value));
+      this->self(),
+      static_cast<jsize>(idx),
+      detail::toPlainJniReference(value));
 }
 
 template <typename T>
@@ -625,7 +628,12 @@ inline void PinnedPrimitiveArray<T, Alloc>::abort() {
 template <typename T, typename Alloc>
 inline void PinnedPrimitiveArray<T, Alloc>::releaseImpl(jint mode) {
   FACEBOOK_JNI_THROW_EXCEPTION_IF(array_.get() == nullptr);
-  Alloc::release(array_, elements_, start_, size_, mode);
+  Alloc::release(
+      array_,
+      elements_,
+      static_cast<jint>(start_),
+      static_cast<jint>(size_),
+      mode);
 }
 
 template <typename T, typename Alloc>
