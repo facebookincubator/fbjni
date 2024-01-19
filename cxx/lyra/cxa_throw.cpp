@@ -50,7 +50,7 @@ void enableCxaThrowHookBacktraces(bool enable) {
   enableBacktraces.store(enable, std::memory_order_relaxed);
 }
 
-[[gnu::noreturn]] void (
+[[gnu::noreturn]] __attribute__((annotate("dynamic_fn_ptr"))) void (
     *original_cxa_throw)(void*, const std::type_info*, void (*)(void*));
 
 #if defined(_LIBCPP_VERSION)
