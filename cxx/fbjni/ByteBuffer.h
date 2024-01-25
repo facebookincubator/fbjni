@@ -36,6 +36,8 @@ class JByteOrder : public JavaClass<JByteOrder> {
   constexpr static const char* kJavaDescriptor = "Ljava/nio/ByteOrder;";
 
   static local_ref<JByteOrder> nativeOrder();
+  static local_ref<JByteOrder> bigEndian();
+  static local_ref<JByteOrder> littleEndian();
 };
 
 // JNI's NIO support has some awkward preconditions and error reporting. This

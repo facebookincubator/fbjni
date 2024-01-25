@@ -69,6 +69,18 @@ local_ref<JByteOrder> JByteOrder::nativeOrder() {
   return meth(JByteOrder::javaClassStatic());
 }
 
+local_ref<JByteOrder> JByteOrder::bigEndian() {
+  static auto field =
+      JByteOrder::javaClassStatic()->getStaticField<JByteOrder>("BIG_ENDIAN");
+  return JByteOrder::javaClassStatic()->getStaticFieldValue(field);
+}
+
+local_ref<JByteOrder> JByteOrder::littleEndian() {
+  static auto field =
+      JByteOrder::javaClassStatic()->getStaticField<JByteOrder>("LITTLE_ENDIAN");
+  return JByteOrder::javaClassStatic()->getStaticFieldValue(field);
+}
+
 local_ref<JByteBuffer> JByteBuffer::wrapBytes(uint8_t* data, size_t size) {
   // env->NewDirectByteBuffer requires that size is positive. Android's
   // dalvik returns an invalid result and Android's art aborts if size == 0.
