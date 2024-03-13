@@ -169,6 +169,14 @@ struct JArrayList : JavaClass<JArrayList<E>, JList<E>> {
   static local_ref<JArrayList<E>> create(int initialCapacity);
 };
 
+template <typename E = jobject>
+struct JHashSet : JavaClass<JHashSet<E>, JSet<E>> {
+  constexpr static auto kJavaDescriptor = "Ljava/util/HashSet;";
+
+  static local_ref<JHashSet<E>> create();
+  static local_ref<JHashSet<E>> create(int initialCapacity);
+};
+
 template <typename K = jobject, typename V = jobject>
 struct JHashMap : JavaClass<JHashMap<K, V>, JMap<K, V>> {
   constexpr static auto kJavaDescriptor = "Ljava/util/HashMap;";

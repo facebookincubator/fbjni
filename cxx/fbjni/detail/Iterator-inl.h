@@ -248,6 +248,16 @@ local_ref<JArrayList<E>> JArrayList<E>::create(int initialCapacity) {
   return JArrayList<E>::newInstance(initialCapacity);
 }
 
+template <typename E>
+local_ref<JHashSet<E>> JHashSet<E>::create() {
+  return JHashSet<E>::newInstance();
+}
+
+template <typename E>
+local_ref<JHashSet<E>> JHashSet<E>::create(int initialCapacity) {
+  return JHashSet<E>::newInstance(initialCapacity);
+}
+
 template <typename K, typename V>
 local_ref<JHashMap<K, V>> JHashMap<K, V>::create() {
   return JHashMap<K, V>::newInstance();
