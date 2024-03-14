@@ -90,6 +90,7 @@ public class DestructorThread {
           }
         };
 
+    sThread.setDaemon(true);
     sThread.start();
   }
 
