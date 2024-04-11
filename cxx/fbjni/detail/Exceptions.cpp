@@ -427,7 +427,13 @@ local_ref<JThrowable> JniException::getThrowable() const noexcept {
 void JniException::populateWhat() const noexcept {
   try {
     ThreadScope ts;
-    what_ = throwable_->toString();
+    static auto exceptionHelperClass =
+        findClassStatic("com/facebook/jni/ExceptionHelper");
+    static auto getErrorDescriptionMethod =
+        exceptionHelperClass->getStaticMethod<std::string(jthrowable)>(
+            "getErrorDescription");
+    what_ = getErrorDescriptionMethod(exceptionHelperClass, throwable_.get())
+                ->toStdString();
     isMessageExtracted_ = true;
   } catch (...) {
     what_ = kExceptionMessageFailure;

@@ -639,7 +639,13 @@ public class FBJniTests extends BaseFBJniTests {
   @Test
   public void testCopyConstructor() {
     assertThat(nativeTestCopyConstructor())
-        .isEqualTo("com.facebook.jni.FBJniTests$CustomException: getMessages: 1");
+        .startsWith(
+            "com.facebook.jni.FBJniTests$CustomException: getMessages: 1\n"
+                + "\tat com.facebook.jni.FBJniTests.customExceptionThrower(FBJniTests.java:")
+        .contains(
+            ")\n"
+                + "\tat com.facebook.jni.FBJniTests.nativeTestCopyConstructor(Native Method)\n"
+                + "\tat com.facebook.jni.FBJniTests.testCopyConstructor(FBJniTests.java:");
   }
 
   private native String nativeTestCopyConstructor();
@@ -647,7 +653,14 @@ public class FBJniTests extends BaseFBJniTests {
   @Test
   public void testMoveConstructorWithEmptyWhat() {
     assertThat(nativeTestMoveConstructorWithEmptyWhat())
-        .isEqualTo("com.facebook.jni.FBJniTests$CustomException: getMessages: 1");
+        .startsWith(
+            "com.facebook.jni.FBJniTests$CustomException: getMessages: 1\n"
+                + "\tat com.facebook.jni.FBJniTests.customExceptionThrower(FBJniTests.java:")
+        .contains(
+            ")\n"
+                + "\tat com.facebook.jni.FBJniTests.nativeTestMoveConstructorWithEmptyWhat(Native"
+                + " Method)\n"
+                + "\tat com.facebook.jni.FBJniTests.testMoveConstructorWithEmptyWhat(FBJniTests.java:");
   }
 
   private native String nativeTestMoveConstructorWithEmptyWhat();
@@ -655,7 +668,14 @@ public class FBJniTests extends BaseFBJniTests {
   @Test
   public void testMoveConstructorWithPopulatedWhat() {
     assertThat(nativeTestMoveConstructorWithPopulatedWhat())
-        .isEqualTo("com.facebook.jni.FBJniTests$CustomException: getMessages: 1");
+        .startsWith(
+            "com.facebook.jni.FBJniTests$CustomException: getMessages: 1\n"
+                + "\tat com.facebook.jni.FBJniTests.customExceptionThrower(FBJniTests.java:")
+        .contains(
+            ")\n"
+                + "\tat com.facebook.jni.FBJniTests.nativeTestMoveConstructorWithPopulatedWhat(Native"
+                + " Method)\n"
+                + "\tat com.facebook.jni.FBJniTests.testMoveConstructorWithPopulatedWhat(FBJniTests.java:");
   }
 
   private native String nativeTestMoveConstructorWithPopulatedWhat();
