@@ -673,9 +673,10 @@ enable_if_t<IsPlainJniReference<JniType<T>>(), alias_ref<T>> static_ref_cast(
     const alias_ref<U>& ref) noexcept;
 
 template <typename T, typename RefType>
-auto dynamic_ref_cast(const RefType& ref) -> enable_if_t<
-    IsPlainJniReference<JniType<T>>(),
-    decltype(static_ref_cast<T>(ref))>;
+auto dynamic_ref_cast(const RefType& ref)
+    -> enable_if_t<
+        IsPlainJniReference<JniType<T>>(),
+        decltype(static_ref_cast<T>(ref))>;
 
 } // namespace jni
 } // namespace facebook

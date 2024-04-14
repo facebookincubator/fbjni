@@ -136,7 +136,7 @@ struct MethodWrapper {
   JNI_ENTRY_POINT static typename Converter<R>::jniType
   call(JNIEnv* env, jobject obj, typename Converter<Args>::jniType... args) {
     return FunctionWrapper<
-        R (*)(alias_ref<jhybrid>, Args && ...),
+        R (*)(alias_ref<jhybrid>, Args&&...),
         jhybrid,
         R,
         Args...>::call(env, obj, args..., dispatch);
