@@ -79,21 +79,23 @@ void ensureRegisteredTerminateHandler();
 std::string toString(std::exception_ptr exceptionPointer);
 
 /**
- * lyra's cxa_throw will delegate to the original cxa throw. That pointer must
- * be set before lyra::cxa_throw is called.
- *
- * One example use would be to statically compile against something that
- * overrides __cxa_throw. That would look something like:
- *
- * [[noreturn]] void __cxa_throw(void* obj, const std::type_info* type, void
- * (*destructor) (void*)) { static auto initializer = lyra::original_cxa_throw =
- * lookupOriginalCxaThrow(); lyra::cxa_throw(obj, type, destructor);
- * }
+ * Lyra needs to hook either __cxa_init_primary_exception or __cxa_throw
+ * (depending on the libc++ version) in order to inject stack traces. Users are
+ * required to set up this hooking using the information in this struct:
+ * - original is a pointer to the address of the exception function to hook.
+ *   This pointer should have the address of the unhooked function stored back
+ *   to it (if the hooking mechanism produces it), so that Lyra can delegate to
+ *   the original function.
+ * - replacement is the address of Lyra's replacement function. After the
+ *   hooking, all callers to the original function should call the replacement
+ *   function instead.
  */
-[[gnu::noreturn]] extern void (
-    *original_cxa_throw)(void*, const std::type_info*, void (*)(void*));
-[[noreturn]] void
-cxa_throw(void* obj, const std::type_info* type, void (*destructor)(void*));
+struct HookInfo {
+  void** original;
+  void* replacement;
+};
+
+const HookInfo* getHookInfo();
 
 void enableCxaThrowHookBacktraces(bool enable);
 
