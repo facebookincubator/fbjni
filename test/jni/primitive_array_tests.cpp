@@ -182,27 +182,27 @@ jboolean testIndexOutOfBoundsInRegions(alias_ref<jclass>) {
   try {
     auto buf = array->getRegion(TOO_MUCH, N);
     EXPECT(false);
-  } catch (JniException& ex) {
+  } catch (JniException&) {
   }
 
   try {
     auto buf = array->getRegion(NEGATIVE, N);
     EXPECT(false);
-  } catch (JniException& ex) {
+  } catch (JniException&) {
   }
 
   try {
     auto vec = std::vector<jint>(TOO_MUCH);
     array->setRegion(0, vec.size(), vec.data());
     EXPECT(false);
-  } catch (JniException& ex) {
+  } catch (JniException&) {
   }
 
   try {
     auto vec = std::vector<jint>(1);
     array->setRegion(NEGATIVE, vec.size(), vec.data());
     EXPECT(false);
-  } catch (JniException& ex) {
+  } catch (JniException&) {
   }
 
   return JNI_TRUE;

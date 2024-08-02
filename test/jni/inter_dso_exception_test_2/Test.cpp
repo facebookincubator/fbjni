@@ -26,7 +26,7 @@ bool inter_dso_exception_test_2b() {
   try {
     inter_dso_exception_test_1();
     return false;
-  } catch (const facebook::jni::JniException& ex) {
+  } catch (const facebook::jni::JniException&) {
     return true;
   } catch (...) {
     return false;
