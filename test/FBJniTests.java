@@ -23,6 +23,7 @@ import com.facebook.jni.annotations.DoNotStrip;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 import org.assertj.core.api.Fail;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -547,7 +548,7 @@ public class FBJniTests extends BaseFBJniTests {
 
   private native int[][] nativeTestMultidimensionalPrimitiveArray(int i0, int i1, int i2);
 
-  private String[] mCapturedStringArray = null;
+  @Nullable private String[] mCapturedStringArray = null;
 
   @DoNotStrip
   String captureStringArray(String[] input) {
