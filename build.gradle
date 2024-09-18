@@ -27,7 +27,7 @@ repositories {
 
 android {
     compileSdk 34
-    ndkVersion '26.1.10909125'
+    ndkVersion '27.1.12297006'
 
     externalNativeBuild {
         cmake {
@@ -53,7 +53,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_shared'
+                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=c++_shared', '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'
                 targets 'fbjni'
                 version '3.22.1'
             }
