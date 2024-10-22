@@ -425,8 +425,8 @@ local_ref<JThrowable> JniException::getThrowable() const noexcept {
 
 // TODO 6900503: consider making this thread-safe.
 void JniException::populateWhat() const noexcept {
+  ThreadScope ts;
   try {
-    ThreadScope ts;
     static auto exceptionHelperClass =
         findClassStatic("com/facebook/jni/ExceptionHelper");
     static auto getErrorDescriptionMethod =
@@ -436,7 +436,12 @@ void JniException::populateWhat() const noexcept {
                 ->toStdString();
     isMessageExtracted_ = true;
   } catch (...) {
-    what_ = kExceptionMessageFailure;
+    try {
+      what_ = throwable_->toString();
+      isMessageExtracted_ = true;
+    } catch (...) {
+      what_ = kExceptionMessageFailure;
+    }
   }
 }
 
