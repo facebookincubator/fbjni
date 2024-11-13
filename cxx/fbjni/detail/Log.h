@@ -73,6 +73,8 @@ logassert(const char* tag, const char* msg, ARGS... args) noexcept {
   } while (0)
 #endif
 
+#define FBJNI_LOG_ONLY
+
 } // namespace log_
 } // namespace jni
 } // namespace facebook
@@ -83,4 +85,5 @@ logassert(const char* tag, const char* msg, ARGS... args) noexcept {
 #define FBJNI_LOGE(...) ((void)0)
 #define FBJNI_LOGF(...) (abort())
 #define FBJNI_ASSERT(cond) ((void)0)
+#define FBJNI_LOG_ONLY [[maybe_unused]]
 #endif

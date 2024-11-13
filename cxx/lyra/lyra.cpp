@@ -167,7 +167,7 @@ ostream& operator<<(ostream& out, const vector<StackTraceElement>& trace) {
 }
 
 void logStackTrace(const vector<StackTraceElement>& trace) {
-  auto i = 0;
+  FBJNI_LOG_ONLY int32_t i = 0;
   FBJNI_LOGE("Backtrace:");
   for (auto& elm : trace) {
     if (!elm.functionName().empty()) {
