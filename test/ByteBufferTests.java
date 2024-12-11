@@ -18,12 +18,14 @@ package com.facebook.jni;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.facebook.infer.annotation.Nullsafe;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import org.junit.Test;
 
+@Nullsafe(Nullsafe.Mode.LOCAL)
 public class ByteBufferTests extends BaseFBJniTests {
   @Test
   public void testDirectByteBuffer() {
