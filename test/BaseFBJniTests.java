@@ -16,13 +16,16 @@
 
 package com.facebook.jni;
 
+import com.facebook.infer.annotation.Nullsafe;
 import com.facebook.soloader.nativeloader.NativeLoader;
 import com.facebook.soloader.nativeloader.SystemDelegate;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 
+@Nullsafe(Nullsafe.Mode.LOCAL)
 public class BaseFBJniTests {
+  // NULLSAFE_FIXME[Not Vetted Third-Party]
   @Rule public ExpectedException thrown = ExpectedException.none();
 
   @BeforeClass
