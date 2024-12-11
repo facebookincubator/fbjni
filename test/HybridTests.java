@@ -18,9 +18,11 @@ package com.facebook.jni;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.facebook.infer.annotation.Nullsafe;
 import com.facebook.jni.annotations.DoNotStrip;
 import org.junit.Test;
 
+@Nullsafe(Nullsafe.Mode.LOCAL)
 public class HybridTests extends BaseFBJniTests {
   static class TestHybridClass {
     // Hybrid classes must include a member which manages the C++ object.  It
