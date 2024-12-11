@@ -18,11 +18,13 @@ package com.facebook.jni;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.facebook.infer.annotation.Nullsafe;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
 import org.junit.Test;
 
+@Nullsafe(Nullsafe.Mode.LOCAL)
 public class ReadableByteChannelTests extends BaseFBJniTests {
   private static final byte[] data = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
