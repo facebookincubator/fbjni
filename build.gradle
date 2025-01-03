@@ -81,7 +81,7 @@ android {
 dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     implementation 'com.facebook.soloader:nativeloader:0.10.5'
-    implementation 'com.facebook.infer.annotation:infer-annotation:0.18.0'
+    compileOnly 'com.facebook.infer.annotation:infer-annotation:0.18.0'
 }
 
 task headersJar(type: Jar) {
