@@ -36,6 +36,7 @@ sourceSets {
 dependencies {
     implementation 'com.facebook.soloader:nativeloader:0.10.5'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    implementation 'com.facebook.infer.annotation:infer-annotation:0.18.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.assertj:assertj-core:2.9.0'
     testImplementation 'org.mockito:mockito-core:2.28.2'

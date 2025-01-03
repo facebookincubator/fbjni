@@ -80,6 +80,9 @@ android {
 
 dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    compileOnly 'com.facebook.infer.annotation:infer-annotation:0.18.0'
+    testCompileOnly 'com.google.code.findbugs:jsr305:3.0.2'
+    testCompileOnly 'com.facebook.infer.annotation:infer-annotation:0.18.0'
     implementation 'com.facebook.soloader:nativeloader:0.10.5'
 }
 
