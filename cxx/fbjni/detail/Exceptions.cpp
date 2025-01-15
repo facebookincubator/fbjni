@@ -52,6 +52,17 @@ class JRuntimeException : public JavaClass<JRuntimeException, JThrowable> {
   }
 };
 
+class JIllegalArgumentException
+    : public JavaClass<JIllegalArgumentException, JThrowable> {
+ public:
+  static auto constexpr kJavaDescriptor =
+      "Ljava/lang/IllegalArgumentException;";
+
+  static local_ref<JIllegalArgumentException> create(const char* str) {
+    return newInstance(make_jstring(str));
+  }
+};
+
 class JIOException : public JavaClass<JIOException, JThrowable> {
  public:
   static auto constexpr kJavaDescriptor = "Ljava/io/IOException;";
@@ -293,14 +304,14 @@ local_ref<JThrowable> convertCppExceptionToJavaException(
     std::exception_ptr ptr) {
   FBJNI_ASSERT(ptr);
   local_ref<JThrowable> current;
-  bool addCppStack = true;
   try {
     std::rethrow_exception(ptr);
-    addCppStack = false;
   } catch (const JniException& ex) {
     current = ex.getThrowable();
   } catch (const std::ios_base::failure& ex) {
     current = JIOException::create(ex.what());
+  } catch (const std::invalid_argument& ex) {
+    current = JIllegalArgumentException::create(ex.what());
   } catch (const std::bad_alloc& ex) {
     current = JOutOfMemoryError::create(ex.what());
   } catch (const std::out_of_range& ex) {
@@ -327,9 +338,7 @@ local_ref<JThrowable> convertCppExceptionToJavaException(
 #endif
   }
 
-  if (addCppStack) {
-    addCppStacktraceToJavaException(current, ptr);
-  }
+  addCppStacktraceToJavaException(current, ptr);
   return current;
 }
 #endif

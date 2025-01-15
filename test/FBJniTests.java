@@ -616,6 +616,19 @@ public class FBJniTests extends BaseFBJniTests {
   private native void testHandleNullExceptionMessageNative();
 
   @Test
+  public void testHandleInvalidArgumentException() {
+    try {
+      nativeTestHandleInvalidArgumentException();
+      Fail.failBecauseExceptionWasNotThrown(IllegalArgumentException.class);
+    } catch (Throwable e) {
+      assertThat(e).isInstanceOf(IllegalArgumentException.class);
+      assertThat(e.getMessage()).isEqualTo("Invalid argument");
+    }
+  }
+
+  private native void nativeTestHandleInvalidArgumentException();
+
+  @Test
   public void testHandleNestedException() {
     try {
       nativeTestHandleNestedException();

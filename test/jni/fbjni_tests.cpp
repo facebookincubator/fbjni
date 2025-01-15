@@ -867,6 +867,10 @@ void TestHandleNullExceptionMessage(JNIEnv* env, jobject self) {
   }
 }
 
+void TestHandleInvalidArgumentException(JNIEnv* env, jobject self) {
+  throw std::invalid_argument("Invalid argument");
+}
+
 void TestHandleNestedException(JNIEnv* env, jobject self) {
   auto me = adopt_local(self);
   auto cls = me->getClass();
@@ -1640,6 +1644,9 @@ void RegisterFbjniTests() {
           makeNativeMethod(
               "testHandleNullExceptionMessageNative",
               TestHandleNullExceptionMessage),
+          makeNativeMethod(
+              "nativeTestHandleInvalidArgumentException",
+              TestHandleInvalidArgumentException),
           makeNativeMethod(
               "nativeTestHandleNestedException", TestHandleNestedException),
           makeNativeMethod(
