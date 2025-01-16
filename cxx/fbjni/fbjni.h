@@ -18,6 +18,7 @@
 
 #include <jni.h>
 
+// IWYU pragma: begin_exports
 #include <fbjni/detail/Common.h>
 #include <fbjni/detail/CoreClasses.h>
 #include <fbjni/detail/Environment.h>
@@ -30,3 +31,4 @@
 #include <fbjni/detail/ReferenceAllocators.h>
 #include <fbjni/detail/References.h>
 #include <fbjni/detail/Registration.h>
+// IWYU pragma: end_exports
