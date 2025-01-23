@@ -103,7 +103,7 @@ JNIEnv* attachCurrentThread() {
   using AttachEnvType =
       typename AttachTraits<decltype(&JavaVM::AttachCurrentThread)>::EnvType;
   AttachEnvType env;
-  auto result = g_vm->AttachCurrentThread(&env, &args);
+  FBJNI_LOG_ONLY auto result = g_vm->AttachCurrentThread(&env, &args);
   FBJNI_ASSERT(result == JNI_OK);
   return reinterpret_cast<JNIEnv*>(env);
 }
@@ -282,7 +282,7 @@ ThreadScope::ThreadScope() : thisAttached_(false) {
   // be TLData.
 
   tls_key_t key = getTLKey();
-  detail::TLData* pdata = getTLData(key);
+  FBJNI_LOG_ONLY detail::TLData* pdata = getTLData(key);
   FBJNI_ASSERT(pdata == nullptr);
   setTLData(key, &data_);
 
@@ -302,7 +302,7 @@ ThreadScope::~ThreadScope() {
   }
 
   tls_key_t key = getTLKey();
-  detail::TLData* pdata = getTLData(key);
+  FBJNI_LOG_ONLY detail::TLData* pdata = getTLData(key);
   FBJNI_ASSERT(pdata);
   FBJNI_ASSERT(pdata->env == nullptr);
   FBJNI_ASSERT(pdata->attached);
