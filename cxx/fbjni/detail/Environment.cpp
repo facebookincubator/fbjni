@@ -28,12 +28,14 @@
 #include <windows.h>
 #endif
 
+#define ROAI __attribute__((annotate("ro_after_init")))
+
 namespace facebook {
 namespace jni {
 
 namespace {
 
-JavaVM* g_vm = nullptr;
+JavaVM* ROAI g_vm = nullptr;
 
 struct EnvironmentInitializer {
   EnvironmentInitializer(JavaVM* vm) {
