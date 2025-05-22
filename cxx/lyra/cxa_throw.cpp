@@ -137,8 +137,7 @@ void add_exception_trace(void* obj, destructor_type destructor) {
 
 #ifndef _WIN32
 #if _LIBCPP_AVAILABILITY_HAS_INIT_PRIMARY_EXCEPTION
-__attribute__((annotate("dynamic_fn_ptr"))) static abi::__cxa_exception* (
-    *original_cxa_init_primary_exception)(
+static abi::__cxa_exception* (*original_cxa_init_primary_exception)(
     void*,
     std::type_info*,
     destructor_type) = &abi::__cxa_init_primary_exception;
@@ -160,8 +159,7 @@ const HookInfo* getHookInfo() {
   return &info;
 }
 #else
-[[gnu::noreturn]]
-__attribute__((annotate("dynamic_fn_ptr"))) static void (*original_cxa_throw)(
+[[gnu::noreturn]] static void (*original_cxa_throw)(
     void*,
     std::type_info*,
     destructor_type) = &abi::__cxa_throw;
