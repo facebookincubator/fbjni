@@ -85,18 +85,3 @@ dependencies {
     testCompileOnly 'com.facebook.infer.annotation:infer-annotation:0.18.0'
     implementation 'com.facebook.soloader:nativeloader:0.10.5'
 }
-
-task headersJar(type: Jar) {
-    archiveClassifier.set('headers')
-    from("$rootDir/cxx/") {
-        include '**/*.h'
-    }
-}
-
-publishing {
-    publications {
-        withType(MavenPublication).configureEach {
-            artifact(headersJar)
-        }
-    }
-}

@@ -49,18 +49,3 @@ dependencies {
 mavenPublishing {
   coordinates(GROUP, "fbjni-java-only", VERSION_NAME)
 }
-
-task headersJar(type: Jar) {
-    archiveClassifier.set('headers')
-    from("$rootDir/cxx/") {
-        include '**/*.h'
-    }
-}
-
-publishing {
-    publications {
-        withType(MavenPublication).configureEach {
-            artifact(headersJar)
-        }
-    }
-}
