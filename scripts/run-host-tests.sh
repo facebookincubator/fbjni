@@ -32,4 +32,4 @@ make test
 TEST_LD_LIBRARY_PATH="$BASE_DIR/host-build-cmake:$BASE_DIR/host-build-cmake/test/jni"
 # Build and run JNI tests
 cd "$BASE_DIR"
-env LD_LIBRARY_PATH="$TEST_LD_LIBRARY_PATH" ./gradlew -b host.gradle -PbuildDir=host-build-gradle test
+env LD_LIBRARY_PATH="$TEST_LD_LIBRARY_PATH" ./gradlew :fbjni-java-only:test
