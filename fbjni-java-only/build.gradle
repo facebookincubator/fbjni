@@ -17,7 +17,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'com.vanniktech.maven.publish' version '0.25.3'
+    id 'com.vanniktech.maven.publish'
 }
 
 repositories {
@@ -26,11 +26,15 @@ repositories {
 
 sourceSets {
     main {
-        java.srcDir 'java'
+        java.srcDir '../java'
     }
     test {
-        java.srcDir 'test'
+        java.srcDir '../test'
     }
+}
+
+test {
+    systemProperty "java.library.path", "${System.getenv('LD_LIBRARY_PATH')}"
 }
 
 dependencies {

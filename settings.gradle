@@ -22,4 +22,9 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'fbjni'
+include(
+    ":fbjni-android",
+    ":fbjni-java-only",
+)
+
+rootProject.name = 'fbjni-root-project'

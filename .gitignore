@@ -5,3 +5,5 @@
 build
 .externalNativeBuild
 .cxx
+host-build-gradle/
+host-build-cmake/
