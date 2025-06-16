@@ -22,14 +22,8 @@ jobs:
       run: echo '${{ secrets.GPG_KEY_CONTENTS }}' | base64 -d > /tmp/secring.gpg
     - name: Update gradle.properties
       run: echo -e "signing.secretKeyRingFile=/tmp/secring.gpg\nsigning.keyId=${{ secrets.SIGNING_KEY_ID }}\nsigning.password=${{ secrets.SIGNING_PASSWORD }}\nmavenCentralPassword=${{ secrets.SONATYPE_NEXUS_PASSWORD }}\nmavenCentralUsername=${{ secrets.SONATYPE_NEXUS_USERNAME }}" >> gradle.properties
-    - name: Upload Android Archives
-      run: ./gradlew assembleRelease publish --info
-    - name: Release fbjni staging repository
-      run: ./gradlew closeAndReleaseRepository
-    - name: Upload Java-Only Archives
-      run: ./gradlew -b host.gradle assemble publish --info
-    - name: Release fbjni-java-only staging repository
-      run: ./gradlew closeAndReleaseRepository
+    - name: Publish Android & Java Archives to Maven Central
+      run: ./gradlew publishAndReleaseToMavenCentral --info
     - name: Clean secrets
       if: always()
       run: rm /tmp/secring.gpg
