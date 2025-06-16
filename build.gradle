@@ -15,7 +15,7 @@
  */
 
 plugins {
-    id 'com.android.library' version '8.7.2'
+    id 'com.android.library' version '8.10.1'
     id 'maven-publish'
     id 'com.vanniktech.maven.publish' version '0.25.3'
 }
@@ -26,7 +26,7 @@ repositories {
 }
 
 android {
-    compileSdk 34
+    compileSdk 36
     ndkVersion '27.1.12297006'
 
     externalNativeBuild {
@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 36
         buildConfigField "boolean", "IS_INTERNAL_BUILD", 'true'
         namespace "com.facebook.fbjni"
 
