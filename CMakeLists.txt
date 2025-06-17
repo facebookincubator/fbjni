@@ -19,7 +19,7 @@ include(GNUInstallDirs)
 
 set(FBJNI_COMPILE_OPTIONS
   -Wall
-  -std=c++17
+  -std=c++20
   -pthread
   -fno-omit-frame-pointer
   -fexceptions
