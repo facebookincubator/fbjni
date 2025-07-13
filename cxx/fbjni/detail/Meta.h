@@ -321,11 +321,6 @@ struct jtype_traits {
       base_name();
 };
 
-template <typename T>
-constexpr typename jtype_traits<T>::descriptorType jtype_traits<T>::kDescriptor;
-template <typename T>
-constexpr typename jtype_traits<T>::basenameType jtype_traits<T>::kBaseName;
-
 static_assert(
     std::is_same<jint, int>::value,
     "jint must be int.  On Windows, try using Android's jni.h.");
@@ -393,18 +388,6 @@ struct jmethod_traits<R(Args...)> {
                             Args...>()) /* detail::SimpleFixedString */
       kConstructorDescriptor = internal::JMethodDescriptor<void, Args...>();
 };
-
-template <typename R, typename... Args>
-/*static*/ constexpr decltype(internal::JMethodDescriptor<
-                              R,
-                              Args...>()) /* detail::SimpleFixedString */
-    jmethod_traits<R(Args...)>::kDescriptor;
-
-template <typename R, typename... Args>
-/*static*/ constexpr decltype(internal::JMethodDescriptor<
-                              void,
-                              Args...>()) /* detail::SimpleFixedString */
-    jmethod_traits<R(Args...)>::kConstructorDescriptor;
 
 } // namespace jni
 } // namespace facebook
