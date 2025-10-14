@@ -16,7 +16,6 @@
 
 #include <fbjni/fbjni.h>
 
-#include <mutex>
 #include <vector>
 
 #include <fbjni/detail/utf8.h>
@@ -24,31 +23,10 @@
 namespace facebook {
 namespace jni {
 
-jint initialize(JavaVM* vm, std::function<void()>&& init_fn) noexcept {
-  // TODO (t7832883): DTRT when we have exception pointers
-  static auto error_msg = std::string{"Failed to initialize fbjni"};
-  static bool error_occured = [vm] {
-    bool retVal = false;
-    try {
-      Environment::initialize(vm);
-    } catch (std::exception& ex) {
-      retVal = true;
-      try {
-        error_msg = std::string{"Failed to initialize fbjni: "} + ex.what();
-      } catch (...) {
-        // Ignore, we already have a fall back message
-      }
-    } catch (...) {
-      retVal = true;
-    }
-    return retVal;
-  }();
+jint initialize(JavaVM* const vm, std::function<void()>&& init_fn) noexcept {
+  Environment::initialize(vm);
 
   try {
-    if (error_occured) {
-      throw std::runtime_error(error_msg);
-    }
-
     init_fn();
   } catch (const std::exception& e) {
     FBJNI_LOGE("error %s", e.what());

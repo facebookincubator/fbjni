@@ -27,7 +27,7 @@ struct Environment {
   // Throws a std::runtime_error if this thread isn't attached to the JVM
   // TODO(T6594868) Benchmark against raw JNI access
   static JNIEnv* current();
-  static void initialize(JavaVM* vm);
+  static void initialize(JavaVM* vm) noexcept;
 
   // There are subtle issues with calling the next functions directly. It is
   // much better to always use a ThreadScope to manage attaching/detaching for

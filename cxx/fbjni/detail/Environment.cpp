@@ -37,8 +37,8 @@ namespace {
 
 JavaVM* ROAI g_vm = nullptr;
 
-struct EnvironmentInitializer {
-  EnvironmentInitializer(JavaVM* vm) {
+struct EnvironmentInitializer final {
+  EnvironmentInitializer(JavaVM* const vm) noexcept {
     FBJNI_ASSERT(!g_vm);
     FBJNI_ASSERT(vm);
     g_vm = vm;
@@ -113,7 +113,7 @@ JNIEnv* attachCurrentThread() {
 } // namespace
 
 /* static */
-void Environment::initialize(JavaVM* vm) {
+void Environment::initialize(JavaVM* const vm) noexcept {
   static EnvironmentInitializer init(vm);
 }
 
