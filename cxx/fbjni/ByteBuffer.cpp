@@ -88,8 +88,9 @@ local_ref<JByteBuffer> JByteBuffer::wrapBytes(uint8_t* data, size_t size) {
   if (!size) {
     return allocateDirect(0);
   }
-  auto res = adopt_local(static_cast<javaobject>(
-      Environment::current()->NewDirectByteBuffer(data, size)));
+  auto res = adopt_local(
+      static_cast<javaobject>(
+          Environment::current()->NewDirectByteBuffer(data, size)));
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
   if (!res) {
     throw std::runtime_error("Direct byte buffers are unsupported.");

@@ -61,13 +61,14 @@ jboolean nativeTestListIterator(
   auto iter = iteratorMethod(jlist);
 
   EXPECT(std::equal(iter->begin(), iter->end(), jlist->begin()));
-  EXPECT(std::equal(
-      iter->begin(),
-      iter->end(),
-      vs3.begin(),
-      [](const local_ref<jstring>& a, const std::string& b) {
-        return a->toStdString() == b;
-      }));
+  EXPECT(
+      std::equal(
+          iter->begin(),
+          iter->end(),
+          vs3.begin(),
+          [](const local_ref<jstring>& a, const std::string& b) {
+            return a->toStdString() == b;
+          }));
 
   return JNI_TRUE;
 }

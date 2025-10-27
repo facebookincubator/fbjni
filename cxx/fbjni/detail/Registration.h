@@ -85,21 +85,17 @@ struct CriticalMethod<R (*)(Args...)> {
 //
 // We need to const_cast because non-Android platforms have
 // unnecessarily non-const members in JNINativeMethod.
-#define makeNativeMethod2(name, func)                                \
-  {                                                                  \
-    const_cast<char*>(name ""),                                      \
-        const_cast<char*>(                                           \
-            ::facebook::jni::detail::makeDescriptor(&func).c_str()), \
-        ::facebook::jni::detail::                                    \
-            exceptionWrapJNIMethod<decltype(&func), &func>(&func)    \
-  }
+#define makeNativeMethod2(name, func)                                         \
+  {const_cast<char*>(name ""),                                                \
+   const_cast<char*>(::facebook::jni::detail::makeDescriptor(&func).c_str()), \
+   ::facebook::jni::detail::exceptionWrapJNIMethod<decltype(&func), &func>(   \
+       &func)}
 
-#define makeNativeMethod3(name, desc, func)                       \
-  {                                                               \
-    const_cast<char*>(name ""), const_cast<char*>(desc),          \
-        ::facebook::jni::detail::                                 \
-            exceptionWrapJNIMethod<decltype(&func), &func>(&func) \
-  }
+#define makeNativeMethod3(name, desc, func)                                 \
+  {const_cast<char*>(name ""),                                              \
+   const_cast<char*>(desc),                                                 \
+   ::facebook::jni::detail::exceptionWrapJNIMethod<decltype(&func), &func>( \
+       &func)}
 
 // Variadic template hacks to get macros with different numbers of
 // arguments. Usage instructions are in CoreClasses.h.

@@ -68,8 +68,7 @@ template <typename T>
 inline typename std::enable_if<
     (std::is_same<T, long long>::value || std::is_same<T, int64_t>::value) &&
         !std::is_same<T, jlong>::value,
-    local_ref<jobject>>::type
-autobox(T val) {
+    local_ref<jobject>>::type autobox(T val) {
   return JLong::valueOf(val);
 }
 

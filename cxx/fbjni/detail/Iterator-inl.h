@@ -152,8 +152,8 @@ typename JIterator<E>::Iterator JIterator<E>::begin() const {
       detail::IteratorHelper<E>::javaClassStatic()
           ->template getConstructor<typename detail::IteratorHelper<
               E>::javaobject(typename JIterator<E>::javaobject)>();
-  return Iterator(
-      make_global(detail::IteratorHelper<E>::javaClassStatic()->newObject(
+  return Iterator(make_global(
+      detail::IteratorHelper<E>::javaClassStatic()->newObject(
           ctor, this->self())));
 }
 
@@ -174,8 +174,8 @@ typename JIterable<E>::Iterator JIterable<E>::begin() const {
       detail::IteratorHelper<E>::javaClassStatic()
           ->template getConstructor<typename detail::IteratorHelper<
               E>::javaobject(typename JIterable<E>::javaobject)>();
-  return Iterator(
-      make_global(detail::IteratorHelper<E>::javaClassStatic()->newObject(
+  return Iterator(make_global(
+      detail::IteratorHelper<E>::javaClassStatic()->newObject(
           ctor, this->self())));
 }
 
@@ -219,8 +219,8 @@ typename JMap<K, V>::Iterator JMap<K, V>::begin() const {
           ->template getConstructor<
               typename detail::MapIteratorHelper<K, V>::javaobject(
                   typename JMap<K, V>::javaobject)>();
-  return Iterator(
-      make_global(detail::MapIteratorHelper<K, V>::javaClassStatic()->newObject(
+  return Iterator(make_global(
+      detail::MapIteratorHelper<K, V>::javaClassStatic()->newObject(
           ctor, this->self())));
 }
 
