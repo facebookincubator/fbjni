@@ -86,6 +86,7 @@ class JniException : public std::exception {
   JniException(const JniException& other);
 
   local_ref<JThrowable> getThrowable() const noexcept;
+  local_ref<JThrowable> releaseThrowable() noexcept;
 
   const char* what() const noexcept override;
 

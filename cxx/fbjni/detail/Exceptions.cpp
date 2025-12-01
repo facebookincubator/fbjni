@@ -124,10 +124,9 @@ class JCppSystemErrorException
 
 // Functions that throw Java exceptions
 
-void setJavaExceptionAndAbortOnFailure(alias_ref<JThrowable> throwable) {
-  auto env = Environment::current();
+void setJavaExceptionAndAbortOnFailure(JNIEnv* env, jthrowable throwable) {
   if (throwable) {
-    env->Throw(throwable.get());
+    env->Throw(throwable);
   }
   if (env->ExceptionCheck() != JNI_TRUE) {
     FBJNI_LOGF("Failed to set Java exception");
@@ -306,8 +305,8 @@ local_ref<JThrowable> convertCppExceptionToJavaException(
   local_ref<JThrowable> current;
   try {
     std::rethrow_exception(ptr);
-  } catch (const JniException& ex) {
-    current = ex.getThrowable();
+  } catch (JniException& ex) {
+    current = ex.releaseThrowable();
   } catch (const std::ios_base::failure& ex) {
     current = JIOException::create(ex.what());
   } catch (const std::invalid_argument& ex) {
@@ -374,12 +373,18 @@ local_ref<JThrowable> getJavaExceptionForCppException(std::exception_ptr ptr) {
 
 void translatePendingCppExceptionToJavaException() {
   try {
+    // Manually managing the local ref's lifetime to avoid
+    // any additional JNI calls (eg from asserts) after the
+    // exception has been set
 #ifndef FBJNI_NO_EXCEPTION_PTR
-    auto exc = getJavaExceptionForCppException(std::current_exception());
+    auto exc =
+        getJavaExceptionForCppException(std::current_exception()).release();
 #else
-    auto exc = JUnknownCppException::create();
+    auto exc = JUnknownCppException::create().release();
 #endif
-    setJavaExceptionAndAbortOnFailure(exc);
+    auto env = Environment::current();
+    setJavaExceptionAndAbortOnFailure(env, exc);
+    env->DeleteLocalRef(exc);
   } catch (...) {
 #ifndef FBJNI_NO_EXCEPTION_PTR
     FBJNI_LOGE(
@@ -432,6 +437,10 @@ local_ref<JThrowable> JniException::getThrowable() const noexcept {
   return make_local(throwable_);
 }
 
+local_ref<JThrowable> JniException::releaseThrowable() noexcept {
+  return make_local(throwable_.releaseAlias());
+}
+
 // TODO 6900503: consider making this thread-safe.
 void JniException::populateWhat() const noexcept {
   ThreadScope ts;
@@ -462,7 +471,8 @@ const char* JniException::what() const noexcept {
 }
 
 void JniException::setJavaException() const noexcept {
-  setJavaExceptionAndAbortOnFailure(throwable_);
+  auto env = Environment::current();
+  setJavaExceptionAndAbortOnFailure(env, throwable_.get());
 }
 
 } // namespace jni
