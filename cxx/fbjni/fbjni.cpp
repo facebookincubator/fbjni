@@ -28,7 +28,7 @@ jint initialize(JavaVM* const vm, std::function<void()>&& init_fn) noexcept {
 
   try {
     init_fn();
-  } catch (const std::exception& e) {
+  } catch ([[maybe_unused]] const std::exception& e) {
     FBJNI_LOGE("error %s", e.what());
     translatePendingCppExceptionToJavaException();
   } catch (...) {
