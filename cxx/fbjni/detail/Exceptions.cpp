@@ -453,6 +453,20 @@ void JniException::populateWhat() const noexcept {
     what_ = getErrorDescriptionMethod(exceptionHelperClass, throwable_.get())
                 ->toStdString();
     isMessageExtracted_ = true;
+  } catch (const std::exception& e) {
+    try {
+      what_ = throwable_->toString();
+
+      if (auto message = e.what()) {
+        what_ += " (stack trace extraction failure: ";
+        what_ += message;
+        what_ += ")";
+      }
+
+      isMessageExtracted_ = true;
+    } catch (...) {
+      what_ = kExceptionMessageFailure;
+    }
   } catch (...) {
     try {
       what_ = throwable_->toString();
