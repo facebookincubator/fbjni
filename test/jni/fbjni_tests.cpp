@@ -1027,7 +1027,7 @@ void classLoadWorker() {
     Callbacks::javaClassLocal();
     gWorkerValue = -1;
     return;
-  } catch (std::exception& e) {
+  } catch (std::exception&) {
     // ignored
   }
   try {
@@ -1036,7 +1036,7 @@ void classLoadWorker() {
       Callbacks::javaClassLocal();
       gWorkerValue = 1;
     });
-  } catch (std::exception& e) {
+  } catch ([[maybe_unused]] const std::exception& e) {
     gWorkerValue = -2;
     // Catch this and log it so that we get a test failure instead of a crash.
     FBJNI_LOGE("%s", e.what());
