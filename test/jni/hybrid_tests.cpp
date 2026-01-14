@@ -123,7 +123,7 @@ class TestHybridClass : public facebook::jni::HybridClass<TestHybridClass> {
   static void mapException(std::exception_ptr ex) {
     try {
       std::rethrow_exception(ex);
-    } catch (const TestException& ex) {
+    } catch (const TestException&) {
       throwNewJavaException("java/lang/ArrayStoreException", "");
     }
   }

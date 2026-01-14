@@ -296,7 +296,7 @@ struct DocTests : JavaClass<DocTests> {
       alias_ref<JMyDerivedClass> derived_2 =
           dynamic_ref_cast<JMyDerivedClass>(base);
       (void)derived_2;
-    } catch (const JniException& exn) {
+    } catch (const JniException&) {
       // Throws ClassCastException if the cast fails.
       throw;
     }
