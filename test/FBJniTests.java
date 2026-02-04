@@ -616,6 +616,13 @@ public class FBJniTests extends BaseFBJniTests {
   private native void testHandleNullExceptionMessageNative();
 
   @Test
+  public void testHandleExceptionMessageNoJavaFrame() {
+    testHandleExceptionMessageNoJavaFrameNative();
+  }
+
+  private native void testHandleExceptionMessageNoJavaFrameNative();
+
+  @Test
   public void testHandleInvalidArgumentException() {
     try {
       nativeTestHandleInvalidArgumentException();

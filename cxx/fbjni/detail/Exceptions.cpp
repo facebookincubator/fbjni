@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <ios>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <system_error>
@@ -443,6 +444,110 @@ local_ref<JThrowable> JniException::releaseThrowable() noexcept {
 
 namespace {
 
+// NOTE: This uses "raw" JNI calls to avoid the possibility of a recursive
+//       issue.
+std::optional<std::string> jni_message(alias_ref<JThrowable> throwable) {
+  auto* const env = Environment::current();
+  if (env == nullptr) {
+    return std::nullopt;
+  }
+
+  // Make sure there isn't an exception pending on the way out.
+  struct EnvClear final {
+    JNIEnv& e;
+    explicit EnvClear(JNIEnv& e) : e(e) {}
+    ~EnvClear() {
+      if (e.ExceptionCheck()) {
+        e.ExceptionClear();
+      }
+    }
+  };
+  EnvClear ec{*env};
+
+#define NULL_CHECK(entity)   \
+  if ((entity) == nullptr) { \
+    return std::nullopt;     \
+  }
+
+  // Find StringWriter class and constructor
+  auto stringWriterClass = adopt_local(env->FindClass("java/io/StringWriter"));
+  NULL_CHECK(stringWriterClass)
+  auto stringWriter = [&]() -> local_ref<jobject> {
+    jmethodID stringWriterCtor =
+        env->GetMethodID(stringWriterClass.get(), "<init>", "()V");
+    if (stringWriterCtor == nullptr) {
+      return nullptr;
+    }
+    return adopt_local(
+        env->NewObject(stringWriterClass.get(), stringWriterCtor));
+  }();
+  NULL_CHECK(stringWriter)
+
+  {
+    // Find PrintWriter class and constructor that takes a Writer
+    auto printWriter = [&]() -> local_ref<jobject> {
+      auto printWriterClass =
+          adopt_local(env->FindClass("java/io/PrintWriter"));
+      if (printWriterClass == nullptr) {
+        return nullptr;
+      }
+      jmethodID printWriterCtor = env->GetMethodID(
+          printWriterClass.get(), "<init>", "(Ljava/io/Writer;)V");
+      if (printWriterCtor == nullptr) {
+        return nullptr;
+      }
+      return adopt_local(env->NewObject(
+          printWriterClass.get(), printWriterCtor, stringWriter.get()));
+    }();
+    NULL_CHECK(printWriter)
+
+    // Call throwable.printStackTrace(printWriter)
+    {
+      auto throwableClass = adopt_local(env->FindClass("java/lang/Throwable"));
+      NULL_CHECK(throwableClass)
+      jmethodID printStackTraceMethod = env->GetMethodID(
+          throwableClass.get(), "printStackTrace", "(Ljava/io/PrintWriter;)V");
+      NULL_CHECK(printStackTraceMethod)
+      env->CallVoidMethod(
+          throwable.get(), printStackTraceMethod, printWriter.get());
+      if (env->ExceptionCheck()) {
+        return std::nullopt;
+      }
+    }
+  }
+
+  std::string resultStr;
+  {
+    // Call stringWriter.toString()
+    auto result = [&]() -> local_ref<jstring> {
+      jmethodID toStringMethod = env->GetMethodID(
+          stringWriterClass.get(), "toString", "()Ljava/lang/String;");
+      if (toStringMethod == nullptr) {
+        return nullptr;
+      }
+      return adopt_local<jstring>(reinterpret_cast<jstring>(
+          env->CallObjectMethod(stringWriter.get(), toStringMethod)));
+    }();
+    NULL_CHECK(result)
+
+    // Convert jstring to std::string
+    const auto* chars = env->GetStringUTFChars(result.get(), nullptr);
+    NULL_CHECK(chars)
+    resultStr = chars;
+    env->ReleaseStringUTFChars(result.get(), chars);
+  }
+
+  return resultStr;
+#undef NULL_CHECK
+}
+
+constexpr bool kUseJniMessageCode =
+#if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING_JNI)
+    true;
+#else
+    false;
+#endif
+
 constexpr bool kExceptionMessageWithClassLoader =
 #if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING)
     true;
@@ -455,6 +560,24 @@ constexpr bool kExceptionMessageWithClassLoader =
 // TODO 6900503: consider making this thread-safe.
 void JniException::populateWhat() const noexcept {
   ThreadScope ts;
+
+  if (kUseJniMessageCode) {
+    auto msg_opt = jni_message(throwable_.get());
+    if (msg_opt) {
+      what_ = std::move(*msg_opt);
+      isMessageExtracted_ = true;
+    } else {
+      // NOTE: This does not look recursion-safe.
+      try {
+        what_ = throwable_->toString();
+        what_ += " (stack trace extraction failure)";
+        isMessageExtracted_ = true;
+      } catch (...) {
+        what_ = kExceptionMessageFailure;
+      }
+    }
+    return;
+  }
 
   if (kExceptionMessageWithClassLoader) {
     try {

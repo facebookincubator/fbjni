@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <ios>
+#include <optional>
 #include <stdexcept>
 #include <system_error>
 #include <thread>
@@ -867,6 +868,68 @@ void TestHandleNullExceptionMessage(JNIEnv* env, jobject self) {
   }
 }
 
+void TestHandleExceptionMessageNoJavaFrameNative(JNIEnv* env, jobject self) {
+  constexpr bool kUseJniMessageCode =
+#if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING_JNI)
+      true;
+#else
+      false;
+#endif
+
+  auto me = adopt_local(self);
+  auto cls = me->getClass();
+  auto method = cls->getMethod<void()>("nullMessageThrower");
+
+  auto me_global = make_global(me);
+
+  auto test = [&](bool withClassLoader) {
+    std::optional<std::string> error_msg;
+    std::optional<std::string> exc_msg;
+
+    std::thread t{[&]() {
+      auto invoker = [&]() {
+        try {
+          method(me_global.get());
+          error_msg = "method did not throw";
+        } catch (const std::exception& ex) {
+          exc_msg = ex.what();
+        } catch (...) {
+          error_msg = "method threw something else";
+        }
+      };
+
+      if (withClassLoader) {
+        ThreadScope::WithClassLoader(invoker);
+      } else {
+        ThreadScope ts;
+        invoker();
+      }
+    }};
+    t.join();
+
+    if (error_msg) {
+      throw std::runtime_error(*error_msg);
+    }
+
+    if (!exc_msg) {
+      throw std::runtime_error("no exception result");
+    }
+
+    const auto& exc_msg_str = *exc_msg;
+    if (exc_msg_str.find(
+            "java.lang.NullPointerException\n\tat com.facebook.jni.FBJniTests.nullMessageThrower(FBJniTests.java:") !=
+        0) {
+      throw std::runtime_error("unexpected exception: " + exc_msg_str + "####");
+    }
+  };
+
+  if (kUseJniMessageCode) {
+    test(/*withClassLoader=*/false);
+  }
+
+  test(/*withClassLoader=*/true);
+}
+
 void TestHandleInvalidArgumentException(JNIEnv* env, jobject self) {
   throw std::invalid_argument("Invalid argument");
 }
@@ -1644,6 +1707,9 @@ void RegisterFbjniTests() {
           makeNativeMethod(
               "testHandleNullExceptionMessageNative",
               TestHandleNullExceptionMessage),
+          makeNativeMethod(
+              "testHandleExceptionMessageNoJavaFrameNative",
+              TestHandleExceptionMessageNoJavaFrameNative),
           makeNativeMethod(
               "nativeTestHandleInvalidArgumentException",
               TestHandleInvalidArgumentException),
