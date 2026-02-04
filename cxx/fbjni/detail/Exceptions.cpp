@@ -441,61 +441,73 @@ local_ref<JThrowable> JniException::releaseThrowable() noexcept {
   return make_local(throwable_.releaseAlias());
 }
 
+namespace {
+
+constexpr bool kExceptionMessageWithClassLoader =
+#if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING)
+    true;
+#else
+    false;
+#endif
+
+} // namespace
+
 // TODO 6900503: consider making this thread-safe.
 void JniException::populateWhat() const noexcept {
   ThreadScope ts;
 
-#if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING)
-  try {
-    // If it is a pending JNI exception, then we need the class loader to ensure
-    // that the java class of the `throwable_` is available
-    facebook::jni::ThreadScope::WithClassLoader([&] {
-      static auto exceptionHelperClass =
-          findClassStatic("com/facebook/jni/ExceptionHelper");
-      static auto getErrorDescriptionMethod =
-          exceptionHelperClass->getStaticMethod<std::string(jthrowable)>(
-              "getErrorDescription");
-      what_ = "Experimenting: " +
-          getErrorDescriptionMethod(exceptionHelperClass, throwable_.get())
-              ->toStdString();
-      isMessageExtracted_ = true;
-    });
-  } catch (...) {
-#endif
+  if (kExceptionMessageWithClassLoader) {
     try {
-      static auto exceptionHelperClass =
-          findClassStatic("com/facebook/jni/ExceptionHelper");
-      static auto getErrorDescriptionMethod =
-          exceptionHelperClass->getStaticMethod<std::string(jthrowable)>(
-              "getErrorDescription");
-      what_ = getErrorDescriptionMethod(exceptionHelperClass, throwable_.get())
-                  ->toStdString();
-      isMessageExtracted_ = true;
-    } catch (const std::exception& e) {
-      try {
-        what_ = throwable_->toString();
-
-        if (auto message = e.what()) {
-          what_ += " (stack trace extraction failure: ";
-          what_ += message;
-          what_ += ")";
-        }
-
+      // If it is a pending JNI exception, then we need the class loader to
+      // ensure that the java class of the `throwable_` is available
+      facebook::jni::ThreadScope::WithClassLoader([&] {
+        static auto exceptionHelperClass =
+            findClassStatic("com/facebook/jni/ExceptionHelper");
+        static auto getErrorDescriptionMethod =
+            exceptionHelperClass->getStaticMethod<std::string(jthrowable)>(
+                "getErrorDescription");
+        what_ = "Experimenting: " +
+            getErrorDescriptionMethod(exceptionHelperClass, throwable_.get())
+                ->toStdString();
         isMessageExtracted_ = true;
-      } catch (...) {
-        what_ = kExceptionMessageFailure;
-      }
+      });
+      return;
     } catch (...) {
-      try {
-        what_ = throwable_->toString();
-        isMessageExtracted_ = true;
-      } catch (...) {
-        what_ = kExceptionMessageFailure;
-      }
     }
-#if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING)
+    // Fallthrough intended
   }
-#endif
+
+  try {
+    static auto exceptionHelperClass =
+        findClassStatic("com/facebook/jni/ExceptionHelper");
+    static auto getErrorDescriptionMethod =
+        exceptionHelperClass->getStaticMethod<std::string(jthrowable)>(
+            "getErrorDescription");
+    what_ = getErrorDescriptionMethod(exceptionHelperClass, throwable_.get())
+                ->toStdString();
+    isMessageExtracted_ = true;
+  } catch (const std::exception& e) {
+    try {
+      what_ = throwable_->toString();
+
+      if (auto message = e.what()) {
+        what_ += " (stack trace extraction failure: ";
+        what_ += message;
+        what_ += ")";
+      }
+
+      isMessageExtracted_ = true;
+    } catch (...) {
+      what_ = kExceptionMessageFailure;
+    }
+  } catch (...) {
+    try {
+      what_ = throwable_->toString();
+      isMessageExtracted_ = true;
+    } catch (...) {
+      what_ = kExceptionMessageFailure;
+    }
+  }
 }
 
 const char* JniException::what() const noexcept {
