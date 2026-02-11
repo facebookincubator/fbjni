@@ -347,7 +347,7 @@ struct DocTests : JavaClass<DocTests> {
   static void catchAndThrow(alias_ref<JClass> clazz) {
     try {
       clazz->getStaticMethod<void()>("doesNotExist");
-      assert(!"Exception wasn't thrown.");
+      assert(false && "Exception wasn't thrown.");
     } catch (JniException& exn) {
       // JniException extends std::exception, so "catch (std::exception& exn)"
       // also works.
