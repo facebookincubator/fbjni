@@ -23,6 +23,7 @@
 #endif
 
 #include <stdio.h>
+#include <atomic>
 #include <cstdlib>
 #include <ios>
 #include <optional>
@@ -38,6 +39,8 @@
 
 namespace facebook {
 namespace jni {
+
+static std::atomic<bool> gFixReleaseThrowableLeak{false};
 
 namespace {
 class JRuntimeException : public JavaClass<JRuntimeException, JThrowable> {
@@ -439,6 +442,11 @@ local_ref<JThrowable> JniException::getThrowable() const noexcept {
 }
 
 local_ref<JThrowable> JniException::releaseThrowable() noexcept {
+  if (gFixReleaseThrowableLeak.load()) {
+    auto local = make_local(throwable_);
+    throwable_.reset();
+    return local;
+  }
   return make_local(throwable_.releaseAlias());
 }
 
@@ -573,6 +581,10 @@ const char* JniException::what() const noexcept {
 void JniException::setJavaException() const noexcept {
   auto env = Environment::current();
   setJavaExceptionAndAbortOnFailure(env, throwable_.get());
+}
+
+void setFixReleaseThrowableLeakEnabled(bool enabled) {
+  gFixReleaseThrowableLeak.store(enabled);
 }
 
 } // namespace jni

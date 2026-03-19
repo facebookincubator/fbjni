@@ -19,10 +19,26 @@
 
 using namespace facebook::jni;
 
+namespace facebook::jni {
+void setFixReleaseThrowableLeakEnabled(bool enabled);
+} // namespace facebook::jni
+
+namespace {
+void setFixReleaseThrowableLeak_jni(alias_ref<jclass>, jboolean enabled) {
+  facebook::jni::setFixReleaseThrowableLeakEnabled(enabled);
+}
+} // namespace
+
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
   return facebook::jni::initialize(vm, [] {
     HybridDataOnLoad();
     JNativeRunnable::OnLoad();
     ThreadScope::OnLoad();
+    registerNatives(
+        "com/facebook/jni/FbjniExceptionConfig",
+        {
+            makeNativeMethod(
+                "setFixReleaseThrowableLeak", setFixReleaseThrowableLeak_jni),
+        });
   });
 }
