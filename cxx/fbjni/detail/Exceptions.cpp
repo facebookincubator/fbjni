@@ -541,91 +541,21 @@ std::optional<std::string> jni_message(alias_ref<JThrowable> throwable) {
 #undef NULL_CHECK
 }
 
-constexpr bool kUseJniMessageCode =
-#if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING_JNI)
-    true;
-#else
-    false;
-#endif
-
-constexpr bool kExceptionMessageWithClassLoader =
-#if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING)
-    true;
-#else
-    false;
-#endif
-
 } // namespace
 
 // TODO 6900503: consider making this thread-safe.
 void JniException::populateWhat() const noexcept {
   ThreadScope ts;
 
-  if (kUseJniMessageCode) {
-    auto msg_opt = jni_message(throwable_.get());
-    if (msg_opt) {
-      what_ = std::move(*msg_opt);
-      isMessageExtracted_ = true;
-    } else {
-      // NOTE: This does not look recursion-safe.
-      try {
-        what_ = throwable_->toString();
-        what_ += " (stack trace extraction failure)";
-        isMessageExtracted_ = true;
-      } catch (...) {
-        what_ = kExceptionMessageFailure;
-      }
-    }
-    return;
-  }
-
-  if (kExceptionMessageWithClassLoader) {
-    try {
-      // If it is a pending JNI exception, then we need the class loader to
-      // ensure that the java class of the `throwable_` is available
-      facebook::jni::ThreadScope::WithClassLoader([&] {
-        static auto exceptionHelperClass =
-            findClassStatic("com/facebook/jni/ExceptionHelper");
-        static auto getErrorDescriptionMethod =
-            exceptionHelperClass->getStaticMethod<std::string(jthrowable)>(
-                "getErrorDescription");
-        what_ = "Experimenting: " +
-            getErrorDescriptionMethod(exceptionHelperClass, throwable_.get())
-                ->toStdString();
-        isMessageExtracted_ = true;
-      });
-      return;
-    } catch (...) {
-    }
-    // Fallthrough intended
-  }
-
-  try {
-    static auto exceptionHelperClass =
-        findClassStatic("com/facebook/jni/ExceptionHelper");
-    static auto getErrorDescriptionMethod =
-        exceptionHelperClass->getStaticMethod<std::string(jthrowable)>(
-            "getErrorDescription");
-    what_ = getErrorDescriptionMethod(exceptionHelperClass, throwable_.get())
-                ->toStdString();
+  auto msg_opt = jni_message(throwable_.get());
+  if (msg_opt) {
+    what_ = std::move(*msg_opt);
     isMessageExtracted_ = true;
-  } catch (const std::exception& e) {
+  } else {
+    // NOTE: This does not look recursion-safe.
     try {
       what_ = throwable_->toString();
-
-      if (auto message = e.what()) {
-        what_ += " (stack trace extraction failure: ";
-        what_ += message;
-        what_ += ")";
-      }
-
-      isMessageExtracted_ = true;
-    } catch (...) {
-      what_ = kExceptionMessageFailure;
-    }
-  } catch (...) {
-    try {
-      what_ = throwable_->toString();
+      what_ += " (stack trace extraction failure)";
       isMessageExtracted_ = true;
     } catch (...) {
       what_ = kExceptionMessageFailure;

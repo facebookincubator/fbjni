@@ -869,13 +869,6 @@ void TestHandleNullExceptionMessage(JNIEnv* env, jobject self) {
 }
 
 void TestHandleExceptionMessageNoJavaFrameNative(JNIEnv* env, jobject self) {
-  constexpr bool kUseJniMessageCode =
-#if defined(JNI_EXCEPTION_POPULATE_INTERNAL_EXPERIMENTING_JNI)
-      true;
-#else
-      false;
-#endif
-
   auto me = adopt_local(self);
   auto cls = me->getClass();
   auto method = cls->getMethod<void()>("nullMessageThrower");
@@ -923,9 +916,7 @@ void TestHandleExceptionMessageNoJavaFrameNative(JNIEnv* env, jobject self) {
     }
   };
 
-  if (kUseJniMessageCode) {
-    test(/*withClassLoader=*/false);
-  }
+  test(/*withClassLoader=*/false);
 
   test(/*withClassLoader=*/true);
 }
