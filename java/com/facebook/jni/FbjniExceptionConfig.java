@@ -17,9 +17,14 @@
 package com.facebook.jni;
 
 import com.facebook.jni.annotations.DoNotStrip;
+import com.facebook.soloader.nativeloader.NativeLoader;
 
 @DoNotStrip
 public class FbjniExceptionConfig {
+
+  static {
+    NativeLoader.loadLibrary("fbjni");
+  }
 
   @DoNotStrip
   public static native void setFixReleaseThrowableLeak(boolean enabled);
