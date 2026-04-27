@@ -94,8 +94,17 @@ inline void GlobalReferenceAllocator::deleteReference(
 #ifdef FBJNI_DEBUG_REFS
     ++internal::g_reference_stats.globals_deleted;
 #endif
+#ifdef __ANDROID__
     assert(verifyReference(reference));
     Environment::current()->DeleteGlobalRef(reference);
+#else
+    // Robolectric tests run global objects' destructors after the JVM
+    // is invalidated. Silently skip JNI reference cleanup in that case,
+    // as "leaking" at process exit is harmless.
+    if (auto env = detail::currentOrNull()) {
+      env->DeleteGlobalRef(reference);
+    }
+#endif
   }
 }
 
@@ -126,8 +135,17 @@ inline void WeakGlobalReferenceAllocator::deleteReference(
 #ifdef FBJNI_DEBUG_REFS
     ++internal::g_reference_stats.weaks_deleted;
 #endif
+#ifdef __ANDROID__
     assert(verifyReference(reference));
     Environment::current()->DeleteWeakGlobalRef(reference);
+#else
+    // Robolectric tests run global objects' destructors after the JVM
+    // is invalidated. Silently skip JNI reference cleanup in that case,
+    // as "leaking" at process exit is harmless.
+    if (auto env = detail::currentOrNull()) {
+      env->DeleteWeakGlobalRef(reference);
+    }
+#endif
   }
 }
 
