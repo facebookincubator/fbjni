@@ -16,6 +16,7 @@
 - [Working with Iterables](#working-with-iterables)
 - [Building Collections](#building-collections)
 - [Transferring data with direct ByteBuffer](#transferring-data-with-direct-bytebuffer)
+- [Creating a Hybrid Class](#creating-a-hybrid-class)
 ## JavaClass definition and method registration
 ```cpp
 #include <fbjni/fbjni.h>
@@ -495,4 +496,63 @@ When no base class is given, JObject will be used as the base.
   }
 ```
 
+
+## Creating a Hybrid Class
+A hybrid class has two classes, one Java and one C++.
+
+When you create an object of a hybrid class, two objects are created.
+
+The Java object holds the pointer to the C++ object to maintain its lifecycle.
+
+And calls the destructor to delete the C++ object on garbage collection. 
+
+For checking an existing implementation, see NativeRunnable in [C++](https://github.com/facebookincubator/fbjni/blob/main/cxx/fbjni/NativeRunnable.h) and [Java](https://github.com/facebookincubator/fbjni/blob/main/java/com/facebook/jni/NativeRunnable.java)
+
+
+### First we implement the Java class
+```java
+package com.example;
+public class SingleArgNativeFunction {
+  private final HybridData mHybridData;
+  private SingleArgNativeFunction(HybridData hybridData) {
+    mHybridData = hybridData;
+  }
+  private native Object nativeInvoke(Object data);
+  public Object invoke(Object data) {
+    nativeInvoke();
+  }
+}
+```
+Or its Kotlin equivalent (the variable name mHybridData has to be same)
+```kotlin
+package com.example
+class SingleArgNativeFunction(val mHybridData: HybridData) {
+    private external fun nativeInvoke(data: Any): Any
+    operator fun invoke(data: Any) = nativeInvoke(data)
+}
+```
+
+### Then we implement the corresponding C++ class
+```cpp
+#include <fbjni/fbjni.h>
+namespace jni = facebook::jni;
+struct SingleArgNativeFunction: public jni::HybridClass<SingleArgNativeFunction> {
+        using FnType = std::function<jobject(jobject)>;
+        static auto constexpr kJavaDescriptor = "Lcom/example/SingleArgNativeFunction;";
+
+        SingleArgNativeFunction(FnType &&consumer) : consumer(std::move(consumer)) {}
+        static void registerNatives() {
+            registerHybrid({
+                makeNativeMethod("nativeInvoke", SingleArgNativeFunction::operator())
+            });
+        }
+
+        jobject operator()(jobject object) {
+            return consumer(object);
+        }
+
+    private:
+        FnType consumer;
+    };
+```
 
