@@ -988,6 +988,25 @@ jstring TestMoveConstructorWithPopulatedWhat(JNIEnv* env, jobject self) {
   }
 }
 
+jstring TestWhatAfterReleaseThrowable(JNIEnv* env, jobject self) {
+  auto me = adopt_local(self);
+  auto cls = me->getClass();
+  auto method = cls->getMethod<void()>("customExceptionThrower");
+
+  try {
+    method(self);
+    return env->NewStringUTF("method did not throw");
+  } catch (JniException& ex) {
+    // Regression test for T274966664: release the underlying throwable, then
+    // read what(). Message extraction is lazy (no eager capture in the ctor),
+    // so once the throwable is released there is nothing left to extract --
+    // what() must safely return the fallback sentinel instead of re-entering
+    // JNI on the now-empty throwable_ (which crashed).
+    ex.releaseThrowable();
+    return env->NewStringUTF(ex.what());
+  }
+}
+
 void TestHandleCppRuntimeError(JNIEnv* env, jobject self, jstring message) {
   throw std::runtime_error(ToString(env, message));
 }
@@ -1715,6 +1734,9 @@ void RegisterFbjniTests() {
           makeNativeMethod(
               "nativeTestMoveConstructorWithPopulatedWhat",
               TestMoveConstructorWithPopulatedWhat),
+          makeNativeMethod(
+              "nativeTestWhatAfterReleaseThrowable",
+              TestWhatAfterReleaseThrowable),
           makeNativeMethod(
               "nativeTestHandleCppRuntimeError", TestHandleCppRuntimeError),
           makeNativeMethod(

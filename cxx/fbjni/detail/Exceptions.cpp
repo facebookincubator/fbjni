@@ -460,6 +460,13 @@ std::optional<std::string> jni_message(alias_ref<JThrowable> throwable) {
     return std::nullopt;
   }
 
+  // Defense in depth: a released/empty throwable (e.g. after
+  // releaseThrowable()) would otherwise be passed as a null jobject to the JNI
+  // calls below, which crashes the process (T274966664).
+  if (!throwable) {
+    return std::nullopt;
+  }
+
   // Make sure there isn't an exception pending on the way out.
   struct EnvClear final {
     JNIEnv& e;
@@ -553,22 +560,40 @@ std::optional<std::string> jni_message(alias_ref<JThrowable> throwable) {
 
 // TODO 6900503: consider making this thread-safe.
 void JniException::populateWhat() const noexcept {
-  ThreadScope ts;
-
-  auto msg_opt = jni_message(throwable_.get());
-  if (msg_opt) {
-    what_ = std::move(*msg_opt);
+  // If the throwable has been released (e.g. after releaseThrowable()) or was
+  // never set, there is nothing to extract. Handle this before touching JNI at
+  // all: constructing ThreadScope below would be pointless, and because this
+  // method is noexcept any failure must not be allowed to escape (T274966664).
+  if (!throwable_) {
+    what_ = kExceptionMessageFailure;
     isMessageExtracted_ = true;
-  } else {
-    // NOTE: This does not look recursion-safe.
-    try {
+    return;
+  }
+
+  // ThreadScope attaches the current thread so the message can be extracted
+  // even from threads the JVM does not own. Its constructor throws when fbjni
+  // has no VM (e.g. during teardown, or when what() is reached via
+  // folly::exceptionStr on a native thread), and attaching is not otherwise
+  // guaranteed to succeed. Keep the attach and all JNI extraction inside this
+  // try so any such failure degrades to the static sentinel instead of
+  // terminating this noexcept method (T274966664). This mirrors the
+  // try/catch-around-ThreadScope pattern used by ~JniException().
+  try {
+    ThreadScope ts;
+
+    auto msg_opt = jni_message(throwable_.get());
+    if (msg_opt) {
+      what_ = std::move(*msg_opt);
+    } else {
+      // We have a live throwable and a usable env, but full stack-trace
+      // extraction failed; fall back to the throwable's own toString().
       what_ = throwable_->toString();
       what_ += " (stack trace extraction failure)";
-      isMessageExtracted_ = true;
-    } catch (...) {
-      what_ = kExceptionMessageFailure;
     }
+  } catch (...) {
+    what_ = kExceptionMessageFailure;
   }
+  isMessageExtracted_ = true;
 }
 
 const char* JniException::what() const noexcept {

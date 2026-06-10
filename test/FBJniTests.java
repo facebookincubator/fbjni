@@ -701,6 +701,18 @@ public class FBJniTests extends BaseFBJniTests {
 
   private native String nativeTestMoveConstructorWithPopulatedWhat();
 
+  @Test
+  public void testWhatAfterReleaseThrowable() {
+    // Regression test for T274966664: what() must not crash when called after
+    // releaseThrowable() empties the underlying throwable. Message extraction
+    // is lazy (no eager capture in the ctor), so once the throwable is released
+    // there is nothing left to extract — what() must safely return the fallback
+    // sentinel instead of re-entering JNI on an empty throwable and crashing.
+    assertThat(nativeTestWhatAfterReleaseThrowable()).isEqualTo("Unable to get exception message.");
+  }
+
+  private native String nativeTestWhatAfterReleaseThrowable();
+
   @DoNotStrip // Used in native code.
   protected void customExceptionThrower() throws CustomException {
     throw new CustomException();
