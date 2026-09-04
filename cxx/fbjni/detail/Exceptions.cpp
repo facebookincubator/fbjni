@@ -148,8 +148,7 @@ void setJavaExceptionAndAbortOnFailure(JNIEnv* env, jthrowable throwable) {
 // the c++ stack and then insert it into the correct place in the java stack
 // trace. Then, as the exception propagates across the boundaries, we will
 // slowly fill in the c++ parts of the trace.
-void throwPendingJniExceptionAsCppException() {
-  JNIEnv* env = Environment::current();
+void throwPendingJniExceptionAsCppException(JNIEnv* env) {
   if (env->ExceptionCheck() == JNI_FALSE) {
     return;
   }
@@ -163,6 +162,10 @@ void throwPendingJniExceptionAsCppException() {
   throw JniException(adopt_local(throwable));
 }
 
+void throwPendingJniExceptionAsCppException() {
+  throwPendingJniExceptionAsCppException(Environment::current());
+}
+
 void throwCppExceptionIf(bool condition) {
   if (!condition) {
     return;
@@ -170,7 +173,7 @@ void throwCppExceptionIf(bool condition) {
 
   auto env = Environment::current();
   if (env->ExceptionCheck() == JNI_TRUE) {
-    throwPendingJniExceptionAsCppException();
+    throwPendingJniExceptionAsCppException(env);
     return;
   }
 

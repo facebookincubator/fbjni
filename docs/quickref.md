@@ -384,6 +384,16 @@ When no base class is given, JObject will be used as the base.
 ```
 
 
+When checking an exception after a raw JNI call, pass an existing `JNIEnv*`
+to avoid looking it up again. It must be non-null and belong to the calling
+thread. The no-argument form still looks up the current environment.
+
+```cpp
+  throwPendingJniExceptionAsCppException(env);
+  // Or equivalently:
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
+```
+
 ## Working with boxed primitives
 ```java
   static native Double scaleUp(Integer number);
