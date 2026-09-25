@@ -16,5 +16,8 @@ jobs:
       uses: gradle/gradle-build-action@v2
     - name: Build with Gradle
       run: ./gradlew assembleDebug
+    - name: Verify Prefab package name
+      run: |
+        unzip -p fbjni-android/build/outputs/aar/fbjni-debug.aar prefab/prefab.json | grep -Fq '"name": "fbjni"'
     - name: Run tests
       run: scripts/run-host-tests.sh
