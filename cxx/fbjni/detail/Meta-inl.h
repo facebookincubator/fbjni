@@ -85,7 +85,7 @@ inline void JMethod<void(Args...)>::operator()(
       getId(),
       detail::callToJni(
           detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
 }
 
 #pragma push_macro("DEFINE_PRIMITIVE_CALL")
@@ -101,7 +101,7 @@ inline void JMethod<void(Args...)>::operator()(
         detail::callToJni(                                            \
             detail::Convert<typename std::decay<Args>::type>::toCall( \
                 args))...);                                           \
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();                           \
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                        \
     return result;                                                    \
   }
 
@@ -147,7 +147,7 @@ inline auto JMethod<R(Args...)>::operator()(
       getId(),
       detail::callToJni(
           detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   return adopt_local(static_cast<JniType<JniRet>>(result));
 }
 
@@ -161,7 +161,7 @@ inline void JStaticMethod<void(Args...)>::operator()(
       getId(),
       detail::callToJni(
           detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
 }
 
 #pragma push_macro("DEFINE_PRIMITIVE_STATIC_CALL")
@@ -177,7 +177,7 @@ inline void JStaticMethod<void(Args...)>::operator()(
         detail::callToJni(                                            \
             detail::Convert<typename std::decay<Args>::type>::toCall( \
                 args))...);                                           \
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();                           \
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                        \
     return result;                                                    \
   }
 
@@ -213,7 +213,7 @@ class JStaticMethod<R(Args...)> : public JMethodBase {
         getId(),
         detail::callToJni(
             detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
     return adopt_local(static_cast<JniType<JniRet>>(result));
   }
 
@@ -232,7 +232,7 @@ inline void JNonvirtualMethod<void(Args...)>::operator()(
       getId(),
       detail::callToJni(
           detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
 }
 
 #pragma push_macro("DEFINE_PRIMITIVE_NON_VIRTUAL_CALL")
@@ -249,7 +249,7 @@ inline void JNonvirtualMethod<void(Args...)>::operator()(
         detail::callToJni(                                                  \
             detail::Convert<typename std::decay<Args>::type>::toCall(       \
                 args))...);                                                 \
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();                                 \
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                              \
     return result;                                                          \
   }
 
@@ -289,7 +289,7 @@ class JNonvirtualMethod<R(Args...)> : public JMethodBase {
         getId(),
         detail::callToJni(
             detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
     return adopt_local(static_cast<JniType<JniRet>>(result));
   }
 
