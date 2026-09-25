@@ -23,8 +23,10 @@ pluginManagement {
 }
 
 include(
-    ":fbjni-android",
+    ":fbjni",
     ":fbjni-java-only",
 )
+
+project(":fbjni").projectDir = file("fbjni-android")
 
 rootProject.name = 'fbjni-root-project'
