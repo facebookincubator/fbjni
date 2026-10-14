@@ -16,8 +16,10 @@
 
 package com.facebook.jni;
 
+import com.facebook.infer.annotation.Nullsafe;
 import com.facebook.jni.annotations.DoNotStrip;
 
+@Nullsafe(Nullsafe.Mode.LOCAL)
 @DoNotStrip
 public class CppException extends RuntimeException {
   @DoNotStrip
