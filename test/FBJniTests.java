@@ -609,6 +609,29 @@ public class FBJniTests extends BaseFBJniTests {
   private native void testHandleJavaCustomExceptionNative();
 
   @Test
+  public void testNoPendingExceptionWithEnv() {
+    assertThat(nativeTestPendingJniException(null, true)).isTrue();
+  }
+
+  @Test
+  public void testPendingExceptionWithEnv() {
+    assertThat(nativeTestPendingJniException(new CustomException(), true)).isTrue();
+  }
+
+  @Test
+  public void testNoPendingExceptionWithoutEnv() {
+    assertThat(nativeTestPendingJniException(null, false)).isTrue();
+  }
+
+  @Test
+  public void testPendingExceptionWithoutEnv() {
+    assertThat(nativeTestPendingJniException(new CustomException(), false)).isTrue();
+  }
+
+  private native boolean nativeTestPendingJniException(
+      @Nullable Throwable throwable, boolean explicitEnv);
+
+  @Test
   public void testHandleNullExceptionMessage() {
     testHandleNullExceptionMessageNative();
   }

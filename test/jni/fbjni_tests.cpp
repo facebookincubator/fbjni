@@ -848,6 +848,32 @@ void TestMethodResolutionWithCxxTypes(
 
 #undef runTest
 
+jboolean TestPendingJniException(
+    JNIEnv* env, jobject, jthrowable throwable, jboolean explicitEnv) {
+  auto checkException = [&] {
+    if (explicitEnv) {
+      FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
+    } else {
+      FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+    }
+  };
+
+  if (throwable != nullptr) {
+    env->Throw(throwable);
+  }
+  try {
+    checkException();
+    EXPECT(throwable == nullptr);
+  } catch (const JniException& exception) {
+    EXPECT(throwable != nullptr);
+    EXPECT(env->ExceptionCheck() == JNI_FALSE);
+    EXPECT(env->IsSameObject(throwable, exception.getThrowable().get()));
+    checkException();
+  }
+  EXPECT(env->ExceptionCheck() == JNI_FALSE);
+  return JNI_TRUE;
+}
+
 void TestHandleJavaCustomException(JNIEnv* env, jobject self) {
   auto me = adopt_local(self);
   auto cls = me->getClass();
@@ -1714,6 +1740,8 @@ void RegisterFbjniTests() {
           makeNativeMethod(
               "testHandleJavaCustomExceptionNative",
               TestHandleJavaCustomException),
+          makeNativeMethod(
+              "nativeTestPendingJniException", TestPendingJniException),
           makeNativeMethod(
               "testHandleNullExceptionMessageNative",
               TestHandleNullExceptionMessage),
