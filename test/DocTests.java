@@ -92,6 +92,13 @@ public class DocTests extends BaseFBJniTests {
     assertThat(getCString()).isEqualTo("Watch your memory.");
   }
 
+  static native String stringBuffers();
+
+  @Test
+  public void testStringBuffers() {
+    assertThat(stringBuffers()).isEqualTo("a\0\uD83D\uDE00");
+  }
+
   // SECTION primitive_arrays
   static native int[] primitiveArrays(int[] arr);
 

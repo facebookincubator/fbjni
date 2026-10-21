@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <chrono>
 #include <ios>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <system_error>
@@ -441,6 +443,116 @@ void TestAutoAliasRefReturningVoid(facebook::jni::alias_ref<jobject> self) {
 jboolean testNullJString(JNIEnv*, jobject) {
   auto aNullJString = make_jstring(nullptr);
   EXPECT(aNullJString.get() == (jstring) nullptr);
+  return JNI_TRUE;
+}
+
+local_ref<JString> roundTripString(
+    alias_ref<JObject>,
+    alias_ref<JString> input,
+    jint encoding) {
+  switch (encoding) {
+    case 0:
+      return make_jstring(input->toStdString());
+    case 1: {
+      auto utf8 = input->toStdString();
+      // Use an unterminated buffer and an offset, not string::c_str().
+      std::vector<char> buffer(utf8.begin(), utf8.end());
+      buffer.insert(buffer.begin(), 'x');
+      return make_jstring(buffer.data() + 1, utf8.size());
+    }
+    case 2:
+      return make_jstring(input->toU16String());
+    case 3: {
+      auto utf16 = input->toU16String();
+      std::vector<char16_t> buffer(utf16.begin(), utf16.end());
+      buffer.insert(buffer.begin(), u'x');
+      return make_jstring(buffer.data() + 1, utf16.size());
+    }
+    default: {
+      const auto chars = input->getChars();
+      return make_jstring(chars.data(), input->size());
+    }
+  }
+}
+
+jboolean testStringAccess(alias_ref<JObject>, alias_ref<JString> input) {
+  const auto expected = input->toU16String();
+  EXPECT(input->size() == expected.size());
+  std::vector<char16_t> region(expected.size() + 2, u'x');
+  input->getRegion(0, input->size(), region.data() + 1);
+  EXPECT(region.front() == u'x' && region.back() == u'x');
+  EXPECT(std::equal(expected.begin(), expected.end(), region.begin() + 1));
+  if (!expected.empty()) {
+    input->getRegion(1, input->size() - 1, region.data());
+    EXPECT(std::equal(expected.begin() + 1, expected.end(), region.begin()));
+  }
+  // A zero-length region at the end is valid and does not touch the buffer.
+  input->getRegion(input->size(), 0, region.data());
+
+  auto owned = make_local(input);
+  {
+    const auto chars = owned->getChars();
+    owned.reset();  // The guard keeps its own local reference alive.
+    EXPECT(std::equal(expected.begin(), expected.end(), chars.data()));
+    // JNI calls and allocation are allowed while GetStringChars is held.
+    EXPECT(make_jstring(chars.data(), expected.size())->toU16String() ==
+           expected);
+  }
+  // Exercise release during exception unwinding as well.
+  try {
+    const auto chars = input->getChars();
+    throw std::runtime_error("unwind string characters");
+  } catch (const std::runtime_error&) {
+  }
+  return JNI_TRUE;
+}
+
+void testStringRegion(
+    alias_ref<JObject>,
+    alias_ref<JString> input,
+    jint start,
+    jint length) {
+  char16_t buffer[1];
+  input->getRegion(start, length, buffer);
+}
+
+jboolean testStringConstructionLimits(alias_ref<JObject>) {
+  EXPECT(make_jstring(nullptr) == nullptr);
+  EXPECT(make_jstring("")->size() == 0);
+  EXPECT(make_jstring(std::string{})->size() == 0);
+  EXPECT(make_jstring(std::u16string{}) != nullptr);
+  EXPECT(make_jstring(std::u16string{})->size() == 0);
+  EXPECT(make_jstring(static_cast<const char*>(nullptr), 0)->size() == 0);
+  EXPECT(make_jstring(static_cast<const char16_t*>(nullptr), 0)->size() ==
+         0);
+
+  const auto tooLong =
+      static_cast<size_t>(std::numeric_limits<jsize>::max()) + 1;
+  try {
+    make_jstring("x", tooLong);
+    EXPECT(false);
+  } catch (const std::length_error&) {
+  }
+  try {
+    make_jstring(u"x", tooLong);
+    EXPECT(false);
+  } catch (const std::length_error&) {
+  }
+  try {
+    make_jstring(static_cast<const char*>(nullptr), 1);
+    EXPECT(false);
+  } catch (const std::invalid_argument&) {
+  }
+  try {
+    make_jstring(static_cast<const char16_t*>(nullptr), 1);
+    EXPECT(false);
+  } catch (const std::invalid_argument&) {
+  }
+  try {
+    JStringChars chars{alias_ref<JString>{}};
+    EXPECT(false);
+  } catch (const std::invalid_argument&) {
+  }
   return JNI_TRUE;
 }
 
@@ -1779,6 +1891,11 @@ void RegisterFbjniTests() {
           makeNativeMethod(
               "nativeTestNestedThreadScopeGuard", TestNestedThreadScopeGuard),
           makeNativeMethod("nativeTestNullJString", testNullJString),
+          makeNativeMethod("nativeRoundTripString", roundTripString),
+          makeNativeMethod("nativeTestStringAccess", testStringAccess),
+          makeNativeMethod("nativeTestStringRegion", testStringRegion),
+          makeNativeMethod(
+              "nativeTestStringConstructionLimits", testStringConstructionLimits),
           makeNativeMethod("nativeTestSwap", testSwap),
           makeNativeMethod("nativeTestEqualOperator", testEqualOperator),
           makeNativeMethod("nativeTestReleaseAlias", testReleaseAlias),
