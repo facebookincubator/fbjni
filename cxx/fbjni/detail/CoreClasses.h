@@ -39,6 +39,7 @@ namespace jni {
 class JClass;
 class JObject;
 class JString;
+class JStringChars;
 
 namespace detail {
 
@@ -369,6 +370,19 @@ class JString : public JavaClass<JString, JObject, jstring> {
   /// Java type descriptor
   static constexpr const char* kJavaDescriptor = "Ljava/lang/String;";
 
+  /// Number of UTF-16 code units. The reference must be non-null.
+  jsize size() const;
+
+  /// Copy UTF-16 code units to buf without a terminator. Invalid ranges
+  /// throw a Java StringIndexOutOfBoundsException. buf must hold length
+  /// code units.
+  void getRegion(jsize start, jsize length, char16_t* buf) const;
+
+  /// Access UTF-16 code units until the returned guard is destroyed. Unlike
+  /// GetStringCritical, this permits JNI calls and allocations while in
+  /// scope.
+  JStringChars getChars() const;
+
   /// Convenience method to convert a jstring object to a std::string
   std::string toStdString() const;
 
@@ -376,10 +390,42 @@ class JString : public JavaClass<JString, JObject, jstring> {
   std::u16string toU16String() const;
 };
 
-/// Convenience functions to convert a const char*, std::string, or
-/// std::u16string into a @ref local_ref to a jstring.
+/// Scoped, read-only UTF-16 access using GetStringChars/ReleaseStringChars.
+/// Owns a local reference to the string. Destroy on the creating thread
+/// before its JNI local frame ends. data() is not necessarily
+/// NUL-terminated.
+class JStringChars {
+ public:
+  explicit JStringChars(alias_ref<JString> string);
+  ~JStringChars() noexcept;
+
+  JStringChars(const JStringChars&) = delete;
+  JStringChars& operator=(const JStringChars&) = delete;
+
+  const char16_t* data() const noexcept;
+
+ private:
+  JNIEnv* env_;
+  jstring string_;
+  const jchar* chars_;
+};
+
+/// Convert NUL-terminated UTF-8. A null pointer returns a null reference.
 local_ref<JString> make_jstring(const char* utf8);
+
+/// Convert all UTF-8 bytes, including embedded NULs. No terminator is
+/// required for the pointer/length overload. A null pointer is allowed only
+/// for length 0 and creates an empty Java string. Lengths above jsize's
+/// maximum throw std::length_error. Invalid UTF-8 retains the existing
+/// best-effort behavior.
+local_ref<JString> make_jstring(const char* utf8, size_t length);
 local_ref<JString> make_jstring(const std::string& utf8);
+
+/// Copy UTF-16 code units unchanged, including NULs and unpaired
+/// surrogates. The pointer/length overload has the same null and length
+/// rules as UTF-8. Empty input creates an empty Java string, including an
+/// empty std::u16string.
+local_ref<JString> make_jstring(const char16_t* utf16, size_t length);
 local_ref<JString> make_jstring(const std::u16string& utf16);
 
 namespace detail {

@@ -64,13 +64,18 @@ inline bool isFourByteUTF8Encoding(const T* utf8) {
 namespace detail {
 
 size_t modifiedLength(const std::string& str) {
+  return modifiedLength(
+      reinterpret_cast<const uint8_t*>(str.data()), str.size());
+}
+
+size_t modifiedLength(const uint8_t* str, size_t length) {
   // Scan for supplementary characters
   size_t j = 0;
-  for (size_t i = 0; i < str.size();) {
+  for (size_t i = 0; i < length;) {
     if (str[i] == 0) {
       i += 1;
       j += 2;
-    } else if (i + 4 > str.size() || !isFourByteUTF8Encoding(&(str[i]))) {
+    } else if (i + 4 > length || !isFourByteUTF8Encoding(&(str[i]))) {
       // See the code in utf8ToModifiedUTF8 for what's happening here.
       i += 1;
       j += 1;
