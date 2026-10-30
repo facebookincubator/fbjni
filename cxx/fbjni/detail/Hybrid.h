@@ -37,6 +37,9 @@ struct HybridData : public JavaClass<HybridData> {
   constexpr static auto kJavaDescriptor = "Lcom/facebook/jni/HybridData;";
   static local_ref<HybridData> create();
   static local_ref<HybridData> create(BaseHybridClass* ptr);
+  // HybridData.mNativePointer, or a null field if the Java class is from an
+  // fbjni version without it.
+  static JField<jlong> nativePointerField();
 };
 
 class HybridDestructor : public JavaClass<HybridDestructor> {
@@ -49,8 +52,18 @@ class HybridDestructor : public JavaClass<HybridDestructor> {
   void setNativePointer(std::unique_ptr<detail::BaseHybridClass> new_value);
 };
 
+// t is a HybridData, or a HybridClassBase, which extends it.
 template <typename T>
 detail::BaseHybridClass* getNativePointer(const T* t) {
+  static const auto field = HybridData::nativePointerField();
+  if (field) {
+    // HybridData.mNativePointer is zero after a reset, or if the pointer was
+    // set by code built against headers that only set mDestructor's copy.
+    // mDestructor has the answer in both cases.
+    if (auto value = t->getFieldValue(field)) {
+      return reinterpret_cast<detail::BaseHybridClass*>(value);
+    }
+  }
   return getHolder(t)->getNativePointer();
 }
 
@@ -58,7 +71,17 @@ template <typename T>
 void setNativePointer(
     const T* t,
     std::unique_ptr<detail::BaseHybridClass> new_value) {
+  static const auto field = HybridData::nativePointerField();
+  auto value = reinterpret_cast<jlong>(new_value.get());
+  // Clear the copy before the old instance is deleted, and set it after the
+  // new one is stored.
+  if (field && !value) {
+    const_cast<T*>(t)->setFieldValue(field, value);
+  }
   getHolder(t)->setNativePointer(std::move(new_value));
+  if (field && value) {
+    const_cast<T*>(t)->setFieldValue(field, value);
+  }
 }
 
 // Save space: use unified getHolder implementation.
@@ -66,7 +89,7 @@ template <typename T, typename Alloc>
 void setNativePointer(
     basic_strong_ref<T, Alloc> t,
     std::unique_ptr<detail::BaseHybridClass> new_value) {
-  getHolder(&*t)->setNativePointer(std::move(new_value));
+  setNativePointer(&*t, std::move(new_value));
 }
 
 // Save space: use unified getHolder implementation.
@@ -74,7 +97,7 @@ template <typename T>
 void setNativePointer(
     alias_ref<T> t,
     std::unique_ptr<detail::BaseHybridClass> new_value) {
-  getHolder(&*t)->setNativePointer(std::move(new_value));
+  setNativePointer(&*t, std::move(new_value));
 }
 
 // Inline rather than in cpp file so that consumers can call into

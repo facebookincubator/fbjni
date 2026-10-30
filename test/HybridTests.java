@@ -17,6 +17,7 @@
 package com.facebook.jni;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.facebook.infer.annotation.Nullsafe;
 import com.facebook.jni.annotations.DoNotStrip;
@@ -265,6 +266,10 @@ public class HybridTests extends BaseFBJniTests {
     public native int getInt();
 
     public static native TestHybridClassBase makeWithThree();
+
+    public static native TestHybridClassBase makeWithPointerOnDestructor(int i);
+
+    public static native boolean cxxTestCthis(TestHybridClassBase base, int i);
   }
 
   static class TestHybridClassBaseDefaultCtor extends TestHybridClassBase {
@@ -292,6 +297,27 @@ public class HybridTests extends BaseFBJniTests {
   public void testHybridBaseFactoryConstruction() {
     TestHybridClassBase base = TestHybridClassBase.makeWithThree();
     assertThat(base.getInt()).isEqualTo(3);
+  }
+
+  @Test
+  public void testHybridBaseCthisFromCxx() {
+    TestHybridClassBase base = new TestHybridClassBase(42);
+    assertThat(TestHybridClassBase.cxxTestCthis(base, 42)).isTrue();
+  }
+
+  @Test
+  public void testHybridBasePointerOnlyOnDestructor() {
+    TestHybridClassBase base = TestHybridClassBase.makeWithPointerOnDestructor(7);
+    assertThat(base.getInt()).isEqualTo(7);
+    assertThat(TestHybridClassBase.cxxTestCthis(base, 7)).isTrue();
+  }
+
+  @Test
+  public void testHybridBaseResetNative() {
+    TestHybridClassBase base = new TestHybridClassBase(42);
+    base.resetNative();
+    assertThat(base.isValid()).isFalse();
+    assertThatThrownBy(base::getInt).isInstanceOf(NullPointerException.class);
   }
 
   static class Destroyable {

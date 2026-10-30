@@ -361,6 +361,24 @@ class TestHybridClassBase
     return newObjectCxxArgs(3);
   }
 
+  // Sets the native pointer the way code built against older headers does:
+  // only on HybridData's Destructor.
+  static local_ref<jhybridobject> makeWithPointerOnDestructor(
+      alias_ref<jclass> /* unused */,
+      jint i) {
+    auto o = JavaPart::newInstance();
+    detail::getHolder(&*o)->setNativePointer(
+        std::make_unique<TestHybridClassBase>(i));
+    return o;
+  }
+
+  static jboolean cxxTestCthis(
+      alias_ref<jclass> /* unused */,
+      alias_ref<jhybridobject> o,
+      jint i) {
+    return o->cthis()->getInt() == i;
+  }
+
   static void registerNatives() {
     registerHybrid({
         makeNativeMethod("initHybrid", TestHybridClassBase::initHybrid),
@@ -368,6 +386,10 @@ class TestHybridClassBase
         makeNativeMethod("getInt", TestHybridClassBase::getInt),
         makeNativeMethod("setInt", TestHybridClassBase::setInt),
         makeNativeMethod("makeWithThree", TestHybridClassBase::makeWithThree),
+        makeNativeMethod(
+            "makeWithPointerOnDestructor",
+            TestHybridClassBase::makeWithPointerOnDestructor),
+        makeNativeMethod("cxxTestCthis", TestHybridClassBase::cxxTestCthis),
     });
   }
 

@@ -36,10 +36,15 @@ public class HybridData {
 
   private final Destructor mDestructor = new Destructor(this);
 
+  // A copy of mDestructor.mNativePointer, so C++ can read the pointer with one field access
+  // instead of going through mDestructor. Zero means C++ has to read mDestructor.
+  private volatile long mNativePointer;
+
   public HybridData() {}
 
   HybridData(long nativePointer) {
     mDestructor.mNativePointer = nativePointer;
+    mNativePointer = nativePointer;
   }
 
   /**
@@ -51,6 +56,7 @@ public class HybridData {
    * destructor, you should call resetNative() explicitly.
    */
   public synchronized void resetNative() {
+    mNativePointer = 0;
     mDestructor.destruct();
   }
 
