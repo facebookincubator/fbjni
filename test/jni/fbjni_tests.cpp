@@ -1076,6 +1076,17 @@ void TestThrowJavaExceptionByName(JNIEnv* env, jobject self) {
       "java/lang/IllegalArgumentException", "bad news: %s", "it didn't work");
 }
 
+// Returns the code units toU16String produces, for comparison in Java.
+local_ref<JArrayChar> toU16StringChars(
+    alias_ref<JObject>,
+    alias_ref<JString> input) {
+  const auto utf16 = input->toU16String();
+  auto chars = JArrayChar::newArray(utf16.size());
+  chars->setRegion(
+      0, utf16.size(), reinterpret_cast<const jchar*>(utf16.data()));
+  return chars;
+}
+
 jint TestJThread(JNIEnv* env, jobject self) {
   jint i = -1;
   auto thread = JThread::create([&] {
@@ -1792,6 +1803,7 @@ void RegisterFbjniTests() {
               "nativeTestThrowJavaExceptionByName",
               TestThrowJavaExceptionByName),
           makeNativeMethod("nativeTestJThread", TestJThread),
+          makeNativeMethod("nativeToU16StringChars", toU16StringChars),
           makeNativeMethod("nativeTestThreadScopeGuard", TestThreadScopeGuard),
           makeNativeMethod(
               "nativeTestNestedThreadScopeGuard", TestNestedThreadScopeGuard),
