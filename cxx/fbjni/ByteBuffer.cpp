@@ -32,8 +32,9 @@ void* JBuffer::getDirectAddress() const {
     throwNewJavaException(
         "java/lang/NullPointerException", "java.lang.NullPointerException");
   }
-  void* addr = Environment::current()->GetDirectBufferAddress(self());
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  const auto env = Environment::current();
+  void* addr = env->GetDirectBufferAddress(self());
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   if (!addr) {
     throw std::runtime_error(
         isDirect() ? "Attempt to get direct bytes of non-direct buffer."
@@ -47,8 +48,9 @@ size_t JBuffer::getDirectCapacity() const {
     throwNewJavaException(
         "java/lang/NullPointerException", "java.lang.NullPointerException");
   }
-  int size = Environment::current()->GetDirectBufferCapacity(self());
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  const auto env = Environment::current();
+  int size = env->GetDirectBufferCapacity(self());
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   if (size < 0) {
     throw std::runtime_error(
         isDirect() ? "Attempt to get direct size of non-direct buffer."
@@ -88,10 +90,10 @@ local_ref<JByteBuffer> JByteBuffer::wrapBytes(uint8_t* data, size_t size) {
   if (!size) {
     return allocateDirect(0);
   }
+  const auto env = Environment::current();
   auto res = adopt_local(
-      static_cast<javaobject>(
-          Environment::current()->NewDirectByteBuffer(data, size)));
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+      static_cast<javaobject>(env->NewDirectByteBuffer(data, size)));
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   if (!res) {
     throw std::runtime_error("Direct byte buffers are unsupported.");
   }
