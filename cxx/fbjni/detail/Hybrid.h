@@ -216,16 +216,17 @@ class HybridClass : public detail::HybridTraits<Base>::CxxBase {
 
   static local_ref<detail::HybridData> makeHybridData(
       std::unique_ptr<T> cxxPart) {
-    auto hybridData = detail::HybridData::create();
-    setNativePointer(hybridData, std::move(cxxPart));
+    // The HybridData(long) constructor stores the pointer, so this is one
+    // NewObject instead of NewObject and setting the pointer through JNI.
+    // cxxPart keeps ownership if the constructor throws.
+    auto hybridData = detail::HybridData::create(cxxPart.get());
+    cxxPart.release();
     return hybridData;
   }
 
   static local_ref<detail::HybridData> makeHybridDataWithPeer(
       std::unique_ptr<T> cxxPart) {
-    auto hybridData = detail::HybridData::create(cxxPart.get());
-    cxxPart.release();
-    return hybridData;
+    return makeHybridData(std::move(cxxPart));
   }
 
   template <typename... Args>
