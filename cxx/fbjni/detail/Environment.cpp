@@ -119,20 +119,43 @@ void Environment::initialize(JavaVM* const vm) noexcept {
 
 namespace {
 
+// Per-thread state, allocated on a thread's first use and freed when the
+// thread exits. This used to be a TLData in the outermost JniEnvCacher or
+// ThreadScope on the stack, which meant setting and clearing the pthread key
+// (two pthread_getspecific and two pthread_setspecific calls) on every call
+// from Java into C++.
+struct ThreadState {
+  // Set by the outermost JniEnvCacher: the env of a JNI call into C++ that is
+  // on the stack, so Java frames (and the app's class loader) are below us.
+  JNIEnv* jniEnv;
+  // Set by the outermost ThreadScope: the env of this thread while that
+  // ThreadScope is on the stack.
+  JNIEnv* scopeEnv;
+  // Set while an attaching ThreadScope is on the stack.
+  bool attached;
+  // Set while a ThreadScope is attaching the thread.
+  bool attaching;
+};
+
 #ifndef _WIN32
 typedef pthread_key_t tls_key_t;
 #else
 typedef DWORD tls_key_t;
 #endif
 
+void freeThreadState(void* state) {
+  delete static_cast<ThreadState*>(state);
+}
+
 tls_key_t makeKey() {
   tls_key_t key;
 #ifndef _WIN32
-  int ret = pthread_key_create(&key, nullptr);
+  int ret = pthread_key_create(&key, freeThreadState);
   if (ret != 0) {
     FBJNI_LOGF("pthread_key_create failed: %d", ret);
   }
 #else
+  // Windows: no destructor; the state of an exiting thread leaks.
   key = TlsAlloc();
   if (key == TLS_OUT_OF_INDEXES) {
     FBJNI_LOGF("TlsAlloc failed");
@@ -146,36 +169,39 @@ tls_key_t getTLKey() {
   return key;
 }
 
-inline detail::TLData* getTLData(tls_key_t key) {
+// Returns null if this thread has no state yet.
+inline ThreadState* peekThreadState() {
 #ifndef _WIN32
-  void* raw_data = pthread_getspecific(key);
+  return static_cast<ThreadState*>(pthread_getspecific(getTLKey()));
 #else
-  LPVOID raw_data = TlsGetValue(key);
-  // TODO: Maybe check for errors here?
+  return static_cast<ThreadState*>(TlsGetValue(getTLKey()));
 #endif
-  return reinterpret_cast<detail::TLData*>(raw_data);
 }
 
-inline void setTLData(tls_key_t key, detail::TLData* data) {
+inline ThreadState& getThreadState() {
+  ThreadState* state = peekThreadState();
+  if (state) {
+    return *state;
+  }
+  state = new ThreadState{};
 #ifndef _WIN32
-  int ret = pthread_setspecific(key, data);
+  int ret = pthread_setspecific(getTLKey(), state);
   if (ret != 0) {
-    (void)ret;
     FBJNI_LOGF("pthread_setspecific failed: %d", ret);
   }
 #else
-  BOOL ret = TlsSetValue(key, data);
-  if (!ret) {
+  if (!TlsSetValue(getTLKey(), state)) {
     FBJNI_LOGF("TlsSetValue failed: %d", GetLastError());
   }
 #endif
+  return *state;
 }
 
 // This returns non-nullptr iff the env was cached from java.  So it
 // can return nullptr for a thread which has been registered.
 inline JNIEnv* cachedOrNull() {
-  detail::TLData* pdata = getTLData(getTLKey());
-  return (pdata ? pdata->env : nullptr);
+  ThreadState* state = peekThreadState();
+  return state ? state->jniEnv : nullptr;
 }
 
 } // namespace
@@ -183,15 +209,9 @@ inline JNIEnv* cachedOrNull() {
 namespace detail {
 
 JNIEnv* cachedWithAttachmentState(bool& isAttaching) {
-  isAttaching = false;
-  detail::TLData* pdata = getTLData(getTLKey());
-  if (!pdata) {
-    return nullptr;
-  }
-  if (!pdata->env && !pdata->attached) {
-    isAttaching = true;
-  }
-  return pdata->env;
+  ThreadState* state = peekThreadState();
+  isAttaching = state && state->attaching;
+  return state ? state->jniEnv : nullptr;
 }
 
 // This will return a cached env if there is one, or get one from JNI
@@ -204,16 +224,21 @@ JNIEnv* currentOrNull() {
     return nullptr;
   }
 
-  detail::TLData* pdata = getTLData(getTLKey());
-  if (pdata && pdata->env) {
-    return pdata->env;
+  ThreadState* state = peekThreadState();
+  if (state) {
+    if (state->jniEnv) {
+      return state->jniEnv;
+    }
+    if (state->scopeEnv) {
+      return state->scopeEnv;
+    }
   }
 
   JNIEnv* env;
   if (getEnv(&env) != JNI_OK) {
     // If there's a ThreadScope on the stack, we should have gotten a
     // JNIEnv and not ended up here.
-    FBJNI_ASSERT(!pdata || !pdata->attached);
+    FBJNI_ASSERT(!state || !state->attached);
   }
   return env;
 }
@@ -229,22 +254,11 @@ JNIEnv* currentOrNull() {
 JniEnvCacher::JniEnvCacher(JNIEnv* env) : thisCached_(false) {
   FBJNI_ASSERT(env);
 
-  tls_key_t key = getTLKey();
-  detail::TLData* pdata = getTLData(key);
-  if (pdata && pdata->env) {
+  ThreadState& state = getThreadState();
+  if (state.jniEnv) {
     return;
   }
-
-  if (!pdata) {
-    pdata = &data_;
-    setTLData(key, pdata);
-    pdata->attached = false;
-  } else {
-    FBJNI_ASSERT(!pdata->env);
-  }
-
-  pdata->env = env;
-
+  state.jniEnv = env;
   thisCached_ = true;
 }
 
@@ -252,15 +266,9 @@ JniEnvCacher::~JniEnvCacher() {
   if (!thisCached_) {
     return;
   }
-
-  tls_key_t key = getTLKey();
-  TLData* pdata = getTLData(key);
-  FBJNI_ASSERT(pdata);
-  FBJNI_ASSERT(pdata->env != nullptr);
-  pdata->env = nullptr;
-  if (!pdata->attached) {
-    setTLData(key, nullptr);
-  }
+  ThreadState* state = peekThreadState();
+  FBJNI_ASSERT(state && state->jniEnv != nullptr);
+  state->jniEnv = nullptr;
 }
 
 } // namespace detail
@@ -270,47 +278,60 @@ ThreadScope::ThreadScope() : thisAttached_(false) {
     throw std::runtime_error(
         "fbjni is uninitialized; no thread can be attached.");
   }
+  // data_.env records whether this scope set state.scopeEnv.
+  data_.env = nullptr;
+  data_.attached = false;
+
+  ThreadState& state = getThreadState();
+  if (state.jniEnv || state.scopeEnv) {
+    return;
+  }
 
   JNIEnv* env;
 
   // Check if the thread is attached somehow.
   auto result = getEnv(&env);
   if (result == JNI_OK) {
+    // Attached by someone else. It stays attached while this scope is on the
+    // stack, so the env can be cached until then.
+    state.scopeEnv = env;
+    data_.env = env;
     return;
   }
 
   // At this point, it appears there's no thread attached and no env is
-  // cached, or we would have returned already.  So there better not
-  // be TLData.
+  // cached, or we would have returned already.
+  FBJNI_ASSERT(!state.attached && !state.attaching);
 
-  tls_key_t key = getTLKey();
-  FBJNI_LOG_ONLY detail::TLData* pdata = getTLData(key);
-  FBJNI_ASSERT(pdata == nullptr);
-  setTLData(key, &data_);
-
-  data_.env = nullptr;
-  data_.attached = false;
-
-  attachCurrentThread();
-
-  data_.attached = true;
+  state.attaching = true;
+  env = attachCurrentThread();
+  state.attaching = false;
+  state.attached = true;
+  state.scopeEnv = env;
+  data_.env = env;
 
   thisAttached_ = true;
 }
 
 ThreadScope::~ThreadScope() {
+  if (!data_.env && !thisAttached_) {
+    return;
+  }
+  ThreadState& state = getThreadState();
+  // A moved-from ThreadScope has the same data_ as the one it was moved to,
+  // so the cache may already have been cleared.
+  if (data_.env && state.scopeEnv == data_.env) {
+    state.scopeEnv = nullptr;
+  }
   if (!thisAttached_) {
     return;
   }
 
-  tls_key_t key = getTLKey();
-  FBJNI_LOG_ONLY detail::TLData* pdata = getTLData(key);
-  FBJNI_ASSERT(pdata);
-  FBJNI_ASSERT(pdata->env == nullptr);
-  FBJNI_ASSERT(pdata->attached);
+  FBJNI_ASSERT(state.jniEnv == nullptr);
+  FBJNI_ASSERT(state.attached);
   FBJNI_ASSERT(g_vm);
   g_vm->DetachCurrentThread();
-  setTLData(key, nullptr);
+  state.attached = false;
 }
 
 /* static */

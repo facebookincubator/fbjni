@@ -52,17 +52,14 @@ JNIEnv* currentOrNull();
 JNIEnv* cachedWithAttachmentState(bool& isAttaching);
 
 /**
- * If there's thread-local data, it's a pointer to one of these.  The
- * instance is a member of JniEnvCacher or ThreadScope, and lives on
- * the stack.
+ * Part of the layout of JniEnvCacher and ThreadScope, which code built against
+ * these headers constructs inline. The per-thread state itself lives in
+ * Environment.cpp; ThreadScope uses data_.env to remember the env it cached.
  */
 struct TLData {
-  // This is modified only by JniEnvCacher, and is guaranteed to be
-  // valid if set, and refer to an env which originated from a JNI
-  // call into C++.
+  // In ThreadScope: the env it cached for its lifetime, if any.
   JNIEnv* env;
-  // This is modified only by ThreadScope, and is set only if an
-  // instance of ThreadScope which attached is on the stack.
+  // Unused.
   bool attached;
 };
 
