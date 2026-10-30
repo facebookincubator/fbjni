@@ -37,8 +37,8 @@ struct HybridData : public JavaClass<HybridData> {
   constexpr static auto kJavaDescriptor = "Lcom/facebook/jni/HybridData;";
   static local_ref<HybridData> create();
   static local_ref<HybridData> create(BaseHybridClass* ptr);
-  // HybridData.mNativePointer, or a null field if the Java class is from an
-  // fbjni version without it.
+  // HybridData.mCachedNativePointer: a copy of the Destructor's pointer that
+  // can be read from the HybridData with one GetLongField.
   static JField<jlong> nativePointerField();
 };
 
@@ -56,13 +56,11 @@ class HybridDestructor : public JavaClass<HybridDestructor> {
 template <typename T>
 detail::BaseHybridClass* getNativePointer(const T* t) {
   static const auto field = HybridData::nativePointerField();
-  if (field) {
-    // HybridData.mNativePointer is zero after a reset, or if the pointer was
-    // set by code built against headers that only set mDestructor's copy.
-    // mDestructor has the answer in both cases.
-    if (auto value = t->getFieldValue(field)) {
-      return reinterpret_cast<detail::BaseHybridClass*>(value);
-    }
+  // HybridData.mCachedNativePointer is zero after a reset, or if the pointer
+  // was set by code built against headers that only set mDestructor's copy.
+  // mDestructor has the answer in both cases.
+  if (auto value = t->getFieldValue(field)) {
+    return reinterpret_cast<detail::BaseHybridClass*>(value);
   }
   return getHolder(t)->getNativePointer();
 }
@@ -75,11 +73,11 @@ void setNativePointer(
   auto value = reinterpret_cast<jlong>(new_value.get());
   // Clear the copy before the old instance is deleted, and set it after the
   // new one is stored.
-  if (field && !value) {
+  if (!value) {
     const_cast<T*>(t)->setFieldValue(field, value);
   }
   getHolder(t)->setNativePointer(std::move(new_value));
-  if (field && value) {
+  if (value) {
     const_cast<T*>(t)->setFieldValue(field, value);
   }
 }

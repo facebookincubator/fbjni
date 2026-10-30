@@ -30,16 +30,9 @@ local_ref<HybridData> HybridData::create(BaseHybridClass* ptr) {
 }
 
 JField<jlong> HybridData::nativePointerField() {
-  static const auto field = []() -> jfieldID {
-    JNIEnv* env = Environment::current();
-    jfieldID id =
-        env->GetFieldID(javaClassStatic().get(), "mNativePointer", "J");
-    if (!id) {
-      env->ExceptionClear();
-    }
-    return id;
-  }();
-  return JField<jlong>(field);
+  static const auto field =
+      javaClassStatic()->getField<jlong>("mCachedNativePointer");
+  return field;
 }
 
 } // namespace detail
