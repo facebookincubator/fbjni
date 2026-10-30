@@ -867,6 +867,44 @@ public class FBJniTests extends BaseFBJniTests {
 
   private native boolean nativeTestToString();
 
+  @Test
+  public void testToStdStringMatchesUtf16() {
+    // Lengths around toStdString's 256 code unit stack buffer, ASCII and not.
+    String a255 = repeat('a', 255);
+    String a256 = repeat('a', 256);
+    for (String input :
+        new String[] {
+          "",
+          "a",
+          "x\0y",
+          "\u00e9",
+          "za\u017c\u00f3\u0142\u0107",
+          "\uD83D\uDE00",
+          "\uD800",
+          "\uDC00",
+          "\uDC00\0\uD800",
+          a255,
+          a256,
+          a256 + "a",
+          repeat('a', 300),
+          a255 + "\u00e9",
+          a256 + "\u00e9",
+          a255 + "\uD83D\uDE00",
+          repeat('\u00e9', 256),
+          repeat('\u00e9', 257),
+        }) {
+      assertThat(nativeTestToStdStringMatchesUtf16(input)).isTrue();
+    }
+  }
+
+  private static String repeat(char c, int count) {
+    char[] chars = new char[count];
+    java.util.Arrays.fill(chars, c);
+    return new String(chars);
+  }
+
+  private native boolean nativeTestToStdStringMatchesUtf16(String input);
+
   // Casting alias_ref
 
   @Test

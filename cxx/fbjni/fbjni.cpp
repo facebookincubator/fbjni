@@ -69,8 +69,40 @@ alias_ref<JClass> findClassStatic(const char* name) {
 
 std::string JString::toStdString() const {
   const auto env = Environment::current();
-  auto utf16String = JStringUtf16Extractor(env, self());
-  return detail::utf16toUTF8(utf16String.chars(), utf16String.length());
+  const auto str = self();
+  if (!str) {
+    return "";
+  }
+  const jsize length = env->GetStringLength(str);
+  // Copy short strings onto the stack. ART stores all-ASCII strings compressed,
+  // and GetStringCritical has to allocate an inflated copy of those; for the
+  // others it holds off the moving GC until ReleaseStringCritical.
+  constexpr jsize kStackLength = 256;
+  if (length <= kStackLength) {
+    jchar chars[kStackLength];
+    env->GetStringRegion(str, 0, length, chars);
+    jsize firstNonAscii = 0;
+    while (firstNonAscii < length && chars[firstNonAscii] < 0x80) {
+      firstNonAscii++;
+    }
+    if (firstNonAscii < length) {
+      return detail::utf16toUTF8(
+          reinterpret_cast<const uint16_t*>(chars), length);
+    }
+    std::string ascii(length, '\0');
+    for (jsize i = 0; i < length; i++) {
+      ascii[i] = static_cast<char>(chars[i]);
+    }
+    return ascii;
+  }
+  const jchar* chars = env->GetStringCritical(str, nullptr);
+  if (!chars) {
+    return "";
+  }
+  auto utf8 =
+      detail::utf16toUTF8(reinterpret_cast<const uint16_t*>(chars), length);
+  env->ReleaseStringCritical(str, chars);
+  return utf8;
 }
 
 std::u16string JString::toU16String() const {
