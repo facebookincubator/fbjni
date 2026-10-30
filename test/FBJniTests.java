@@ -861,6 +861,20 @@ public class FBJniTests extends BaseFBJniTests {
   private native int nativeTestClassLoadWorkerFastPath();
 
   @Test
+  public void testMovedThreadScope() {
+    assertThat(nativeTestMovedThreadScope()).isEqualTo(2);
+  }
+
+  private native int nativeTestMovedThreadScope();
+
+  @Test
+  public void testThreadScopeAcrossReattach() {
+    assertThat(nativeTestThreadScopeAcrossReattach()).isEqualTo(4);
+  }
+
+  private native int nativeTestThreadScopeAcrossReattach();
+
+  @Test
   public void testToString() {
     assertThat(nativeTestToString()).isTrue();
   }
