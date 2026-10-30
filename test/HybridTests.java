@@ -17,6 +17,7 @@
 package com.facebook.jni;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.facebook.infer.annotation.Nullsafe;
 import com.facebook.jni.annotations.DoNotStrip;
@@ -122,6 +123,15 @@ public class HybridTests extends BaseFBJniTests {
 
     thrown.expect(NullPointerException.class);
     thc2.getInt();
+  }
+
+  @Test
+  public void testResetNativeTwice() {
+    TestHybridClass thc = new TestHybridClass();
+    thc.doneUsingIt();
+    // The second reset finds nothing to delete.
+    thc.doneUsingIt();
+    assertThatThrownBy(thc::getInt).isInstanceOf(NullPointerException.class);
   }
 
   @Test

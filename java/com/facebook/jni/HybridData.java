@@ -85,8 +85,14 @@ public class HybridData {
       // When invoked from the DestructorThread instead of resetNative,
       // the DestructorThread has exclusive ownership of the HybridData
       // so synchronization is not necessary.
-      deleteNative(mNativePointer);
-      mNativePointer = 0;
+      long nativePointer = mNativePointer;
+      // After resetNative(), the DestructorThread still runs this when the
+      // HybridData is collected. Skip the JNI call when there is nothing left
+      // to delete.
+      if (nativePointer != 0) {
+        deleteNative(nativePointer);
+        mNativePointer = 0;
+      }
     }
 
     static native void deleteNative(long pointer);
