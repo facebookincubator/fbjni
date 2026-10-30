@@ -21,6 +21,7 @@
 #endif // __ANDROID__
 
 #include <functional>
+#include <new>
 #include <vector>
 #ifndef _WIN32
 #include <pthread.h>
@@ -178,12 +179,18 @@ inline ThreadState* peekThreadState() {
 #endif
 }
 
-inline ThreadState& getThreadState() {
+// Returns null if the state can't be allocated. Callers then work without the
+// cache, as fbjni did before it had one: this runs before the try block of
+// every native method wrapper, so it must not throw.
+inline ThreadState* getOrCreateThreadState() noexcept {
   ThreadState* state = peekThreadState();
   if (state) {
-    return *state;
+    return state;
   }
-  state = new ThreadState{};
+  state = new (std::nothrow) ThreadState{};
+  if (!state) {
+    return nullptr;
+  }
 #ifndef _WIN32
   int ret = pthread_setspecific(getTLKey(), state);
   if (ret != 0) {
@@ -194,7 +201,7 @@ inline ThreadState& getThreadState() {
     FBJNI_LOGF("TlsSetValue failed: %d", GetLastError());
   }
 #endif
-  return *state;
+  return state;
 }
 
 // This returns non-nullptr iff the env was cached from java.  So it
@@ -254,11 +261,11 @@ JNIEnv* currentOrNull() {
 JniEnvCacher::JniEnvCacher(JNIEnv* env) : thisCached_(false) {
   FBJNI_ASSERT(env);
 
-  ThreadState& state = getThreadState();
-  if (state.jniEnv) {
+  ThreadState* state = getOrCreateThreadState();
+  if (!state || state->jniEnv) {
     return;
   }
-  state.jniEnv = env;
+  state->jniEnv = env;
   thisCached_ = true;
 }
 
@@ -282,8 +289,9 @@ ThreadScope::ThreadScope() : thisAttached_(false) {
   data_.env = nullptr;
   data_.attached = false;
 
-  ThreadState& state = getThreadState();
-  if (state.jniEnv || state.scopeEnv) {
+  // Null if it can't be allocated: then nothing is cached.
+  ThreadState* state = getOrCreateThreadState();
+  if (state && (state->jniEnv || state->scopeEnv)) {
     return;
   }
 
@@ -294,21 +302,27 @@ ThreadScope::ThreadScope() : thisAttached_(false) {
   if (result == JNI_OK) {
     // Attached by someone else. It stays attached while this scope is on the
     // stack, so the env can be cached until then.
-    state.scopeEnv = env;
-    data_.env = env;
+    if (state) {
+      state->scopeEnv = env;
+      data_.env = env;
+    }
     return;
   }
 
   // At this point, it appears there's no thread attached and no env is
   // cached, or we would have returned already.
-  FBJNI_ASSERT(!state.attached && !state.attaching);
+  FBJNI_ASSERT(!state || (!state->attached && !state->attaching));
 
-  state.attaching = true;
+  if (state) {
+    state->attaching = true;
+  }
   env = attachCurrentThread();
-  state.attaching = false;
-  state.attached = true;
-  state.scopeEnv = env;
-  data_.env = env;
+  if (state) {
+    state->attaching = false;
+    state->attached = true;
+    state->scopeEnv = env;
+    data_.env = env;
+  }
 
   thisAttached_ = true;
 }
@@ -317,21 +331,24 @@ ThreadScope::~ThreadScope() {
   if (!data_.env && !thisAttached_) {
     return;
   }
-  ThreadState& state = getThreadState();
+  // The state exists if this scope cached the env; it may not if the
+  // constructor couldn't allocate it. A destructor must not allocate.
+  ThreadState* state = peekThreadState();
   // A moved-from ThreadScope has the same data_ as the one it was moved to,
   // so the cache may already have been cleared.
-  if (data_.env && state.scopeEnv == data_.env) {
-    state.scopeEnv = nullptr;
+  if (state && data_.env && state->scopeEnv == data_.env) {
+    state->scopeEnv = nullptr;
   }
   if (!thisAttached_) {
     return;
   }
 
-  FBJNI_ASSERT(state.jniEnv == nullptr);
-  FBJNI_ASSERT(state.attached);
+  FBJNI_ASSERT(!state || state->jniEnv == nullptr);
   FBJNI_ASSERT(g_vm);
   g_vm->DetachCurrentThread();
-  state.attached = false;
+  if (state) {
+    state->attached = false;
+  }
 }
 
 /* static */
