@@ -216,8 +216,8 @@ class HybridClass : public detail::HybridTraits<Base>::CxxBase {
 
   static local_ref<detail::HybridData> makeHybridData(
       std::unique_ptr<T> cxxPart) {
-    // The HybridData(long) constructor stores the pointer, so this is one
-    // NewObject instead of NewObject and setting the pointer through JNI.
+    // The HybridData(long) constructor stores the pointer, so this is one single
+    // NewObject call instead of NewObject and setting the pointer through JNI.
     // cxxPart keeps ownership if the constructor throws.
     auto hybridData = detail::HybridData::create(cxxPart.get());
     cxxPart.release();
