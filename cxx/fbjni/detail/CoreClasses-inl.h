@@ -520,7 +520,7 @@ global_ref<JStringChars> make_global(
 }
 
 inline local_ref<JStringChars> JString::getChars() const {
-  return local_ref<JStringChars>(make_local(wrap_alias(self())));
+  return local_ref<JStringChars>(make_local(self()));
 }
 
 // jtypeArray
