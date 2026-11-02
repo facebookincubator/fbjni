@@ -79,9 +79,9 @@ std::u16string JString::toU16String() const {
   if (!str) {
     return {};
   }
-  // Copy the code units straight into the result. ART stores all-ASCII
-  // strings compressed, and GetStringCritical has to allocate an inflated copy
-  // of those; for the others it holds off the moving GC until the release.
+  // Copy the code units straight into the result. GetStringCritical may have to
+  // allocate an inflated copy, because ART and HotSpot store some strings
+  // compressed, and otherwise may hold off the GC until the release.
   static_assert(sizeof(char16_t) == sizeof(jchar), "Expected 16-bit jchar");
   const jsize length = env->GetStringLength(str);
   std::u16string result(length, u'\0');
