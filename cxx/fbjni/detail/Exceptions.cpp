@@ -141,6 +141,7 @@ void setJavaExceptionAndAbortOnFailure(JNIEnv* env, jthrowable throwable) {
 
 // Functions that throw C++ exceptions
 
+namespace detail {
 // TODO(T6618159) Inject the c++ stack into the exception's stack trace. One
 // issue: when a java exception is created, it captures the full java stack
 // across jni boundaries. lyra will only capture the c++ stack to the jni
@@ -148,11 +149,7 @@ void setJavaExceptionAndAbortOnFailure(JNIEnv* env, jthrowable throwable) {
 // the c++ stack and then insert it into the correct place in the java stack
 // trace. Then, as the exception propagates across the boundaries, we will
 // slowly fill in the c++ parts of the trace.
-void throwPendingJniExceptionAsCppException(JNIEnv* env) {
-  if (env->ExceptionCheck() == JNI_FALSE) {
-    return;
-  }
-
+void throwPendingJniExceptionImpl(JNIEnv* env) {
   auto throwable = env->ExceptionOccurred();
   if (!throwable) {
     throw std::runtime_error("Unable to get pending JNI exception.");
@@ -161,6 +158,7 @@ void throwPendingJniExceptionAsCppException(JNIEnv* env) {
 
   throw JniException(adopt_local(throwable));
 }
+} // namespace detail
 
 void throwPendingJniExceptionAsCppException() {
   throwPendingJniExceptionAsCppException(Environment::current());
@@ -173,8 +171,7 @@ void throwCppExceptionIf(bool condition) {
 
   auto env = Environment::current();
   if (env->ExceptionCheck() == JNI_TRUE) {
-    throwPendingJniExceptionAsCppException(env);
-    return;
+    detail::throwPendingJniExceptionImpl(env);
   }
 
   throw JniException();

@@ -36,7 +36,7 @@
 // If a pending JNI Java exception is found, wraps it in a JniException object
 // and throws it as a C++ exception.
 #define FACEBOOK_JNI_THROW_PENDING_EXCEPTION(...) \
-  ::facebook::jni::detail::throwPendingJniException(__VA_ARGS__)
+  ::facebook::jni::throwPendingJniExceptionAsCppException(__VA_ARGS__)
 
 // If the condition is true, throws a JniException object, which wraps the
 // pending JNI Java exception if any. If no pending exception is found, throws a
@@ -49,23 +49,19 @@
 namespace facebook {
 namespace jni {
 
+namespace detail {
+// Wraps the exception pending on env in a JniException object and throws it.
+[[noreturn]] void throwPendingJniExceptionImpl(JNIEnv* env);
+} // namespace detail
+
 void throwPendingJniExceptionAsCppException();
 // env must be non-null and belong to the calling thread.
-void throwPendingJniExceptionAsCppException(JNIEnv* env);
-void throwCppExceptionIf(bool condition);
-
-namespace detail {
-// With an env, the check is inline; fbjni is only called to translate a
-// pending exception.
-inline void throwPendingJniException(JNIEnv* env) {
+inline void throwPendingJniExceptionAsCppException(JNIEnv* env) {
   if (env->ExceptionCheck() == JNI_TRUE) {
-    throwPendingJniExceptionAsCppException(env);
+    detail::throwPendingJniExceptionImpl(env);
   }
 }
-inline void throwPendingJniException() {
-  throwPendingJniExceptionAsCppException();
-}
-} // namespace detail
+void throwCppExceptionIf(bool condition);
 
 [[noreturn]] void throwNewJavaException(jthrowable);
 [[noreturn]] void throwNewJavaException(
