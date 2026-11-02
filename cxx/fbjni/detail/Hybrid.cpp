@@ -29,10 +29,15 @@ local_ref<HybridData> HybridData::create(BaseHybridClass* ptr) {
   return newInstance(reinterpret_cast<jlong>(ptr));
 }
 
-JField<jlong> HybridData::nativePointerField() {
-  static const auto field =
-      javaClassStatic()->getField<jlong>("mCachedNativePointer");
-  return field;
+BaseHybridClass* HybridData::getNativePointer(alias_ref<jobject> self) {
+  static const auto method =
+      javaClassStatic()->getMethod<jlong()>("getNativePointer");
+  auto* value = reinterpret_cast<BaseHybridClass*>(method(self));
+  if (!value) {
+    throwNewJavaException(
+        "java/lang/NullPointerException", "java.lang.NullPointerException");
+  }
+  return value;
 }
 
 } // namespace detail
