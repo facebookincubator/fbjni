@@ -125,6 +125,16 @@ public class HybridTests extends BaseFBJniTests {
   }
 
   @Test
+  public void testResetNativeTwice() {
+    TestHybridClass thc = new TestHybridClass();
+    thc.doneUsingIt();
+    // The second reset finds nothing to delete.
+    thc.doneUsingIt();
+    thrown.expect(NullPointerException.class);
+    thc.getInt();
+  }
+
+  @Test
   public void testHybridAutoconversion() {
     TestHybridClass thc3 = TestHybridClass.makeWithThree();
     assertThat(thc3.copy1(new TestHybridClass(3, "three", false))).isTrue();
