@@ -75,13 +75,18 @@ std::string JString::toStdString() const {
 
 std::u16string JString::toU16String() const {
   const auto env = Environment::current();
-  auto utf16String = JStringUtf16Extractor(env, self());
-  if (!utf16String.chars() || utf16String.length() == 0) {
+  const auto str = self();
+  if (!str) {
     return {};
   }
-  return std::u16string(
-      reinterpret_cast<const char16_t*>(utf16String.chars()),
-      utf16String.length());
+  // Copy the code units straight into the result. GetStringCritical may have to
+  // allocate an inflated copy, because ART and HotSpot store some strings
+  // compressed, and otherwise may hold off the GC until the release.
+  static_assert(sizeof(char16_t) == sizeof(jchar), "Expected 16-bit jchar");
+  const jsize length = env->GetStringLength(str);
+  std::u16string result(length, u'\0');
+  env->GetStringRegion(str, 0, length, reinterpret_cast<jchar*>(result.data()));
+  return result;
 }
 
 local_ref<JString> make_jstring(const char* utf8) {
