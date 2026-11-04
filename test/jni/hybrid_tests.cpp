@@ -361,6 +361,13 @@ class TestHybridClassBase
     return newObjectCxxArgs(3);
   }
 
+  static jboolean cxxTestCthis(
+      alias_ref<jclass> /* unused */,
+      alias_ref<jhybridobject> o,
+      jint i) {
+    return o->cthis()->getInt() == i;
+  }
+
   static void registerNatives() {
     registerHybrid({
         makeNativeMethod("initHybrid", TestHybridClassBase::initHybrid),
@@ -368,6 +375,7 @@ class TestHybridClassBase
         makeNativeMethod("getInt", TestHybridClassBase::getInt),
         makeNativeMethod("setInt", TestHybridClassBase::setInt),
         makeNativeMethod("makeWithThree", TestHybridClassBase::makeWithThree),
+        makeNativeMethod("cxxTestCthis", TestHybridClassBase::cxxTestCthis),
     });
   }
 

@@ -37,6 +37,10 @@ struct HybridData : public JavaClass<HybridData> {
   constexpr static auto kJavaDescriptor = "Lcom/facebook/jni/HybridData;";
   static local_ref<HybridData> create();
   static local_ref<HybridData> create(BaseHybridClass* ptr);
+  // Reads the pointer with one call to HybridData.getNativePointer(), instead
+  // of going through mDestructor. self is a HybridData, or a HybridClassBase,
+  // which extends it. Throws a NullPointerException if the pointer is null.
+  static BaseHybridClass* getNativePointer(alias_ref<jobject> self);
 };
 
 class HybridDestructor : public JavaClass<HybridDestructor> {
@@ -51,7 +55,7 @@ class HybridDestructor : public JavaClass<HybridDestructor> {
 
 template <typename T>
 detail::BaseHybridClass* getNativePointer(const T* t) {
-  return getHolder(t)->getNativePointer();
+  return HybridData::getNativePointer(ReprAccess<T>::get(*t));
 }
 
 template <typename T>
