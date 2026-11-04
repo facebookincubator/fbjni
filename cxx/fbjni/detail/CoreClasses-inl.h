@@ -364,6 +364,165 @@ struct Convert<const char*> {
 };
 } // namespace detail
 
+template <typename Alloc>
+local_ref<JStringChars> make_local(
+    basic_strong_ref<JStringChars, Alloc>&& chars);
+
+template <typename Alloc>
+global_ref<JStringChars> make_global(
+    basic_strong_ref<JStringChars, Alloc>&& chars);
+
+// The character buffer and the string reference must move together. A local
+// owner has the same thread and local-frame limits as local_ref<JString>.
+// A global owner can cross JNI calls and threads, but must be destroyed on an
+// attached thread. Synchronize access with reset and destruction when sharing.
+template <typename Alloc>
+class basic_strong_ref<JStringChars, Alloc> {
+  static_assert(
+      std::is_same<Alloc, LocalReferenceAllocator>::value ||
+          std::is_same<Alloc, GlobalReferenceAllocator>::value,
+      "String characters require a local or global reference");
+
+ public:
+  using Allocator = Alloc;
+
+  basic_strong_ref() noexcept = default;
+  /* implicit */ basic_strong_ref(std::nullptr_t) noexcept {}
+
+  basic_strong_ref(const basic_strong_ref&) = delete;
+  basic_strong_ref& operator=(const basic_strong_ref&) = delete;
+
+  basic_strong_ref(basic_strong_ref&& other) noexcept {
+    swap(*this, other);
+  }
+
+  basic_strong_ref& operator=(basic_strong_ref&& other) noexcept {
+    if (this != &other) {
+      reset();
+      swap(*this, other);
+    }
+    return *this;
+  }
+
+  ~basic_strong_ref() noexcept {
+    reset();
+  }
+
+  void reset() noexcept {
+    view_.release(string_.get());
+    string_.reset();
+  }
+
+  explicit operator bool() const noexcept {
+    return static_cast<bool>(string_);
+  }
+
+  const JStringChars* get() const noexcept {
+    return string_ ? &view_ : nullptr;
+  }
+
+  const JStringChars* operator->() const noexcept {
+    assert(string_);
+    return &view_;
+  }
+
+  const JStringChars& operator*() const noexcept {
+    assert(string_);
+    return view_;
+  }
+
+  friend bool operator==(
+      const basic_strong_ref& chars,
+      std::nullptr_t) noexcept {
+    return !chars;
+  }
+
+  friend bool operator==(
+      std::nullptr_t,
+      const basic_strong_ref& chars) noexcept {
+    return !chars;
+  }
+
+  friend bool operator!=(
+      const basic_strong_ref& chars,
+      std::nullptr_t) noexcept {
+    return static_cast<bool>(chars);
+  }
+
+  friend bool operator!=(
+      std::nullptr_t,
+      const basic_strong_ref& chars) noexcept {
+    return static_cast<bool>(chars);
+  }
+
+  friend void swap(basic_strong_ref& lhs, basic_strong_ref& rhs) noexcept {
+    lhs.swapWith(rhs);
+  }
+
+ private:
+  void swapWith(basic_strong_ref& other) noexcept {
+    using std::swap;
+    swap(string_, other.string_);
+    swap(view_.chars_, other.view_.chars_);
+    swap(view_.size_, other.view_.size_);
+  }
+
+  explicit basic_strong_ref(basic_strong_ref<JString, Alloc> string)
+      : string_(std::move(string)) {
+    view_.acquire(string_.get());
+  }
+
+  template <typename OtherAlloc>
+  basic_strong_ref(
+      basic_strong_ref<JString, Alloc> string,
+      basic_strong_ref<JStringChars, OtherAlloc>&& other) noexcept
+      : string_(std::move(string)), view_(other.view_) {
+    other.view_ = JStringChars{};
+    other.string_.reset();
+  }
+
+  basic_strong_ref<JString, Alloc> string_;
+  JStringChars view_;
+
+  friend class JString;
+  template <typename, typename>
+  friend class basic_strong_ref;
+  template <typename OtherAlloc>
+  friend local_ref<JStringChars> make_local(
+      basic_strong_ref<JStringChars, OtherAlloc>&& chars);
+  template <typename OtherAlloc>
+  friend global_ref<JStringChars> make_global(
+      basic_strong_ref<JStringChars, OtherAlloc>&& chars);
+};
+
+// Changing ownership first creates the new reference. If that fails, chars
+// still owns both the old reference and the acquired buffer.
+template <typename Alloc>
+local_ref<JStringChars> make_local(
+    basic_strong_ref<JStringChars, Alloc>&& chars) {
+  if constexpr (std::is_same<Alloc, LocalReferenceAllocator>::value) {
+    return std::move(chars);
+  } else {
+    return local_ref<JStringChars>(
+        make_local(chars.string_), std::move(chars));
+  }
+}
+
+template <typename Alloc>
+global_ref<JStringChars> make_global(
+    basic_strong_ref<JStringChars, Alloc>&& chars) {
+  if constexpr (std::is_same<Alloc, GlobalReferenceAllocator>::value) {
+    return std::move(chars);
+  } else {
+    return global_ref<JStringChars>(
+        make_global(chars.string_), std::move(chars));
+  }
+}
+
+inline local_ref<JStringChars> JString::getChars() const {
+  return local_ref<JStringChars>(make_local(self()));
+}
+
 // jtypeArray
 // //////////////////////////////////////////////////////////////////////////////////////
 

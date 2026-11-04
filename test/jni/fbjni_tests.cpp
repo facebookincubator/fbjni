@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <chrono>
 #include <ios>
 #include <optional>
 #include <stdexcept>
 #include <system_error>
 #include <thread>
+#include <type_traits>
 
 #include <fbjni/JThread.h>
 #include <fbjni/fbjni.h>
@@ -1242,6 +1244,118 @@ jboolean testNullReferences(JNIEnv*, jobject) {
   return JNI_TRUE;
 }
 
+static_assert(!IsAnyReference<local_ref<JStringChars>>());
+static_assert(!IsNonWeakReference<global_ref<JStringChars>>());
+static_assert(!std::is_copy_constructible_v<local_ref<JStringChars>>);
+static_assert(!std::is_copy_assignable_v<local_ref<JStringChars>>);
+static_assert(std::is_nothrow_move_constructible_v<local_ref<JStringChars>>);
+static_assert(std::is_nothrow_move_assignable_v<local_ref<JStringChars>>);
+static_assert(!std::is_copy_constructible_v<global_ref<JStringChars>>);
+static_assert(!std::is_copy_assignable_v<global_ref<JStringChars>>);
+static_assert(std::is_nothrow_move_constructible_v<global_ref<JStringChars>>);
+static_assert(std::is_nothrow_move_assignable_v<global_ref<JStringChars>>);
+
+jboolean testStringChars(alias_ref<JObject>, alias_ref<JString> input) {
+  const auto expected = input->toU16String();
+  auto owned = make_local(input);
+  auto chars = owned->getChars();
+  owned.reset();
+  EXPECT(static_cast<size_t>(chars->size()) == expected.size());
+  EXPECT(std::equal(expected.begin(), expected.end(), chars->data()));
+
+  const auto* data = chars->data();
+  auto moved = make_local(std::move(chars));
+  EXPECT(!chars && moved->data() == data);
+  chars = input->getChars();
+  chars = std::move(moved);
+  EXPECT(!moved && chars->data() == data);
+
+  // JNI calls and allocations remain valid while characters are held.
+  auto other = make_jstring("other")->getChars();
+  swap(chars, other);
+  EXPECT(other->data() == data);
+  EXPECT(std::u16string(chars->data(), chars->size()) == u"other");
+
+  auto global = make_global(std::move(other));
+  EXPECT(!other && global->data() == data);
+  auto movedGlobal = make_global(std::move(global));
+  EXPECT(!global && movedGlobal->data() == data);
+  global = make_global(input->getChars());
+  global = std::move(movedGlobal);
+  EXPECT(!movedGlobal && global->data() == data);
+  auto local = make_local(std::move(global));
+  EXPECT(!global && local->data() == data);
+  EXPECT(std::equal(expected.begin(), expected.end(), local->data()));
+  local.reset();
+  local.reset();
+  EXPECT(!local);
+
+  local_ref<JStringChars> empty;
+  global_ref<JStringChars> emptyGlobal(nullptr);
+  EXPECT(empty == nullptr && nullptr == emptyGlobal);
+  EXPECT(!(empty != nullptr) && !(nullptr != emptyGlobal));
+  auto promotedEmpty = make_global(std::move(empty));
+  auto localizedEmpty = make_local(std::move(emptyGlobal));
+  EXPECT(!promotedEmpty && !localizedEmpty);
+  return JNI_TRUE;
+}
+
+jboolean testStringCharsReferences(
+    alias_ref<JObject>,
+    alias_ref<JString> input) {
+  using facebook::jni::internal::g_reference_stats;
+  g_reference_stats.reset();
+  const auto globalsCreated = g_reference_stats.globals_created.load();
+  {
+    auto chars = input->getChars();
+    auto moved = make_local(std::move(chars));
+    EXPECT(!chars && moved);
+    EXPECT(g_reference_stats.globals_created == globalsCreated);
+  }
+  EXPECT(g_reference_stats.locals_deleted == 1);
+  EXPECT(g_reference_stats.globals_deleted == 0);
+
+  g_reference_stats.reset();
+  {
+    auto chars = input->getChars();
+    auto global = make_global(std::move(chars));
+    auto movedGlobal = make_global(std::move(global));
+    EXPECT(!chars && !global && movedGlobal);
+    EXPECT(g_reference_stats.locals_deleted == 1);
+    EXPECT(g_reference_stats.globals_created == globalsCreated + 1);
+  }
+  EXPECT(g_reference_stats.globals_deleted == 1);
+
+  g_reference_stats.reset();
+  try {
+    auto chars = input->getChars();
+    throw std::runtime_error("unwind string characters");
+  } catch (const std::runtime_error&) {
+  }
+  EXPECT(g_reference_stats.locals_deleted == 1);
+  EXPECT(g_reference_stats.globals_created == globalsCreated + 1);
+  EXPECT(g_reference_stats.globals_deleted == 0);
+  return JNI_TRUE;
+}
+
+jlong storeStringChars(alias_ref<JObject>, alias_ref<JString> input) {
+  // Copy the string so only the global character reference owns it on return.
+  const auto utf16 = input->toU16String();
+  auto string = utf16.empty() ? make_jstring("") : make_jstring(utf16);
+  auto stored = std::make_unique<global_ref<JStringChars>>(
+      make_global(string->getChars()));
+  return reinterpret_cast<jlong>(stored.release());
+}
+
+local_ref<JString> consumeStringChars(alias_ref<JObject>, jlong handle) {
+  std::unique_ptr<global_ref<JStringChars>> stored(
+      reinterpret_cast<global_ref<JStringChars>*>(handle));
+  const auto& chars = *stored;
+  return chars->size() == 0
+      ? make_jstring("")
+      : make_jstring(std::u16string(chars->data(), chars->size()));
+}
+
 jboolean testCreatingReferences(JNIEnv*, jobject self) {
   auto a = wrap_alias(self);
   auto l = adopt_local(self);
@@ -1710,6 +1824,11 @@ void RegisterFbjniTests() {
               TestAutoAliasRefReturningVoid),
           makeNativeMethod(
               "nativeTestAliasRefConversions", testAliasRefConversions),
+          makeNativeMethod("nativeTestStringChars", testStringChars),
+          makeNativeMethod(
+              "nativeTestStringCharsReferences", testStringCharsReferences),
+          makeNativeMethod("nativeStoreStringChars", storeStringChars),
+          makeNativeMethod("nativeConsumeStringChars", consumeStringChars),
           makeNativeMethod(
               "nativeTestCreatingReferences", testCreatingReferences),
           makeNativeMethod(

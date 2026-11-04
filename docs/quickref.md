@@ -143,6 +143,40 @@ struct JDataHolder : JavaClass<JDataHolder> {
 
 
 ## Methods using Java Strings
+
+  `JString::getChars()` returns a move-only `local_ref<JStringChars>` with
+  `data()` and `size()` for reading UTF-16 code units, including embedded NULs
+  and unpaired surrogates. The string reference must be non-null. JNI calls
+  and allocations are allowed while the characters are held.
+
+  Destroy a local character owner on its creating thread before its JNI
+  local frame ends. To keep the characters across JNI calls or threads,
+  use `make_global(std::move(chars))`. This transfers the acquired buffer
+  and creates a global string reference. The source becomes empty, and
+  the data pointer remains valid. `make_local(std::move(globalChars))`
+  transfers ownership back to a local reference.
+
+  A global character owner must be destroyed on a JVM-attached thread.
+  Synchronize access with reset or destruction when sharing between threads.
+  Resetting or destroying an owner releases the character buffer before
+  deleting its string reference. `data()` need not be NUL-terminated.
+
+```cpp
+  static jint stringChars(alias_ref<JClass>) {
+    auto string = make_jstring(std::u16string{u'a', u'\0', 0xd83d, 0xde00});
+    auto chars = string->getChars();
+    string.reset();  // The character owner keeps its own local reference.
+    assert(chars->size() == 4);
+    assert(chars->data()[1] == u'\0');
+
+    // Pay for a global reference only when the characters must outlive
+    // the current JNI call or move to another thread.
+    auto globalChars = make_global(std::move(chars));
+    assert(chars == nullptr);
+    return globalChars->size();
+  }
+```
+
 ```java
   // Java methods used by the C++ code below.
   static native String fancyCat(String s1, String s2);

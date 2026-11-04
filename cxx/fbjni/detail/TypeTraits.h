@@ -185,6 +185,18 @@ struct reference_traits<R<T, A...>> {
       "Need a plain JNI reference");
 };
 
+// String character views own a JNI string, but are not Java objects themselves.
+template <typename Alloc>
+struct is_non_weak_reference<basic_strong_ref<JStringChars, Alloc>>
+    : std::false_type {};
+
+template <typename Alloc>
+struct is_any_reference<basic_strong_ref<JStringChars, Alloc>>
+    : std::false_type {};
+
+template <typename Alloc>
+struct reference_traits<basic_strong_ref<JStringChars, Alloc>> {};
+
 template <typename T>
 using plain_jni_reference_t =
     typename reference_traits<T>::plain_jni_reference_t;

@@ -363,6 +363,29 @@ void registerNatives(
     const char* name,
     std::initializer_list<JNINativeMethod> methods);
 
+/// A read-only UTF-16 view owned by local_ref or global_ref. Its data need not
+/// be NUL-terminated and is valid until the owning reference is reset or
+/// destroyed. Moving or promoting the owner preserves the data pointer.
+class JStringChars {
+ public:
+  const char16_t* data() const noexcept;
+  jsize size() const noexcept;
+
+ private:
+  JStringChars() noexcept = default;
+  JStringChars(const JStringChars&) noexcept = default;
+  JStringChars& operator=(const JStringChars&) noexcept = default;
+
+  void acquire(jstring string);
+  void release(jstring string) noexcept;
+
+  const jchar* chars_ = nullptr;
+  jsize size_ = 0;
+
+  template <typename, typename>
+  friend class basic_strong_ref;
+};
+
 /// Wrapper to provide functionality to jstring references
 class JString : public JavaClass<JString, JObject, jstring> {
  public:
@@ -374,6 +397,12 @@ class JString : public JavaClass<JString, JObject, jstring> {
 
   /// Convenience method to convert a jstring object to a std::u16string
   std::u16string toU16String() const;
+
+  /// Access UTF-16 code units with GetStringChars. The returned local reference
+  /// must be destroyed on this thread before its JNI local frame ends. Use
+  /// make_global(std::move(chars)) to keep it across JNI calls or threads.
+  /// JNI calls and allocations are allowed while characters are held.
+  local_ref<JStringChars> getChars() const;
 };
 
 /// Convenience functions to convert a const char*, std::string, or

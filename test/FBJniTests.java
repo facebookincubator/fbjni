@@ -23,6 +23,7 @@ import com.facebook.jni.annotations.DoNotStrip;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 import javax.annotation.Nullable;
 import org.assertj.core.api.Fail;
 import org.junit.Test;
@@ -403,6 +404,53 @@ public class FBJniTests extends BaseFBJniTests {
   }
 
   private native boolean nativeTestLockingWeakReferences();
+
+  @Test
+  public void testStringChars() {
+    StringBuilder longString = new StringBuilder();
+    for (int i = 0; i < 4096; ++i) {
+      longString.append("世界\uD83D\uDE00");
+    }
+    longString.insert(longString.length() / 2, '\0');
+    for (String input :
+        new String[] {
+          "",
+          "before after",
+          "before\0after",
+          "\0",
+          "\uD800",
+          "\uDC00\0\uD800",
+          "世界\uD83D\uDE00",
+          longString.toString()
+        }) {
+      assertThat(nativeTestStringChars(input)).isTrue();
+    }
+    assertThat(nativeTestStringCharsReferences("characters")).isTrue();
+  }
+
+  private native boolean nativeTestStringChars(String input);
+
+  private native boolean nativeTestStringCharsReferences(String input);
+
+  @Test
+  public void testStringCharsAcrossCalls() throws Exception {
+    for (String input : new String[] {"", "before\0after", "\uD800", "世界\uD83D\uDE00"}) {
+      long handle = nativeStoreStringChars(input);
+      System.gc();
+      assertThat(nativeConsumeStringChars(handle)).isEqualTo(input);
+
+      long crossThreadHandle = nativeStoreStringChars(input);
+      System.gc();
+      FutureTask<String> result =
+          new FutureTask<>(() -> nativeConsumeStringChars(crossThreadHandle));
+      new Thread(result).start();
+      assertThat(result.get()).isEqualTo(input);
+    }
+  }
+
+  private native long nativeStoreStringChars(String input);
+
+  private native String nativeConsumeStringChars(long handle);
 
   @Test
   public void testCreatingReferences() {

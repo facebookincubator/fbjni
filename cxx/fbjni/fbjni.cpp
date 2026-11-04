@@ -84,6 +84,30 @@ std::u16string JString::toU16String() const {
       utf16String.length());
 }
 
+void JStringChars::acquire(jstring string) {
+  const auto env = Environment::current();
+  size_ = env->GetStringLength(string);
+  chars_ = env->GetStringChars(string, nullptr);
+  FACEBOOK_JNI_THROW_EXCEPTION_IF(!chars_);
+}
+
+void JStringChars::release(jstring string) noexcept {
+  if (chars_) {
+    Environment::current()->ReleaseStringChars(string, chars_);
+    chars_ = nullptr;
+    size_ = 0;
+  }
+}
+
+const char16_t* JStringChars::data() const noexcept {
+  static_assert(sizeof(char16_t) == sizeof(jchar), "Expected 16-bit jchar");
+  return reinterpret_cast<const char16_t*>(chars_);
+}
+
+jsize JStringChars::size() const noexcept {
+  return size_;
+}
+
 local_ref<JString> make_jstring(const char* utf8) {
   if (!utf8) {
     return {};
