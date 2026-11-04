@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>The underlying thread in DestructorThread starts when the first Destructor is constructed and
  * then runs indefinitely.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class DestructorThread {
 
   /**
@@ -37,16 +38,19 @@ public class DestructorThread {
    * implicitly (for example, as a non-static inner class). This will create a reference cycle where
    * the referent object will never be garbage collected.
    */
+  @SuppressWarnings("unchecked")
   public abstract static class Destructor extends PhantomReference<Object> {
 
     private Destructor next;
     private Destructor previous;
 
+    @SuppressWarnings("this-escape")
     public Destructor(Object referent) {
       super(referent, sReferenceQueue);
       sDestructorStack.push(this);
     }
 
+    @SuppressWarnings("unchecked")
     private Destructor() {
       super(null, sReferenceQueue);
     }

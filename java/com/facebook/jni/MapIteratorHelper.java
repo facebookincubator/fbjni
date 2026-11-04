@@ -28,12 +28,14 @@ import javax.annotation.Nullable;
  * java.util.Iterator}.
  */
 @DoNotStrip
+@SuppressWarnings("rawtypes")
 public class MapIteratorHelper {
   @DoNotStrip private final Iterator<Map.Entry> mIterator;
   @DoNotStrip private @Nullable Object mKey;
   @DoNotStrip private @Nullable Object mValue;
 
   @DoNotStrip
+  @SuppressWarnings("unchecked")
   public MapIteratorHelper(Map map) {
     mIterator = map.entrySet().iterator();
   }
@@ -43,6 +45,7 @@ public class MapIteratorHelper {
    * read.
    */
   @DoNotStrip
+  @SuppressWarnings("rawtypes")
   boolean hasNext() {
     if (mIterator.hasNext()) {
       Map.Entry entry = mIterator.next();

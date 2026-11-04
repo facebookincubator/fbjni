@@ -21,6 +21,7 @@ import com.facebook.jni.annotations.DoNotStrip;
 
 @Nullsafe(Nullsafe.Mode.LOCAL)
 @DoNotStrip
+@SuppressWarnings("serial")
 public class CppSystemErrorException extends CppException {
   int errorCode;
 

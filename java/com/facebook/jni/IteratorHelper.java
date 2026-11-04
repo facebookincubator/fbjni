@@ -27,17 +27,20 @@ import javax.annotation.Nullable;
  */
 @DoNotStrip
 public class IteratorHelper {
+  @SuppressWarnings("rawtypes")
   private final Iterator mIterator;
 
   // This is private, but accessed via JNI.
   @DoNotStrip private @Nullable Object mElement;
 
   @DoNotStrip
+  @SuppressWarnings("rawtypes")
   public IteratorHelper(Iterator iterator) {
     mIterator = iterator;
   }
 
   @DoNotStrip
+  @SuppressWarnings("rawtypes")
   public IteratorHelper(Iterable iterable) {
     mIterator = iterable.iterator();
   }
