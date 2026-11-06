@@ -369,6 +369,14 @@ class JString : public JavaClass<JString, JObject, jstring> {
   /// Java type descriptor
   static constexpr const char* kJavaDescriptor = "Ljava/lang/String;";
 
+  /// Number of UTF-16 code units. The reference must be non-null.
+  jsize size() const;
+
+  /// Copy UTF-16 code units to buf without a terminator. Invalid ranges
+  /// throw a Java StringIndexOutOfBoundsException. buf must hold length
+  /// code units.
+  void getRegion(jsize start, jsize length, char16_t* buf) const;
+
   /// Convenience method to convert a jstring object to a std::string
   std::string toStdString() const;
 
@@ -376,10 +384,22 @@ class JString : public JavaClass<JString, JObject, jstring> {
   std::u16string toU16String() const;
 };
 
-/// Convenience functions to convert a const char*, std::string, or
-/// std::u16string into a @ref local_ref to a jstring.
+/// Convert NUL-terminated UTF-8. A null pointer returns a null reference.
 local_ref<JString> make_jstring(const char* utf8);
+
+/// Convert all UTF-8 bytes, including embedded NULs. No terminator is
+/// required for the pointer/length overload. A null pointer is allowed only
+/// for length 0 and creates an empty Java string. Lengths above jsize's
+/// maximum throw std::length_error. Invalid UTF-8 retains the existing
+/// best-effort behavior.
+local_ref<JString> make_jstring(const char* utf8, size_t length);
 local_ref<JString> make_jstring(const std::string& utf8);
+
+/// Copy UTF-16 code units unchanged, including NULs and unpaired
+/// surrogates. The pointer/length overload has the same null and length
+/// rules as UTF-8. Empty input creates an empty Java string, including an
+/// empty std::u16string.
+local_ref<JString> make_jstring(const char16_t* utf16, size_t length);
 local_ref<JString> make_jstring(const std::u16string& utf16);
 
 namespace detail {

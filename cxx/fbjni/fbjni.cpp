@@ -16,6 +16,9 @@
 
 #include <fbjni/fbjni.h>
 
+#include <cstring>
+#include <limits>
+#include <stdexcept>
 #include <vector>
 
 #include <fbjni/detail/utf8.h>
@@ -67,6 +70,16 @@ alias_ref<JClass> findClassStatic(const char* name) {
 // jstring
 // /////////////////////////////////////////////////////////////////////////////////////////
 
+jsize JString::size() const {
+  return Environment::current()->GetStringLength(self());
+}
+
+void JString::getRegion(jsize start, jsize length, char16_t* buf) const {
+  Environment::current()->GetStringRegion(
+      self(), start, length, reinterpret_cast<jchar*>(buf));
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+}
+
 std::string JString::toStdString() const {
   const auto env = Environment::current();
   auto utf16String = JStringUtf16Extractor(env, self());
@@ -114,18 +127,73 @@ local_ref<JString> make_jstring(const char* utf8) {
   return adopt_local(result);
 }
 
-local_ref<JString> make_jstring(const std::u16string& utf16) {
-  if (utf16.empty()) {
-    return {};
+namespace {
+
+void checkStringLength(size_t length) {
+  if (length > static_cast<size_t>(std::numeric_limits<jsize>::max())) {
+    throw std::length_error("String exceeds JNI's maximum length");
   }
+}
+
+local_ref<JString> makeJStringFromUtf8(
+    const char* utf8,
+    size_t length,
+    bool nulTerminated) {
+  checkStringLength(length);
+  if (!utf8 && length != 0) {
+    throw std::invalid_argument("Null UTF-8 data with nonzero length");
+  }
+  const auto* bytes = reinterpret_cast<const uint8_t*>(utf8);
+  const size_t modifiedLength = detail::modifiedLength(bytes, length);
   const auto env = Environment::current();
-  static_assert(
-      sizeof(jchar) == sizeof(std::u16string::value_type),
-      "Expecting jchar to be the same size as std::u16string::CharT");
-  jstring result = env->NewString(
-      reinterpret_cast<const jchar*>(utf16.c_str()), utf16.size());
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  jstring result;
+  if (length == 0 || (nulTerminated && modifiedLength == length)) {
+    // std::string already supplies a terminator, so no copy is needed.
+    result = env->NewStringUTF(length == 0 ? "" : utf8);
+  } else {
+    std::vector<char> modified(modifiedLength + 1);
+    if (modifiedLength == length) {
+      std::memcpy(modified.data(), utf8, length);
+    } else {
+      detail::utf8ToModifiedUTF8(
+          bytes,
+          length,
+          reinterpret_cast<uint8_t*>(modified.data()),
+          modified.size());
+    }
+    result = env->NewStringUTF(modified.data());
+  }
+  FACEBOOK_JNI_THROW_EXCEPTION_IF(!result);
   return adopt_local(result);
+}
+
+} // namespace
+
+local_ref<JString> make_jstring(const char* utf8, size_t length) {
+  return makeJStringFromUtf8(utf8, length, false);
+}
+
+local_ref<JString> make_jstring(const std::string& utf8) {
+  return makeJStringFromUtf8(utf8.c_str(), utf8.size(), true);
+}
+
+local_ref<JString> make_jstring(const char16_t* utf16, size_t length) {
+  checkStringLength(length);
+  if (!utf16 && length != 0) {
+    throw std::invalid_argument("Null UTF-16 data with nonzero length");
+  }
+  static_assert(sizeof(char16_t) == sizeof(jchar), "Expected 16-bit jchar");
+  static constexpr jchar empty = 0;
+  const auto env = Environment::current();
+  jstring result = env->NewString(
+      length == 0 ? &empty : reinterpret_cast<const jchar*>(utf16),
+      static_cast<jsize>(length));
+  FACEBOOK_JNI_THROW_EXCEPTION_IF(!result);
+  return adopt_local(result);
+}
+
+local_ref<JString> make_jstring(const std::u16string& utf16) {
+  return make_jstring(utf16.data(), utf16.size());
 }
 
 // JniPrimitiveArrayFunctions

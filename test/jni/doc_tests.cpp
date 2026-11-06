@@ -206,6 +206,50 @@ struct DocTests : JavaClass<DocTests> {
   }
   // END
 
+  // SECTION strings
+  /* MARKDOWN
+  `make_jstring(std::string)` preserves all bytes, including embedded NULs.
+  The pointer/length overloads accept UTF-8 bytes or UTF-16 code units
+  without requiring a terminator. Lengths above `jsize`'s maximum throw
+  `std::length_error`. Invalid UTF-8 keeps the existing best-effort
+  conversion; UTF-16 code units are copied unchanged.
+
+  Empty input creates an empty Java string. This includes an empty
+  `std::u16string`, which previously produced a null reference. The
+  one-argument `make_jstring(const char*)` still returns null for `nullptr`.
+  Pointer/length overloads accept a null pointer only with length zero,
+  producing an empty string; a nonzero length throws
+  `std::invalid_argument`.
+  // END
+  */
+
+  // SECTION strings
+  static local_ref<JString> stringBuffers(alias_ref<JClass>) {
+    const std::string utf8("before\0after", 12);
+    auto fromString = make_jstring(utf8);
+    auto fromBytes = make_jstring(utf8.data(), utf8.size());
+    assert(fromString->toStdString() == fromBytes->toStdString());
+
+    const char16_t utf16[] = {u'a', u'\0', 0xd83d, 0xde00};
+    auto string = make_jstring(utf16, 4);
+    assert(string->size() == 4);  // UTF-16 code units, including NUL.
+
+    // Copy into caller-owned storage, without a terminator or STL string.
+    char16_t region[2];
+    string->getRegion(2, 2, region);
+    assert(region[0] == 0xd83d && region[1] == 0xde00);
+
+    return string;
+  }
+  // END
+
+  // SECTION strings
+  /* MARKDOWN
+  `getRegion` requires a non-null string reference. An invalid region
+  throws a Java `StringIndexOutOfBoundsException`.
+  // END
+  */
+
   // SECTION primitive_arrays
   static local_ref<JArrayInt> primitiveArrays(
       alias_ref<JClass> clazz,
@@ -452,6 +496,7 @@ struct DocTests : JavaClass<DocTests> {
         makeNativeMethod("addSomeNumbers", DocTests::addSomeNumbers),
         makeNativeMethod("fancyCat", DocTests::fancyCat),
         makeNativeMethod("getCString", DocTests::getCString),
+        makeNativeMethod("stringBuffers", DocTests::stringBuffers),
         makeNativeMethod("primitiveArrays", DocTests::primitiveArrays),
         makeNativeMethod("convertReferences", DocTests::convertReferences),
         makeNativeMethod("castReferences", DocTests::castReferences),

@@ -377,6 +377,73 @@ public class FBJniTests extends BaseFBJniTests {
   private native boolean nativeTestNullJString();
 
   @Test
+  public void testLengthAwareStrings() {
+    StringBuilder longString = new StringBuilder();
+    for (int i = 0; i < 4096; ++i) {
+      longString.append("世界\uD83D\uDE00");
+    }
+    longString.insert(longString.length() / 2, '\0');
+    String[] inputs = {
+      "",
+      "before after",
+      "Grüße 世界",
+      "\uD83D\uDE00\uD83D\uDE80",
+      "\0after",
+      "before\0after",
+      "before\0",
+      "\0\uD83D\uDE00\0",
+      "\0",
+      "a\0\0b\0",
+      longString.toString()
+    };
+    for (String input : inputs) {
+      for (int encoding = 0; encoding < 4; ++encoding) {
+        assertThat(nativeRoundTripString(input, encoding)).isEqualTo(input);
+      }
+      assertThat(nativeTestStringAccess(input)).isTrue();
+    }
+    assertThat(nativeTestStringConstructionLimits()).isTrue();
+  }
+
+  @Test
+  public void testUtf16CodeUnits() {
+    // Preserve unpaired surrogates and pairs at buffer boundaries unchanged.
+    for (String input :
+        new String[] {"\uD800", "\uDC00", "\uDC00\0\uD800", "\uD83D\uDE00"}) {
+      for (int encoding = 2; encoding < 4; ++encoding) {
+        assertThat(nativeRoundTripString(input, encoding)).isEqualTo(input);
+      }
+      assertThat(nativeTestStringAccess(input)).isTrue();
+    }
+  }
+
+  @Test
+  public void testStringRegionNegativeStart() {
+    thrown.expect(StringIndexOutOfBoundsException.class);
+    nativeTestStringRegion("abc", -1, 1);
+  }
+
+  @Test
+  public void testStringRegionNegativeLength() {
+    thrown.expect(StringIndexOutOfBoundsException.class);
+    nativeTestStringRegion("abc", 0, -1);
+  }
+
+  @Test
+  public void testStringRegionPastEnd() {
+    thrown.expect(StringIndexOutOfBoundsException.class);
+    nativeTestStringRegion("abc", 3, 1);
+  }
+
+  private native String nativeRoundTripString(String input, int encoding);
+
+  private native boolean nativeTestStringAccess(String input);
+
+  private native void nativeTestStringRegion(String input, int start, int length);
+
+  private native boolean nativeTestStringConstructionLimits();
+
+  @Test
   public void testSwap() {
     assertThat(nativeTestSwap(new Object())).isTrue();
   }
