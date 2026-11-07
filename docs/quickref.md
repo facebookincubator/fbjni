@@ -129,6 +129,9 @@ struct JDataHolder : JavaClass<JDataHolder> {
 
 ```
   Argument and return types can be in either JNI style or C++ style.
+  When supplying an explicit method or constructor descriptor, match its
+  primitive types in the C++ signature. For example, `(F)V` takes a `jfloat`
+  or `float` argument.
 
   | Java type | JNI types |
   | --- | --- |
