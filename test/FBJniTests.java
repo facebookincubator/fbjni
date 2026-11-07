@@ -204,6 +204,16 @@ public class FBJniTests extends BaseFBJniTests {
   private native Object nativeCreateInstanceOf(String className);
 
   @Test
+  public void testConstructorCallArguments() {
+    assertThat(nativeConstructFrame("Example"))
+        .isEqualTo(new StackTraceElement("Example", "run", "Example.java", 314));
+    thrown.expect(NullPointerException.class);
+    nativeConstructFrame(null);
+  }
+
+  private static native StackTraceElement nativeConstructFrame(@Nullable String declaringClass);
+
+  @Test
   public void typeDescriptors() {
     assertThat(nativeTestTypeDescriptors()).isTrue();
   }
