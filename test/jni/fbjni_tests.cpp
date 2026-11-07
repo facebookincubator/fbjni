@@ -79,6 +79,16 @@ jobject TestCreateInstanceOf(JNIEnv* env, jobject self, jstring class_name) {
   return clazz->newObject(constructor, class_name).release();
 }
 
+local_ref<JStackTraceElement> ConstructFrame(
+    alias_ref<JClass>,
+    alias_ref<JString> declaringClass) {
+  auto cls = JStackTraceElement::javaClassStatic();
+  auto constructor = cls->getConstructor<JStackTraceElement::javaobject(
+      alias_ref<JString>, std::string, const char*, jint)>();
+  return cls->newObject(
+      constructor, declaringClass, std::string("run"), "Example.java", jint{314});
+}
+
 jboolean TestTypeDescriptors(JNIEnv* env, jobject self) {
 #define FIXED_STRING_EXPECT_EQ(actual, expected) \
   static_assert((actual) == (expected), "descriptor mismatch")
@@ -1674,6 +1684,7 @@ void RegisterFbjniTests() {
           makeNativeMethod(
               "nativeTestLazyClassResolution", TestLazyClassResolution),
           makeNativeMethod("nativeCreateInstanceOf", TestCreateInstanceOf),
+          makeNativeMethod("nativeConstructFrame", ConstructFrame),
           makeNativeMethod(
               "nativeTestVirtualMethodResolution_I",
               TestVirtualMethodResolution_I),

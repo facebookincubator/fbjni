@@ -16,6 +16,7 @@
 
 #include "CoreClasses.h"
 #include "Log.h"
+#include "MetaConvert.h"
 
 #ifndef FBJNI_NO_EXCEPTION_PTR
 #include <lyra/lyra.h>
@@ -497,7 +498,7 @@ std::optional<std::string> jni_message(alias_ref<JThrowable> throwable) {
       return nullptr;
     }
     return adopt_local(
-        env->NewObject(stringWriterClass.get(), stringWriterCtor));
+        env->NewObjectA(stringWriterClass.get(), stringWriterCtor, nullptr));
   }();
   NULL_CHECK(stringWriter)
 
@@ -514,8 +515,9 @@ std::optional<std::string> jni_message(alias_ref<JThrowable> throwable) {
       if (printWriterCtor == nullptr) {
         return nullptr;
       }
-      return adopt_local(env->NewObject(
-          printWriterClass.get(), printWriterCtor, stringWriter.get()));
+      const jvalue writer = detail::toJValue(stringWriter.get());
+      return adopt_local(env->NewObjectA(
+          printWriterClass.get(), printWriterCtor, &writer));
     }();
     NULL_CHECK(printWriter)
 
@@ -526,8 +528,8 @@ std::optional<std::string> jni_message(alias_ref<JThrowable> throwable) {
       jmethodID printStackTraceMethod = env->GetMethodID(
           throwableClass.get(), "printStackTrace", "(Ljava/io/PrintWriter;)V");
       NULL_CHECK(printStackTraceMethod)
-      env->CallVoidMethod(
-          throwable.get(), printStackTraceMethod, printWriter.get());
+      const jvalue writer = detail::toJValue(printWriter.get());
+      env->CallVoidMethodA(throwable.get(), printStackTraceMethod, &writer);
       if (env->ExceptionCheck()) {
         return std::nullopt;
       }
@@ -544,7 +546,7 @@ std::optional<std::string> jni_message(alias_ref<JThrowable> throwable) {
         return nullptr;
       }
       return adopt_local<jstring>(reinterpret_cast<jstring>(
-          env->CallObjectMethod(stringWriter.get(), toStringMethod)));
+          env->CallObjectMethodA(stringWriter.get(), toStringMethod, nullptr)));
     }();
     NULL_CHECK(result)
 
