@@ -304,10 +304,10 @@ slowCall(jmethodID method_id, alias_ref<jobject> self, Args... args) {
           ->getMethod<jobject(jobject, JArrayClass<jobject>::javaobject)>(
               "invoke");
   // TODO(xxxxxxx): Provide fbjni interface to ToReflectedMethod.
-  auto reflected = adopt_local(
-      Environment::current()->ToReflectedMethod(
-          self->getClass().get(), method_id, JNI_FALSE));
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  const auto env = Environment::current();
+  auto reflected = adopt_local(env->ToReflectedMethod(
+      self->getClass().get(), method_id, JNI_FALSE));
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   if (!reflected)
     throw std::runtime_error(
         "Unable to get reflected java.lang.reflect.Method");

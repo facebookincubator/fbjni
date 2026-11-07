@@ -139,7 +139,7 @@ local_ref<JString> make_jstring(const std::u16string& utf16) {
   TYPE* JPrimitiveArray<TYPE##Array>::getElements(jboolean* isCopy) { \
     auto env = Environment::current();                                \
     TYPE* res = env->Get##NAME##ArrayElements(self(), isCopy);        \
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();                           \
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                        \
     return res;                                                       \
   }                                                                   \
                                                                       \
@@ -148,7 +148,7 @@ local_ref<JString> make_jstring(const std::u16string& utf16) {
       TYPE* elements, jint mode) {                                    \
     auto env = Environment::current();                                \
     env->Release##NAME##ArrayElements(self(), elements, mode);        \
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();                           \
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                        \
   }                                                                   \
                                                                       \
   template <>                                                         \
@@ -156,7 +156,7 @@ local_ref<JString> make_jstring(const std::u16string& utf16) {
       jsize start, jsize length, TYPE* buf) {                         \
     auto env = Environment::current();                                \
     env->Get##NAME##ArrayRegion(self(), start, length, buf);          \
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();                           \
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                        \
   }                                                                   \
                                                                       \
   template <>                                                         \
@@ -164,7 +164,7 @@ local_ref<JString> make_jstring(const std::u16string& utf16) {
       jsize start, jsize length, const TYPE* elements) {              \
     auto env = Environment::current();                                \
     env->Set##NAME##ArrayRegion(self(), start, length, elements);     \
-    FACEBOOK_JNI_THROW_PENDING_EXCEPTION();                           \
+    FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                        \
   }                                                                   \
                                                                       \
   local_ref<TYPE##Array> make_##SMALLNAME##_array(jsize size) {       \
