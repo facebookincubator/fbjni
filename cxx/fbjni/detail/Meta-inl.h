@@ -80,11 +80,12 @@ inline void JMethod<void(Args...)>::operator()(
     alias_ref<jobject> self,
     Args... args) const {
   const auto env = Environment::current();
-  env->CallVoidMethod(
+  env->CallVoidMethodA(
       self.get(),
       getId(),
-      detail::callToJni(
-          detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
+      detail::JniArgs<Args...>(
+          detail::Convert<std::decay_t<Args>>::toCall(args)...)
+          .data());
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
 }
 
@@ -95,12 +96,12 @@ inline void JMethod<void(Args...)>::operator()(
   inline TYPE JMethod<TYPE(Args...)>::operator()(                     \
       alias_ref<jobject> self, Args... args) const {                  \
     const auto env = Environment::current();                          \
-    auto result = env->Call##METHOD##Method(                          \
+    auto result = env->Call##METHOD##MethodA(                         \
         self.get(),                                                   \
         getId(),                                                      \
-        detail::callToJni(                                            \
-            detail::Convert<typename std::decay<Args>::type>::toCall( \
-                args))...);                                           \
+        detail::JniArgs<Args...>(                                     \
+            detail::Convert<std::decay_t<Args>>::toCall(args)...)     \
+            .data());                                                 \
     FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                        \
     return result;                                                    \
   }
@@ -142,11 +143,12 @@ inline auto JMethod<R(Args...)>::operator()(
     alias_ref<jobject> self,
     Args... args) const -> local_ref<JniRet> {
   const auto env = Environment::current();
-  auto result = env->CallObjectMethod(
+  auto result = env->CallObjectMethodA(
       self.get(),
       getId(),
-      detail::callToJni(
-          detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
+      detail::JniArgs<Args...>(
+          detail::Convert<std::decay_t<Args>>::toCall(args)...)
+          .data());
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   return adopt_local(static_cast<JniType<JniRet>>(result));
 }
@@ -156,11 +158,12 @@ inline void JStaticMethod<void(Args...)>::operator()(
     alias_ref<jclass> cls,
     Args... args) const {
   const auto env = Environment::current();
-  env->CallStaticVoidMethod(
+  env->CallStaticVoidMethodA(
       cls.get(),
       getId(),
-      detail::callToJni(
-          detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
+      detail::JniArgs<Args...>(
+          detail::Convert<std::decay_t<Args>>::toCall(args)...)
+          .data());
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
 }
 
@@ -171,12 +174,12 @@ inline void JStaticMethod<void(Args...)>::operator()(
   inline TYPE JStaticMethod<TYPE(Args...)>::operator()(               \
       alias_ref<jclass> cls, Args... args) const {                    \
     const auto env = Environment::current();                          \
-    auto result = env->CallStatic##METHOD##Method(                    \
+    auto result = env->CallStatic##METHOD##MethodA(                   \
         cls.get(),                                                    \
         getId(),                                                      \
-        detail::callToJni(                                            \
-            detail::Convert<typename std::decay<Args>::type>::toCall( \
-                args))...);                                           \
+        detail::JniArgs<Args...>(                                     \
+            detail::Convert<std::decay_t<Args>>::toCall(args)...)     \
+            .data());                                                 \
     FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                        \
     return result;                                                    \
   }
@@ -208,11 +211,12 @@ class JStaticMethod<R(Args...)> : public JMethodBase {
   /// Invoke a method and return a local reference wrapping the result
   local_ref<JniRet> operator()(alias_ref<jclass> cls, Args... args) const {
     const auto env = Environment::current();
-    auto result = env->CallStaticObjectMethod(
+    auto result = env->CallStaticObjectMethodA(
         cls.get(),
         getId(),
-        detail::callToJni(
-            detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
+        detail::JniArgs<Args...>(
+            detail::Convert<std::decay_t<Args>>::toCall(args)...)
+            .data());
     FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
     return adopt_local(static_cast<JniType<JniRet>>(result));
   }
@@ -226,12 +230,13 @@ inline void JNonvirtualMethod<void(Args...)>::operator()(
     alias_ref<jclass> cls,
     Args... args) const {
   const auto env = Environment::current();
-  env->CallNonvirtualVoidMethod(
+  env->CallNonvirtualVoidMethodA(
       self.get(),
       cls.get(),
       getId(),
-      detail::callToJni(
-          detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
+      detail::JniArgs<Args...>(
+          detail::Convert<std::decay_t<Args>>::toCall(args)...)
+          .data());
   FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
 }
 
@@ -242,13 +247,13 @@ inline void JNonvirtualMethod<void(Args...)>::operator()(
   inline TYPE JNonvirtualMethod<TYPE(Args...)>::operator()(                 \
       alias_ref<jobject> self, alias_ref<jclass> cls, Args... args) const { \
     const auto env = Environment::current();                                \
-    auto result = env->CallNonvirtual##METHOD##Method(                      \
+    auto result = env->CallNonvirtual##METHOD##MethodA(                     \
         self.get(),                                                         \
         cls.get(),                                                          \
         getId(),                                                            \
-        detail::callToJni(                                                  \
-            detail::Convert<typename std::decay<Args>::type>::toCall(       \
-                args))...);                                                 \
+        detail::JniArgs<Args...>(                                           \
+            detail::Convert<std::decay_t<Args>>::toCall(args)...)           \
+            .data());                                                       \
     FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);                              \
     return result;                                                          \
   }
@@ -283,12 +288,13 @@ class JNonvirtualMethod<R(Args...)> : public JMethodBase {
       alias_ref<jclass> cls,
       Args... args) const {
     const auto env = Environment::current();
-    auto result = env->CallNonvirtualObjectMethod(
+    auto result = env->CallNonvirtualObjectMethodA(
         self.get(),
         cls.get(),
         getId(),
-        detail::callToJni(
-            detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
+        detail::JniArgs<Args...>(
+            detail::Convert<std::decay_t<Args>>::toCall(args)...)
+            .data());
     FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
     return adopt_local(static_cast<JniType<JniRet>>(result));
   }

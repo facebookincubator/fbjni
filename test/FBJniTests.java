@@ -512,7 +512,14 @@ public class FBJniTests extends BaseFBJniTests {
 
   @Test
   public void testNonVirtualMethod() {
-    assertThat(nativeTestNonVirtualMethod(true)).isTrue();
+    FBJniTests derived =
+        new FBJniTests() {
+          @Override
+          public boolean nonVirtualMethod(boolean s) {
+            return !s;
+          }
+        };
+    assertThat(derived.nativeTestNonVirtualMethod(true)).isTrue();
   }
 
   private native boolean nativeTestNonVirtualMethod(boolean s);
@@ -600,6 +607,38 @@ public class FBJniTests extends BaseFBJniTests {
 
   private native void testMethodResolutionWithCxxTypesNative(
       String callbackName, String str, long val);
+
+  @DoNotStrip
+  private String checkCallArguments(
+      String first,
+      boolean flag,
+      byte b,
+      char c,
+      short s,
+      int i,
+      long l,
+      float f,
+      double d,
+      Object receiver,
+      String last) {
+    assertThat(flag).isTrue();
+    assertThat(b).isEqualTo((byte) -101);
+    assertThat(c).isEqualTo('\uFEDC');
+    assertThat(s).isEqualTo((short) -31001);
+    assertThat(i).isEqualTo(-0x12345678);
+    assertThat(l).isEqualTo(0x123456789ABCDEFL);
+    assertThat(f).isEqualTo(-1.25f);
+    assertThat(d).isEqualTo(0x1.0000000000001p0);
+    assertThat(receiver).isSameAs(this);
+    return first + ":" + last;
+  }
+
+  @Test
+  public void testMixedCallArguments() {
+    assertThat(nativeTestMixedCallArguments()).isEqualTo("first:last");
+  }
+
+  private native String nativeTestMixedCallArguments();
 
   @Test(expected = CustomException.class)
   public void testHandleJavaCustomException() {

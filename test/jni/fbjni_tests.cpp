@@ -678,22 +678,12 @@ jboolean TestStaticReferenceFieldAccess(
   return JNI_TRUE;
 }
 
-jboolean TestNonVirtualMethod(JNIEnv* env, jobject self, jboolean s) {
-  auto me = adopt_local(self);
-  if (!me) {
-    return JNI_FALSE;
-  }
-
-  auto cls = me->getClass();
-  if (!cls) {
-    return JNI_FALSE;
-  }
-  auto method =
-      cls->getNonvirtualMethod<jboolean(jboolean)>("nonVirtualMethod");
-
-  jclass jcls = env->FindClass("com/facebook/jni/FBJniTests");
-
-  return method(self, jcls, s);
+jboolean TestNonVirtualMethod(alias_ref<jobject> self, jboolean s) {
+  auto base = findClassLocal("com/facebook/jni/FBJniTests");
+  auto method = base->getMethod<jboolean(jboolean)>("nonVirtualMethod");
+  auto nonvirtual =
+      base->getNonvirtualMethod<jboolean(jboolean)>("nonVirtualMethod");
+  return method(self, s) != s && nonvirtual(self, base, s) == s;
 }
 
 jtypeArray<jstring> TestArrayCreation(
@@ -847,6 +837,43 @@ void TestMethodResolutionWithCxxTypes(
 }
 
 #undef runTest
+
+template <typename T>
+T unboxNonvirtual(T value) {
+  auto boxed = autobox(value);
+  auto cls = boxed->getClass();
+  auto method = cls->template getNonvirtualMethod<T()>(boxed->kValueMethod);
+  return method(boxed, cls);
+}
+
+local_ref<JString> TestMixedCallArguments(alias_ref<jobject> self) {
+  using Signature = jstring(
+      std::string,
+      bool,
+      jbyte,
+      jchar,
+      jshort,
+      jint,
+      int64_t,
+      jfloat,
+      jdouble,
+      JObject,
+      const char*);
+  auto method = self->getClass()->getMethod<Signature>("checkCallArguments");
+  return method(
+      self,
+      "first",
+      unboxNonvirtual(jboolean{JNI_TRUE}),
+      unboxNonvirtual(jbyte{-101}),
+      unboxNonvirtual(jchar{0xfedc}),
+      unboxNonvirtual(jshort{-31001}),
+      unboxNonvirtual(jint{-0x12345678}),
+      unboxNonvirtual(jlong{0x123456789abcdefLL}),
+      unboxNonvirtual(jfloat{-1.25f}),
+      unboxNonvirtual(jdouble{0x1.0000000000001p0}),
+      *self,
+      "last");
+}
 
 jboolean TestPendingJniException(
     JNIEnv* env,
@@ -1829,6 +1856,8 @@ void RegisterFbjniTests() {
           makeNativeMethod(
               "nativeDynamicCastGlobalRefToString",
               DynamicCastGlobalRefToString),
+          makeNativeMethod(
+              "nativeTestMixedCallArguments", TestMixedCallArguments),
           makeNativeMethod(
               "testMethodResolutionWithCxxTypesNative",
               TestMethodResolutionWithCxxTypes),
