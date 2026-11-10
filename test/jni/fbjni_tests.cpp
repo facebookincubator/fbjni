@@ -1181,6 +1181,84 @@ jint TestClassLoadWorkerFastPath(JNIEnv* env, jobject self) {
   return i;
 }
 
+// Attaches the current thread without fbjni. jni.h declares
+// AttachCurrentThread's first argument as void** or JNIEnv**, depending on
+// the platform.
+JNIEnv* attachWithoutFbjni(JavaVM* vm) {
+  struct EnvOut {
+    JNIEnv** env;
+    operator JNIEnv**() const {
+      return env;
+    }
+    operator void**() const {
+      return reinterpret_cast<void**>(env);
+    }
+  };
+  JNIEnv* env = nullptr;
+  vm->AttachCurrentThread(EnvOut{&env}, nullptr);
+  return env;
+}
+
+// On a thread attached without fbjni, a ThreadScope caches the env, and a
+// moved-from ThreadScope must not clear it twice or abort.
+jint TestMovedThreadScope(JNIEnv* env, jobject self) {
+  JavaVM* vm = nullptr;
+  env->GetJavaVM(&vm);
+  jint result = 0;
+  std::thread t([&] {
+    JNIEnv* threadEnv = attachWithoutFbjni(vm);
+    {
+      ThreadScope first;
+      ThreadScope second(std::move(first));
+      if (Environment::current() == threadEnv) {
+        result += 1;
+      }
+    }
+    if (Environment::current() == threadEnv) {
+      result += 1;
+    }
+    vm->DetachCurrentThread();
+  });
+  t.join();
+  return result;
+}
+
+// A thread that is detached and attached again gets a new env. Nothing
+// cached by an earlier ThreadScope may be used after the scope ends.
+jint TestThreadScopeAcrossReattach(JNIEnv* env, jobject self) {
+  JavaVM* vm = nullptr;
+  env->GetJavaVM(&vm);
+  jint result = 0;
+  std::thread t([&] {
+    JNIEnv* firstEnv = attachWithoutFbjni(vm);
+    {
+      ThreadScope scope;
+      if (Environment::current() == firstEnv) {
+        result += 1;
+      }
+    }
+    vm->DetachCurrentThread();
+    if (detail::currentOrNull() == nullptr) {
+      result += 1;
+    }
+
+    JNIEnv* secondEnv = attachWithoutFbjni(vm);
+    if (Environment::current() == secondEnv &&
+        findClassLocal("java/lang/String")) {
+      result += 1;
+    }
+    {
+      ThreadScope scope;
+      if (Environment::current() == secondEnv) {
+        result += 1;
+      }
+    }
+    vm->DetachCurrentThread();
+  });
+  t.join();
+  return result;
+}
+
 void testNewObject(JNIEnv*, jobject self) {
   // This is a compilation only test, verifies that all the types work out.
   auto cls = findClassLocal("java/lang/String");
@@ -1799,6 +1877,10 @@ void RegisterFbjniTests() {
               "nativeTestClassLoadInWorker", TestClassLoadInWorker),
           makeNativeMethod(
               "nativeTestClassLoadWorkerFastPath", TestClassLoadWorkerFastPath),
+          makeNativeMethod("nativeTestMovedThreadScope", TestMovedThreadScope),
+          makeNativeMethod(
+              "nativeTestThreadScopeAcrossReattach",
+              TestThreadScopeAcrossReattach),
           makeNativeMethod(
               "nativeTestHandleCppCharPointerThrow",
               TestHandleCppCharPointerThrow),
