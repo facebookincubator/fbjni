@@ -50,8 +50,9 @@ inline jobject LocalReferenceAllocator::newReference(jobject original) const {
 #ifdef FBJNI_DEBUG_REFS
   ++internal::g_reference_stats.locals_created;
 #endif
-  auto ref = Environment::current()->NewLocalRef(original);
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  const auto env = Environment::current();
+  auto ref = env->NewLocalRef(original);
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   return ref;
 }
 
@@ -81,8 +82,9 @@ inline jobject GlobalReferenceAllocator::newReference(jobject original) const {
 #ifdef FBJNI_DEBUG_REFS
   ++internal::g_reference_stats.globals_created;
 #endif
-  auto ref = Environment::current()->NewGlobalRef(original);
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  const auto env = Environment::current();
+  auto ref = env->NewGlobalRef(original);
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   return ref;
 }
 
@@ -122,8 +124,9 @@ inline jobject WeakGlobalReferenceAllocator::newReference(
 #ifdef FBJNI_DEBUG_REFS
   ++internal::g_reference_stats.weaks_created;
 #endif
-  auto ref = Environment::current()->NewWeakGlobalRef(original);
-  FACEBOOK_JNI_THROW_PENDING_EXCEPTION();
+  const auto env = Environment::current();
+  auto ref = env->NewWeakGlobalRef(original);
+  FACEBOOK_JNI_THROW_PENDING_EXCEPTION(env);
   return ref;
 }
 

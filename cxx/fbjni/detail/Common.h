@@ -49,9 +49,18 @@
 namespace facebook {
 namespace jni {
 
+namespace detail {
+// Wraps the exception pending on env in a JniException object and throws it.
+[[noreturn]] void throwPendingJniExceptionImpl(JNIEnv* env);
+} // namespace detail
+
 void throwPendingJniExceptionAsCppException();
 // env must be non-null and belong to the calling thread.
-void throwPendingJniExceptionAsCppException(JNIEnv* env);
+inline void throwPendingJniExceptionAsCppException(JNIEnv* env) {
+  if (env->ExceptionCheck() == JNI_TRUE) {
+    detail::throwPendingJniExceptionImpl(env);
+  }
+}
 void throwCppExceptionIf(bool condition);
 
 [[noreturn]] void throwNewJavaException(jthrowable);
