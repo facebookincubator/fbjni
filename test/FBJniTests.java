@@ -833,6 +833,27 @@ public class FBJniTests extends BaseFBJniTests {
   private native int nativeTestJThread();
 
   @Test
+  public void testToU16String() {
+    char[] longChars = new char[300];
+    java.util.Arrays.fill(longChars, '\u00e9');
+    for (String input :
+        new String[] {
+          "",
+          "a",
+          "x\0y",
+          "za\u017c\u00f3\u0142\u0107",
+          "\uD83D\uDE00",
+          "\uD800",
+          "\uDC00\0\uD800",
+          new String(longChars),
+        }) {
+      assertThat(nativeToU16StringChars(input)).isEqualTo(input.toCharArray());
+    }
+  }
+
+  private native char[] nativeToU16StringChars(String input);
+
+  @Test
   public void testThreadScopeGuard() {
     assertThat(nativeTestThreadScopeGuard(17)).isEqualTo(42);
   }
