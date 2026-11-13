@@ -275,6 +275,8 @@ public class HybridTests extends BaseFBJniTests {
     public native int getInt();
 
     public static native TestHybridClassBase makeWithThree();
+
+    public static native boolean cxxTestCthis(TestHybridClassBase base, int i);
   }
 
   static class TestHybridClassBaseDefaultCtor extends TestHybridClassBase {
@@ -302,6 +304,37 @@ public class HybridTests extends BaseFBJniTests {
   public void testHybridBaseFactoryConstruction() {
     TestHybridClassBase base = TestHybridClassBase.makeWithThree();
     assertThat(base.getInt()).isEqualTo(3);
+  }
+
+  @Test
+  public void testHybridBaseCthisFromCxx() {
+    TestHybridClassBase base = new TestHybridClassBase(42);
+    assertThat(TestHybridClassBase.cxxTestCthis(base, 42)).isTrue();
+  }
+
+  static class TestHybridClassBaseWithGetNativePointer extends TestHybridClassBase {
+    TestHybridClassBaseWithGetNativePointer(int i) {
+      super(i);
+    }
+
+    long getNativePointer() {
+      return 0;
+    }
+  }
+
+  @Test
+  public void testHybridBaseSubclassWithGetNativePointer() {
+    TestHybridClassBase base = new TestHybridClassBaseWithGetNativePointer(42);
+    assertThat(base.getInt()).isEqualTo(42);
+  }
+
+  @Test
+  public void testHybridBaseResetNative() {
+    TestHybridClassBase base = new TestHybridClassBase(42);
+    base.resetNative();
+    assertThat(base.isValid()).isFalse();
+    thrown.expect(NullPointerException.class);
+    base.getInt();
   }
 
   static class Destroyable {

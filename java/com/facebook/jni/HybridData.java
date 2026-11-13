@@ -70,6 +70,12 @@ public class HybridData {
     return mDestructor.mNativePointer != 0;
   }
 
+  // Called from C++, so it can read the pointer with one call instead of going through
+  // mDestructor.
+  private long getNativePointer() {
+    return mDestructor.mNativePointer;
+  }
+
   @DoNotStripAny
   public static class Destructor extends DestructorThread.Destructor {
 
