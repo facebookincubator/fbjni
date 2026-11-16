@@ -44,7 +44,7 @@ inline char32_t decode3ByteUTF8(const uint8_t* in) {
 }
 
 inline void encode4ByteUTF8(char32_t code, std::string& out, size_t offset) {
-  if ((code & 0xfff80000) != 0) {
+  if ((code & 0xffe00000) != 0) {
     FBJNI_LOGF("4 byte utf-8 encodings only valid for up to 21 bits");
   }
 
@@ -54,9 +54,10 @@ inline void encode4ByteUTF8(char32_t code, std::string& out, size_t offset) {
   out[offset + 3] = (char)(0x80 | (code & 0x3F));
 }
 
-template <typename T>
-inline bool isFourByteUTF8Encoding(const T* utf8) {
-  return ((*utf8 & 0xF8) == 0xF0);
+inline bool isFourByteUTF8Encoding(const uint8_t* utf8) {
+  return (utf8[0] & 0xF8) == 0xF0 && (utf8[1] & 0xC0) == 0x80 &&
+      (utf8[2] & 0xC0) == 0x80 && (utf8[3] & 0xC0) == 0x80 &&
+      (utf8[0] != 0xF0 || utf8[1] >= 0x90);
 }
 
 } // namespace
@@ -64,13 +65,18 @@ inline bool isFourByteUTF8Encoding(const T* utf8) {
 namespace detail {
 
 size_t modifiedLength(const std::string& str) {
+  return modifiedLength(
+      reinterpret_cast<const uint8_t*>(str.data()), str.size());
+}
+
+size_t modifiedLength(const uint8_t* str, size_t length) {
   // Scan for supplementary characters
   size_t j = 0;
-  for (size_t i = 0; i < str.size();) {
+  for (size_t i = 0; i < length;) {
     if (str[i] == 0) {
       i += 1;
       j += 2;
-    } else if (i + 4 > str.size() || !isFourByteUTF8Encoding(&(str[i]))) {
+    } else if (i + 4 > length || !isFourByteUTF8Encoding(&(str[i]))) {
       // See the code in utf8ToModifiedUTF8 for what's happening here.
       i += 1;
       j += 1;
@@ -89,8 +95,7 @@ size_t modifiedLength(const uint8_t* str, size_t* length) {
   size_t i = 0;
   size_t j = 0;
   while (str[i] != 0) {
-    if (str[i + 1] == 0 || str[i + 2] == 0 || str[i + 3] == 0 ||
-        !isFourByteUTF8Encoding(&(str[i]))) {
+    if (!isFourByteUTF8Encoding(&(str[i]))) {
       i += 1;
       j += 1;
     } else {

@@ -330,10 +330,6 @@ inline auto JClass::getCanonicalName() -> local_ref<JString> {
 // jstring
 // /////////////////////////////////////////////////////////////////////////////////////////
 
-inline local_ref<JString> make_jstring(const std::string& utf8) {
-  return make_jstring(utf8.c_str());
-}
-
 namespace detail {
 // convert to std::string from jstring
 template <>

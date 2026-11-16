@@ -33,6 +33,7 @@ void testPair(
 
   size_t modlen = detail::modifiedLength(utf8str);
   EXPECT_EQ(modlen, modified.size());
+  EXPECT_EQ(modlen, detail::modifiedLength(utf8.data(), utf8.size()));
   vector<uint8_t> out(modlen + 1);
   detail::utf8ToModifiedUTF8(utf8.data(), utf8.size(), out.data(), out.size());
   // we expect utf8ToModified to return null terminated string, but vector in
@@ -123,6 +124,53 @@ TEST(ModifiedUTF8Test, pairs) {
   vector_append(all_modified, four_byte_modified);
 
   testPair(all, all_modified, true);
+}
+
+TEST(ModifiedUTF8Test, malformedFourByteEncodings) {
+  const vector<vector<uint8_t>> inputs = {
+      {0xf0, 0x9f, 0x98, 0},
+      {0xf0, 0, 0, 0},
+      {0xf0, 0, 0x98, 0xb8},
+      {0xf0, 0x9f, 0, 0xb8},
+      {0xf0, 'x', 0x98, 0xb8},
+      {0xf0, 0x9f, 'x', 0xb8},
+      {0xf0, 0x9f, 0x98, 'x'},
+      {0xf0, 0x80, 0x80, 0x80},
+      {0xf0, 0x8f, 0xbf, 0xbf},
+      {0xf0},
+      {0xf0, 0x9f},
+      {0xf0, 0x9f, 0x98},
+  };
+  for (const auto& input : inputs) {
+    SCOPED_TRACE(testing::PrintToString(input));
+    vector<uint8_t> modified;
+    size_t prefixLength = input.size();
+    for (size_t i = 0; i < input.size(); ++i) {
+      if (input[i] == 0) {
+        modified.push_back(0xc0);
+        modified.push_back(0x80);
+        if (prefixLength == input.size()) {
+          prefixLength = i;
+        }
+      } else {
+        modified.push_back(input[i]);
+      }
+    }
+    testPair(input, modified, true);
+
+    auto terminated = input;
+    terminated.push_back(0);
+    size_t length = 0;
+    EXPECT_EQ(prefixLength, detail::modifiedLength(terminated.data(), &length));
+    EXPECT_EQ(prefixLength, length);
+  }
+}
+
+TEST(ModifiedUTF8Test, supplementaryCodePointBoundaries) {
+  testPair(
+      {0xf0, 0x90, 0x80, 0x80}, {0xed, 0xa0, 0x80, 0xed, 0xb0, 0x80}, true);
+  testPair(
+      {0xf4, 0x8f, 0xbf, 0xbf}, {0xed, 0xaf, 0xbf, 0xed, 0xbf, 0xbf}, true);
 }
 
 TEST(ModifiedUTF8Test, conversionFailForTooShortBuffer) {
