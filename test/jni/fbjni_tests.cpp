@@ -25,6 +25,7 @@
 #include <type_traits>
 
 #include <fbjni/JThread.h>
+#include <fbjni/detail/utf8.h>
 #include <fbjni/fbjni.h>
 
 #include "expect.h"
@@ -1689,6 +1690,17 @@ jboolean testAssignmentAndCopyCrossTypes(JNIEnv*, jobject self) {
   return JNI_TRUE;
 }
 
+// toStdString must produce exactly what converting the UTF-16 code units
+// does, whichever of its paths the length selects.
+jboolean testToStdStringMatchesUtf16(
+    alias_ref<JObject>,
+    alias_ref<JString> input) {
+  const auto utf16 = input->toU16String();
+  const auto expected = detail::utf16toUTF8(
+      reinterpret_cast<const uint16_t*>(utf16.data()), utf16.size());
+  return input->toStdString() == expected;
+}
+
 jboolean testToString(JNIEnv* env, jobject self) {
   auto dateClass = findClassLocal("java/util/Date");
   auto dateConstructor = dateClass->getConstructor<jobject()>();
@@ -2026,6 +2038,8 @@ void RegisterFbjniTests() {
               "nativeTestHandleCppCharPointerThrow",
               TestHandleCppCharPointerThrow),
           makeNativeMethod("nativeTestToString", testToString),
+          makeNativeMethod(
+              "nativeTestToStdStringMatchesUtf16", testToStdStringMatchesUtf16),
           makeNativeMethod(
               "nativeTestThrowJavaExceptionByName",
               TestThrowJavaExceptionByName),
