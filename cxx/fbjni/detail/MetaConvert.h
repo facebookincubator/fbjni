@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <array>
+#include <utility>
+
 #include <jni.h>
 
 #include "Common.h"
@@ -26,10 +29,6 @@ namespace jni {
 
 namespace detail {
 
-// In order to avoid potentially filling the jni locals table,
-// temporary objects (right now, this is just jstrings) need to be
-// released. This is done by returning a holder which autoconverts to
-// jstring.
 template <typename T>
 inline T callToJni(T&& t) {
   return t;
@@ -160,6 +159,51 @@ struct Convert<global_ref<T>> {
   static jniType toCall(const global_ref<jniType>& t) {
     return t.get();
   }
+};
+
+template <typename T>
+inline jvalue toJValue(T arg) {
+  jvalue value{};
+  value.l = toPlainJniReference(arg);
+  return value;
+}
+
+#pragma push_macro("FBJNI_PRIMITIVE_JVALUE")
+#undef FBJNI_PRIMITIVE_JVALUE
+#define FBJNI_PRIMITIVE_JVALUE(TYPE, FIELD) \
+  template <>                               \
+  inline jvalue toJValue<TYPE>(TYPE arg) {  \
+    jvalue value{};                         \
+    value.FIELD = arg;                      \
+    return value;                           \
+  }
+
+FBJNI_PRIMITIVE_JVALUE(jboolean, z)
+FBJNI_PRIMITIVE_JVALUE(jbyte, b)
+FBJNI_PRIMITIVE_JVALUE(jchar, c)
+FBJNI_PRIMITIVE_JVALUE(jshort, s)
+FBJNI_PRIMITIVE_JVALUE(jint, i)
+FBJNI_PRIMITIVE_JVALUE(jlong, j)
+FBJNI_PRIMITIVE_JVALUE(jfloat, f)
+FBJNI_PRIMITIVE_JVALUE(jdouble, d)
+#pragma pop_macro("FBJNI_PRIMITIVE_JVALUE")
+
+// Convert::toCall may return a temporary local_ref. Construct the argument
+// array in the JNI call expression so those references outlive the call.
+template <typename... Args>
+class JniArgs {
+ public:
+  template <typename... Converted>
+  explicit JniArgs(Converted&&... args)
+      : values_{toJValue<typename Convert<std::decay_t<Args>>::jniType>(
+            callToJni(std::forward<Converted>(args)))...} {}
+
+  const jvalue* data() const&& noexcept {
+    return sizeof...(Args) == 0 ? nullptr : values_.data();
+  }
+
+ private:
+  std::array<jvalue, sizeof...(Args)> values_;
 };
 
 template <typename T>

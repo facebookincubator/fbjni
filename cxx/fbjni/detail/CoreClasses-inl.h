@@ -302,11 +302,12 @@ inline local_ref<R> JClass::newObject(
     JConstructor<R(Args...)> constructor,
     Args... args) const {
   const auto env = Environment::current();
-  auto object = env->NewObject(
+  auto object = env->NewObjectA(
       self(),
       constructor.getId(),
-      detail::callToJni(
-          detail::Convert<typename std::decay<Args>::type>::toCall(args))...);
+      detail::JniArgs<Args...>(
+          detail::Convert<std::decay_t<Args>>::toCall(args)...)
+          .data());
   FACEBOOK_JNI_THROW_EXCEPTION_IF(!object);
   return adopt_local(static_cast<R>(object));
 }
