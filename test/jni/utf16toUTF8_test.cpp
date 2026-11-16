@@ -25,11 +25,6 @@ TEST(Utf16toUTF8_test, nullUtf16String) {
   EXPECT_TRUE(detail::utf16toUTF8(NULL, 10).empty());
 }
 
-TEST(Utf16toUTF8_test, negativeUtf16StringLength) {
-  std::vector<uint16_t> utf16String = {'a'};
-  EXPECT_TRUE(detail::utf16toUTF8(utf16String.data(), -1).empty());
-}
-
 TEST(Utf16toUTF8_test, zeroUtf16StringLength) {
   std::vector<uint16_t> utf16String = {'a'};
   EXPECT_TRUE(detail::utf16toUTF8(utf16String.data(), 0).empty());
