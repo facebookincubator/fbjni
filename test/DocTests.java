@@ -74,6 +74,13 @@ public class DocTests extends BaseFBJniTests {
     assertThat(addSomeNumbers((byte) 1, (short) 2, 3)).isEqualTo(14);
   }
 
+  static native int stringChars();
+
+  @Test
+  public void testStringChars() {
+    assertThat(stringChars()).isEqualTo(4);
+  }
+
   // SECTION strings
   // Java methods used by the C++ code below.
   static native String fancyCat(String s1, String s2);

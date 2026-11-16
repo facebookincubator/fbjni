@@ -60,6 +60,8 @@ class base_owned_ref;
 template <typename T, typename Alloc>
 class basic_strong_ref;
 
+class JStringChars;
+
 template <typename T>
 class weak_ref;
 
